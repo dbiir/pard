@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cn.edu.ruc.iir</groupId>
+    <artifactId>pard</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>pard-assembly</module>
+        <module>pard-parser</module>
+        <module>pard-connector</module>
+        <module>pard-catalog</module>
+        <module>pard-connector-mysql</module>
+        <module>pard-connector-postgresql</module>
+        <module>pard-nodekeeper</module>
+        <module>pard-main</module>
+        <module>pard-communication</module>
+        <module>pard-optimizer</module>
+    </modules>
+
+</project>

@@ -16,9 +16,7 @@ singleExpression
 statement
     : query                                                            #statementDefault
     | USE schema=identifier                                            #use
-    | USE catalog=identifier '.' schema=identifier                     #use
-    | CREATE SCHEMA (IF NOT EXISTS)? qualifiedName
-        (WITH properties)?                                             #createSchema
+    | CREATE SCHEMA (IF NOT EXISTS)? qualifiedName                     #createSchema
     | DROP SCHEMA (IF EXISTS)? qualifiedName (CASCADE | RESTRICT)?     #dropSchema
     | ALTER SCHEMA qualifiedName RENAME TO identifier                  #renameSchema
     | CREATE TABLE (IF NOT EXISTS)? qualifiedName
@@ -57,14 +55,6 @@ statement
     | SHOW PARTITIONS (FROM | IN) qualifiedName                        #showPartitions
     ;
 
-query
-    :  with? queryNoWith
-    ;
-
-with
-    : WITH RECURSIVE? namedQuery (',' namedQuery)*
-    ;
-
 partitionOps
     : PARTITION BY HASH(partitionKey=expression) PARTITIONS INTEGER_VALUE                 #hashPartition
     | PARTITION BY RANGE(partitionKey=expression)
@@ -81,7 +71,6 @@ tableElementPart
 
 tableElement
     : columnDefinition
-    | likeClause
     ;
 
 rangePartitionElement
@@ -96,22 +85,10 @@ columnDefinition
     : identifier type (COMMENT string)?
     ;
 
-likeClause
-    : LIKE qualifiedName (optionType=(INCLUDING | EXCLUDING) PROPERTIES)?
-    ;
-
-properties
-    : '(' property (',' property)* ')'
-    ;
-
-property
-    : identifier EQ expression
-    ;
-
-queryNoWith:
+query:
       queryTerm
       (ORDER BY sortItem (',' sortItem)*)?
-      (LIMIT limit=(INTEGER_VALUE | ALL))?
+      (LIMIT limit=INTEGER_VALUE)?
     ;
 
 queryTerm
@@ -124,7 +101,7 @@ queryPrimary
     : querySpecification                   #queryPrimaryDefault
     | TABLE qualifiedName                  #table
     | VALUES expression (',' expression)*  #inlineTable
-    | '(' queryNoWith  ')'                 #subquery
+    | '(' query  ')'                       #subquery
     ;
 
 sortItem
@@ -158,10 +135,6 @@ groupingExpressions
 groupingSet
     : '(' (qualifiedName (',' qualifiedName)*)? ')'
     | qualifiedName
-    ;
-
-namedQuery
-    : name=identifier (columnAliases)? AS '(' query ')'
     ;
 
 setQuantifier

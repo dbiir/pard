@@ -26,6 +26,9 @@
         <check-style.skip>false</check-style.skip>
         <check-style.failOnViolation>true</check-style.failOnViolation>
         <main.basedir>${project.basedir}</main.basedir>
+        <javax-inject.version>1</javax-inject.version>
+        <javax-validation.version>1.1.0.Final</javax-validation.version>
+        <guava.version>21.0</guava.version>
     </properties>
 
     <dependencyManagement>
@@ -34,6 +37,32 @@
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr4-runtime</artifactId>
                 <version>${antlr.version}</version>
+            </dependency>
+
+            <!-- Java APIs -->
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>${javax-inject.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>${javax-validation.version}</version>
+            </dependency>
+
+            <!-- JSR-305 -->
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>3.0.2</version>
+            </dependency>
+
+            <!-- guava -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

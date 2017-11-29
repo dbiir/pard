@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>pard-optimizer</artifactId>
+    <artifactId>pard-executor</artifactId>
 
     <properties>
         <main.basedir>${project.parent.basedir}</main.basedir>
@@ -18,7 +18,7 @@
     <dependencies>
         <dependency>
             <groupId>cn.edu.ruc.iir</groupId>
-            <artifactId>pard-parser</artifactId>
+            <artifactId>pard-connector</artifactId>
         </dependency>
     </dependencies>
 </project>

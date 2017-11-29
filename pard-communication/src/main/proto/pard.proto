@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option java_package = "cn.edu.ruc.iir.pard.communication.proto";
+option java_outer_classname = "PardProto";
+option objc_class_prefix = "PARD";
+
+service Pard {
+
+}

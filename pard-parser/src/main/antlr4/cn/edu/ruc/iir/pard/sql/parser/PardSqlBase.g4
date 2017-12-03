@@ -20,8 +20,8 @@ statement
     | DROP SCHEMA (IF EXISTS)? qualifiedName (CASCADE | RESTRICT)?     #dropSchema
     | ALTER SCHEMA qualifiedName RENAME TO identifier                  #renameSchema
     | CREATE TABLE (IF NOT EXISTS)? qualifiedName
-        tableElementPart
-        (',' tableElementPart)*
+        tableElementPart (ON node=identifier)?
+        (',' tableElementPart (ON node=identifier)?)*
         partitionOps?                                                  #createTable
     | CREATE INDEX indexName=identifier ON
         indexTbl=qualifiedName indexCols=tableElementPart              #createIndex

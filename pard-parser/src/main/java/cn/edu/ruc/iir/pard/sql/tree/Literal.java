@@ -29,4 +29,3 @@ public abstract class Literal
         return ImmutableList.of();
     }
 }
-

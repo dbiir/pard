@@ -1,7 +1,5 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
-import java.util.Optional;
-
 import static java.util.Objects.requireNonNull;
 
 /**

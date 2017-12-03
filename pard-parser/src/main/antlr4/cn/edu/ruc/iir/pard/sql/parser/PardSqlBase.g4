@@ -20,11 +20,12 @@ statement
     | DROP SCHEMA (IF EXISTS)? qualifiedName (CASCADE | RESTRICT)?     #dropSchema
     | ALTER SCHEMA qualifiedName RENAME TO identifier                  #renameSchema
     | CREATE TABLE (IF NOT EXISTS)? qualifiedName
-        tableElementPart (ON node=identifier)?
-        (',' tableElementPart (ON node=identifier)?)*
+        tableElementPart
+        (',' tableElementPart)*
         partitionOps?                                                  #createTable
     | CREATE INDEX indexName=identifier ON
-        indexTbl=qualifiedName indexCols=tableElementPart              #createIndex
+        indexTbl=qualifiedName '(' identifier (',' identifier)*')'     #createIndex
+    | DROP INDEX indexName=identifier                                  #dropIndex
     | DROP TABLE (IF EXISTS)? qualifiedName                            #dropTable
     | INSERT INTO qualifiedName columnAliases? query                   #insertInto
     | DELETE FROM qualifiedName (WHERE booleanExpression)?             #delete
@@ -68,7 +69,7 @@ partitionOps
     ;
 
 tableElementPart
-    : '(' tableElement (',' tableElement)* ')'
+    : '(' tableElement (',' tableElement)* ')' (ON node=identifier)?
     ;
 
 tableElement

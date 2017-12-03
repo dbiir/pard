@@ -23,12 +23,10 @@ public class LongLiteral
     {
         super(location);
         requireNonNull(value, "value is null");
-        try
-        {
+        try {
             this.value = Long.parseLong(value);
         }
-        catch (NumberFormatException e)
-        {
+        catch (NumberFormatException e) {
             throw new ParsingException("Invalid numeric literal: " + value);
         }
     }
@@ -47,19 +45,16 @@ public class LongLiteral
     @Override
     public boolean equals(Object o)
     {
-        if (this == o)
-        {
+        if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass())
-        {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
         LongLiteral that = (LongLiteral) o;
 
-        if (value != that.value)
-        {
+        if (value != that.value) {
             return false;
         }
 

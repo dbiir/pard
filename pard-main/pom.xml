@@ -14,4 +14,22 @@
     <properties>
         <main.basedir>${project.parent.basedir}</main.basedir>
     </properties>
+
+    <dependencies>
+        <!-- pard -->
+        <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-communication</artifactId>
+        </dependency>
+
+        <!-- grpc -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty</artifactId>
+        </dependency>
+    </dependencies>
 </project>

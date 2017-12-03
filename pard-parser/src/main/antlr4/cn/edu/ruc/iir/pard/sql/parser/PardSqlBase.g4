@@ -90,7 +90,7 @@ listPartitionElement
     ;
 
 columnDefinition
-    : identifier type (COMMENT string)?
+    : identifier type (PRIMARY KEY)?
     ;
 
 query:
@@ -517,6 +517,7 @@ INTO: 'INTO';
 IS: 'IS';
 ISOLATION: 'ISOLATION';
 JOIN: 'JOIN';
+KEY: 'KEY';
 LAST: 'LAST';
 LATERAL: 'LATERAL';
 LEFT: 'LEFT';
@@ -559,6 +560,7 @@ PARTITIONS: 'PARTITIONS';
 POSITION: 'POSITION';
 PRECEDING: 'PRECEDING';
 PREPARE: 'PREPARE';
+PRIMARY: 'PRIMARY';
 PRIVILEGES: 'PRIVILEGES';
 PROPERTIES: 'PROPERTIES';
 PUBLIC: 'PUBLIC';

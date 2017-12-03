@@ -6,7 +6,7 @@ package cn.edu.ruc.iir.pard.sql.tree;
  * @author guodong
  */
 public abstract class TableHPartitioner
-    extends Statement
+        extends Statement
 {
     protected TableHPartitioner(Location location)
     {
@@ -16,6 +16,6 @@ public abstract class TableHPartitioner
     @Override
     protected <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
-        return visitor.visitTableHPartition(this, context);
+        return visitor.visitTableHPartitioner(this, context);
     }
 }

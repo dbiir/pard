@@ -5,5 +5,15 @@ option java_outer_classname = "PardProto";
 option objc_class_prefix = "PARD";
 
 service Pard {
+    rpc heartbeat(HeartBeatMsg) returns (ResponseStatus) {}
+}
 
+message HeartBeatMsg {
+    int32 beatType = 1;
+    int32 nodeId = 2;
+    string message = 3;
+}
+
+message ResponseStatus {
+    int32 status = 1;
 }

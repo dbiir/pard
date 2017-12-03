@@ -15,7 +15,7 @@ import static java.util.Objects.requireNonNull;
  * @author guodong
  */
 public final class OrderBy
-    extends Node
+        extends Node
 {
     private final List<SortItem> sortItems;
 

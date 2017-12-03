@@ -14,7 +14,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * @author guodong
  */
 public final class Identifier
-    extends Expression
+        extends Expression
 {
     private static final Pattern NAME_PATTERN = Pattern.compile("[a-zA-Z_]([a-zA-Z0-9_:@])*");
 

@@ -12,17 +12,17 @@ import static java.util.Objects.requireNonNull;
  *
  * @author guodong
  */
-public final class TableVPartition
-    extends Statement
+public final class TableVPartitioner
+        extends Statement
 {
     private final List<TableElement> elements;
 
-    public TableVPartition(List<TableElement> elements)
+    public TableVPartitioner(List<TableElement> elements)
     {
         this(null, elements);
     }
 
-    public TableVPartition(Location location, List<TableElement> elements)
+    public TableVPartitioner(Location location, List<TableElement> elements)
     {
         super(location);
         this.elements = ImmutableList.copyOf(requireNonNull(elements, "elements is null"));
@@ -36,7 +36,7 @@ public final class TableVPartition
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
-        return visitor.visitTableVPartition(this, context);
+        return visitor.visitTableVPartitioner(this, context);
     }
 
     @Override
@@ -62,7 +62,7 @@ public final class TableVPartition
         if ((obj == null) || (getClass() != obj.getClass())) {
             return false;
         }
-        TableVPartition o = (TableVPartition) obj;
+        TableVPartitioner o = (TableVPartitioner) obj;
         return Objects.equals(elements, o.elements);
     }
 

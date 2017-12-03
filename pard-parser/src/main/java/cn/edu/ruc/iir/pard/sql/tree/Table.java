@@ -13,7 +13,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
  * @author guodong
  */
 public final class Table
-    extends QueryBody
+        extends QueryBody
 {
     private final QualifiedName name;
 

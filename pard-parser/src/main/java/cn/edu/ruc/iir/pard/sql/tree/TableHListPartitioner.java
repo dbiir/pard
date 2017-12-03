@@ -13,7 +13,7 @@ import static java.util.Objects.requireNonNull;
  * @author guodong
  */
 public final class TableHListPartitioner
-    extends TableHPartitioner
+        extends TableHPartitioner
 {
     private final List<ListPartitionElement> elements;
 
@@ -36,7 +36,7 @@ public final class TableHListPartitioner
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
-        return visitor.visitTableHListPartition(this, context);
+        return visitor.visitTableHListPartitioner(this, context);
     }
 
     @Override

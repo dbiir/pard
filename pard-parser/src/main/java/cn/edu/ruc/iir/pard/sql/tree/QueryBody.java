@@ -6,7 +6,7 @@ package cn.edu.ruc.iir.pard.sql.tree;
  * @author guodong
  */
 public abstract class QueryBody
-    extends Relation
+        extends Relation
 {
     protected QueryBody(Location location)
     {

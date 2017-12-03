@@ -29,4 +29,22 @@
             <artifactId>grpc-stub</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.os72</groupId>
+                <artifactId>protoc-jar-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <configuration>
+                            <inputDirectories>
+                                <inputDirectory>${project.basedir}/src/main/proto</inputDirectory>
+                            </inputDirectories>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

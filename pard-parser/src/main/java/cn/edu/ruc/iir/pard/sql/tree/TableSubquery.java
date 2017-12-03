@@ -73,4 +73,3 @@ public class TableSubquery
         return query.hashCode();
     }
 }
-

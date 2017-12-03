@@ -64,7 +64,7 @@ public final class ColumnDefinition
         }
         ColumnDefinition o = (ColumnDefinition) obj;
         return Objects.equals(this.name, o.name) &&
-                Objects.equals(this.type, o.type)
+                Objects.equals(this.type, o.type);
     }
 
     @Override
@@ -82,4 +82,3 @@ public final class ColumnDefinition
                 .toString();
     }
 }
-

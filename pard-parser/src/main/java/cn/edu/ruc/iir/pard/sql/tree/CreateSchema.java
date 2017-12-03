@@ -68,7 +68,7 @@ public final class CreateSchema
         }
         CreateSchema o = (CreateSchema) obj;
         return Objects.equals(schemaName, o.schemaName) &&
-                Objects.equals(notExists, o.notExists)
+                Objects.equals(notExists, o.notExists);
     }
 
     @Override

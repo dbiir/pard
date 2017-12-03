@@ -6,7 +6,7 @@ package cn.edu.ruc.iir.pard.sql.tree;
  * @author guodong
  */
 public abstract class Statement
-    extends Node
+        extends Node
 {
     protected Statement(Location location)
     {
@@ -14,7 +14,7 @@ public abstract class Statement
     }
 
     @Override
-    protected  <R, C> R accept(AstVisitor<R, C> visitor, C context)
+    protected <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
         return visitor.visitStatement(this, context);
     }

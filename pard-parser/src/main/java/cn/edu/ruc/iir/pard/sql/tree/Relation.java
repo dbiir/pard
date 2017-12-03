@@ -6,7 +6,7 @@ package cn.edu.ruc.iir.pard.sql.tree;
  * @author guodong
  */
 public abstract class Relation
-    extends Node
+        extends Node
 {
     protected Relation(Location location)
     {

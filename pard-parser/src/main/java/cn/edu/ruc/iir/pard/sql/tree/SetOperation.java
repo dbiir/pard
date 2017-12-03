@@ -31,4 +31,3 @@ public abstract class SetOperation
 
     public abstract List<Relation> getRelations();
 }
-

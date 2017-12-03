@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
 import com.google.common.collect.ImmutableList;
-import com.sun.istack.internal.NotNull;
 
 import java.util.List;
 import java.util.Objects;
@@ -15,28 +14,28 @@ import static java.util.Objects.requireNonNull;
  * @author guodong
  */
 public final class Query
-    extends Statement
+        extends Statement
 {
     private final QueryBody queryBody;
     private final Optional<OrderBy> orderBy;
     private final Optional<Limit> limit;
 
-    public Query(@NotNull QueryBody queryBody)
+    public Query(QueryBody queryBody)
     {
         this(null, queryBody, null, null);
     }
 
-    public Query(@NotNull QueryBody queryBody, @NotNull OrderBy orderBy)
+    public Query(QueryBody queryBody, OrderBy orderBy)
     {
         this(null, queryBody, orderBy, null);
     }
 
-    public Query(@NotNull QueryBody queryBody, @NotNull Limit limit)
+    public Query(QueryBody queryBody, Limit limit)
     {
         this(null, queryBody, null, limit);
     }
 
-    public Query(@NotNull QueryBody queryBody, @NotNull OrderBy orderBy, @NotNull Limit limit)
+    public Query(QueryBody queryBody, OrderBy orderBy, Limit limit)
     {
         this(null, queryBody, orderBy, limit);
     }

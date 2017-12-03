@@ -12,7 +12,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * @author guodong
  */
 public final class Limit
-    extends Node
+        extends Node
 {
     private int limitNum;
 

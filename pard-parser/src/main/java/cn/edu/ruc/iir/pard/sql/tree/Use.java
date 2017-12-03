@@ -8,7 +8,7 @@ import java.util.List;
  * @author guodong
  */
 public final class Use
-    extends Statement
+        extends Statement
 {
     private final Identifier schema;
 

@@ -18,16 +18,16 @@ public class CreateTable
         extends Statement
 {
     private final QualifiedName name;
-    private final List<TableVPartition> verticalPartitions;
+    private final List<TableVPartitioner> verticalPartitions;
     private final boolean notExists;
     private final Optional<TableHPartitioner> horizontalPartitioner;
 
-    public CreateTable(QualifiedName name, List<TableVPartition> verticalPartitions, boolean notExists)
+    public CreateTable(QualifiedName name, List<TableVPartitioner> verticalPartitions, boolean notExists)
     {
         this(null, name, verticalPartitions, notExists, Optional.empty());
     }
 
-    public CreateTable(Location location, QualifiedName name, List<TableVPartition> verticalPartitions, boolean notExists, Optional<TableHPartitioner> horizontalPartition)
+    public CreateTable(Location location, QualifiedName name, List<TableVPartitioner> verticalPartitions, boolean notExists, Optional<TableHPartitioner> horizontalPartition)
     {
         super(location);
         this.name = requireNonNull(name, "table is null");
@@ -41,7 +41,7 @@ public class CreateTable
         return name;
     }
 
-    public List<TableVPartition> getVerticalPartitions()
+    public List<TableVPartitioner> getVerticalPartitions()
     {
         return verticalPartitions;
     }

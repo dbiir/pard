@@ -11,7 +11,7 @@ import static java.util.Objects.requireNonNull;
  * @author guodong
  */
 public final class TableHHashPartitioner
-    extends TableHPartitioner
+        extends TableHPartitioner
 {
     private final Expression keyExpr;
     private final int bucketNum;
@@ -41,7 +41,7 @@ public final class TableHHashPartitioner
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
-        return visitor.visitTableHHashPartition(this, context);
+        return visitor.visitTableHHashPartitioner(this, context);
     }
 
     @Override

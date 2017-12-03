@@ -157,6 +157,33 @@
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>2.4.3</version>
                 </plugin>
+
+                <plugin>
+                    <groupId>com.github.os72</groupId>
+                    <artifactId>protoc-jar-maven-plugin</artifactId>
+                    <version>3.3.0.1</version>
+                    <executions>
+                        <execution>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>run</goal>
+                            </goals>
+                            <configuration>
+                                <protocArtifact>com.google.protobuf:protoc:3.0.0</protocArtifact>
+                                <protocVersion>3.3.0</protocVersion>
+                                <outputTargets>
+                                    <outputTarget>
+                                        <type>java</type>
+                                    </outputTarget>
+                                    <outputTarget>
+                                        <type>grpc-java</type>
+                                        <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.4.0</pluginArtifact>
+                                    </outputTarget>
+                                </outputTargets>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
 

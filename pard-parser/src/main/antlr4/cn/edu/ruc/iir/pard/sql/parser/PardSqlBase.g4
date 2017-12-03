@@ -23,6 +23,8 @@ statement
         tableElementPart
         (',' tableElementPart)*
         partitionOps?                                                  #createTable
+    | CREATE INDEX indexName=identifier ON
+        indexTbl=qualifiedName indexCols=tableElementPart              #createIndex
     | DROP TABLE (IF EXISTS)? qualifiedName                            #dropTable
     | INSERT INTO qualifiedName columnAliases? query                   #insertInto
     | DELETE FROM qualifiedName (WHERE booleanExpression)?             #delete
@@ -57,10 +59,10 @@ statement
 
 partitionOps
     : PARTITION BY HASH(partitionKey=expression) PARTITIONS INTEGER_VALUE                 #hashPartition
-    | PARTITION BY RANGE(partitionKey=expression)
+    | PARTITION BY RANGE
          '(' rangePartitionElement
          (',' rangePartitionElement)* ')'                                                 #rangePartition
-    | PARTITION BY LIST(partitionKey=expression)
+    | PARTITION BY LIST
          '(' listPartitionElement
          (',' listPartitionElement)* ')'                                                  #listPartition
     ;
@@ -74,11 +76,17 @@ tableElement
     ;
 
 rangePartitionElement
-    : partitionName=identifier VALUES LESS THAN (partitionCon=expression | MAXVALUE)
+    : partitionName=identifier
+        partitionCol=identifier (LESS | GREATER | LESSEQ | GREATEREQ) THAN (MINVALUE | partitionCon=expression | MAXVALUE)
+        (AND partitionCol=identifier (LESS | GREATER | LESSEQ | GREATEREQ) THAN (MINVALUE | partitionCon=expression | MAXVALUE))*
+        (ON node=identifier)?
     ;
 
 listPartitionElement
-    : (partitionName=identifier VALUES IN '('expression (',' expression)*')')
+    : (partitionName=identifier
+        partitionCol=identifier IN '('expression (',' expression)*')')
+        (AND partitionCol=identifier IN '('expression (',' expression)*')')*
+        (ON node=identifier)?
     ;
 
 columnDefinition
@@ -488,6 +496,8 @@ FUNCTIONS: 'FUNCTIONS';
 GRANT: 'GRANT';
 GRANTS: 'GRANTS';
 GRAPHVIZ: 'GRAPHVIZ';
+GREATER: 'GREATER';
+GREATEREQ: 'GREATEREQ';
 GROUP: 'GROUP';
 GROUPING: 'GROUPING';
 HASH: 'HASH';
@@ -496,6 +506,7 @@ HOUR: 'HOUR';
 IF: 'IF';
 IN: 'IN';
 INCLUDING: 'INCLUDING';
+INDEX: 'INDEX';
 INNER: 'INNER';
 INPUT: 'INPUT';
 INSERT: 'INSERT';
@@ -510,6 +521,7 @@ LAST: 'LAST';
 LATERAL: 'LATERAL';
 LEFT: 'LEFT';
 LESS: 'LESS';
+LESSEQ: 'LESSEQ';
 LEVEL: 'LEVEL';
 LIKE: 'LIKE';
 LIMIT: 'LIMIT';
@@ -520,6 +532,7 @@ LOGICAL: 'LOGICAL';
 MAP: 'MAP';
 MAXVALUE: 'MAXVALUE';
 MINUTE: 'MINUTE';
+MINVALUE: 'MINVALUE';
 MONTH: 'MONTH';
 NATURAL: 'NATURAL';
 NFC : 'NFC';

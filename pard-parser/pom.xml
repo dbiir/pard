@@ -17,6 +17,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-commons</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
         </dependency>

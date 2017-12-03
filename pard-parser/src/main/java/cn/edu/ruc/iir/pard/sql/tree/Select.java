@@ -1,6 +1,12 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.List;
+import java.util.Objects;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static java.util.Objects.requireNonNull;
 
 /**
  * pard
@@ -10,32 +16,71 @@ import java.util.List;
 public class Select
         extends Node
 {
-    protected Select(Location location)
+    private final boolean distinct;
+    private final List<SelectItem> selectItems;
+
+    public Select(boolean distinct, List<SelectItem> selectItems)
+    {
+        this(null, distinct, selectItems);
+    }
+
+    public Select(Location location, boolean distinct, List<SelectItem> selectItems)
     {
         super(location);
+        this.distinct = distinct;
+        this.selectItems = ImmutableList.copyOf(requireNonNull(selectItems, "selectItems"));
+    }
+
+    public boolean isDistinct()
+    {
+        return distinct;
+    }
+
+    public List<SelectItem> getSelectItems()
+    {
+        return selectItems;
+    }
+
+    @Override
+    public <R, C> R accept(AstVisitor<R, C> visitor, C context)
+    {
+        return visitor.visitSelect(this, context);
     }
 
     @Override
     public List<? extends Node> getChildren()
     {
-        return null;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return 0;
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        return false;
+        return selectItems;
     }
 
     @Override
     public String toString()
     {
-        return null;
+        return toStringHelper(this)
+                .add("distinct", distinct)
+                .add("selectItems", selectItems)
+                .omitNullValues()
+                .toString();
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Select select = (Select) o;
+        return (distinct == select.distinct) &&
+                Objects.equals(selectItems, select.selectItems);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(distinct, selectItems);
     }
 }

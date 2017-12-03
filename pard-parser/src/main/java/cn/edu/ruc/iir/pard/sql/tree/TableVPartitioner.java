@@ -16,16 +16,23 @@ public final class TableVPartitioner
         extends Statement
 {
     private final List<TableElement> elements;
+    private String nodeId;
 
     public TableVPartitioner(List<TableElement> elements)
     {
-        this(null, elements);
+        this(null, elements, null);
     }
 
-    public TableVPartitioner(Location location, List<TableElement> elements)
+    public TableVPartitioner(List<TableElement> elements, String nodeId)
+    {
+        this(null, elements, nodeId);
+    }
+
+    public TableVPartitioner(Location location, List<TableElement> elements, String nodeId)
     {
         super(location);
         this.elements = ImmutableList.copyOf(requireNonNull(elements, "elements is null"));
+        this.nodeId = nodeId;
     }
 
     public List<TableElement> getElements()
@@ -50,7 +57,7 @@ public final class TableVPartitioner
     @Override
     public int hashCode()
     {
-        return Objects.hash(elements);
+        return Objects.hash(elements, nodeId);
     }
 
     @Override
@@ -63,7 +70,8 @@ public final class TableVPartitioner
             return false;
         }
         TableVPartitioner o = (TableVPartitioner) obj;
-        return Objects.equals(elements, o.elements);
+        return Objects.equals(elements, o.elements) &&
+                Objects.equals(nodeId, o.nodeId);
     }
 
     @Override
@@ -71,6 +79,7 @@ public final class TableVPartitioner
     {
         return toStringHelper(this)
                 .add("elements", elements)
+                .add("node", nodeId == null ? "" : nodeId)
                 .toString();
     }
 }

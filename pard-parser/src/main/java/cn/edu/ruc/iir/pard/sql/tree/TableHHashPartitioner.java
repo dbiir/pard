@@ -15,17 +15,24 @@ public final class TableHHashPartitioner
 {
     private final Expression keyExpr;
     private final int bucketNum;
+    private String nodeId;
 
     public TableHHashPartitioner(Expression keyExpr, int bucketNum)
     {
-        this(null, keyExpr, bucketNum);
+        this(null, keyExpr, bucketNum, null);
     }
 
-    public TableHHashPartitioner(Location location, Expression keyExpr, int bucketNum)
+    public TableHHashPartitioner(Expression keyExpr, int bucketNum, String nodeId)
+    {
+        this(null, keyExpr, bucketNum, nodeId);
+    }
+
+    public TableHHashPartitioner(Location location, Expression keyExpr, int bucketNum, String nodeId)
     {
         super(location);
         this.keyExpr = requireNonNull(keyExpr, "key expression is null");
         this.bucketNum = bucketNum;
+        this.nodeId = nodeId;
     }
 
     public Expression getKeyExpr()
@@ -53,7 +60,7 @@ public final class TableHHashPartitioner
     @Override
     public int hashCode()
     {
-        return Objects.hash(keyExpr, bucketNum);
+        return Objects.hash(keyExpr, bucketNum, nodeId);
     }
 
     @Override
@@ -67,7 +74,8 @@ public final class TableHHashPartitioner
         }
         TableHHashPartitioner o = (TableHHashPartitioner) obj;
         return Objects.equals(keyExpr, o.keyExpr) &&
-                Objects.equals(bucketNum, o.bucketNum);
+                Objects.equals(bucketNum, o.bucketNum) &&
+                Objects.equals(nodeId, o.nodeId);
     }
 
     @Override
@@ -76,6 +84,7 @@ public final class TableHHashPartitioner
         return toStringHelper(this)
                 .add("key", keyExpr)
                 .add("bucket num", bucketNum)
+                .add("node", nodeId)
                 .toString();
     }
 }

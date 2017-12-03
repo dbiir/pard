@@ -88,6 +88,51 @@ public abstract class AstVisitor<R, C>
         return visitExpression(node, context);
     }
 
+    protected R visitLiteral(Literal node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitBinaryLiteral(BinaryLiteral node, C context)
+    {
+        return visitLiteral(node, context);
+    }
+
+    protected R visitBooleanLiteral(BooleanLiteral node, C context)
+    {
+        return visitLiteral(node, context);
+    }
+
+    protected R visitCharLiteral(CharLiteral node, C context)
+    {
+        return visitLiteral(node, context);
+    }
+
+    protected R visitDoubleLiteral(DoubleLiteral node, C context)
+    {
+        return visitLiteral(node, context);
+    }
+
+    protected R visitLongLiteral(LongLiteral node, C context)
+    {
+        return visitLiteral(node, context);
+    }
+
+    protected R visitNullLiteral(NullLiteral node, C context)
+    {
+        return visitLiteral(node, context);
+    }
+
+    protected R visitStringLiteral(StringLiteral node, C context)
+    {
+        return visitStringLiteral(node, context);
+    }
+
+    protected R visitComparisonExpression(ComparisonExpression node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
     protected R visitTableElement(TableElement node, C context)
     {
         return visitNode(node, context);
@@ -101,6 +146,21 @@ public abstract class AstVisitor<R, C>
     protected R visitRelation(Relation node, C context)
     {
         return visitNode(node, context);
+    }
+
+    protected R visitJoin(Join node, C context)
+    {
+        return visitRelation(node, context);
+    }
+
+    protected R visitAliasedRelation(AliasedRelation node, C context)
+    {
+        return visitRelation(node, context);
+    }
+
+    protected R visitSampledRelation(SampledRelation node, C context)
+    {
+        return visitSampledRelation(node, context);
     }
 
     protected R visitQueryBody(QueryBody node, C context)
@@ -161,5 +221,55 @@ public abstract class AstVisitor<R, C>
     protected R visitSortItem(SortItem node, C context)
     {
         return visitNode(node, context);
+    }
+
+    protected R visitListPartitionElement(ListPartitionElement node, C context)
+    {
+        return visitNode(node, context);
+    }
+
+    protected R visitListPartitionElementCondition(ListPartitionElementCondition node, C context)
+    {
+        return visitNode(node, context);
+    }
+
+    protected R visitRangePartitionElement(RangePartitionElement node, C context)
+    {
+        return visitNode(node, context);
+    }
+
+    protected R visitRangePartitionElementCondition(RangePartitionElementCondition node, C context)
+    {
+        return visitNode(node, context);
+    }
+
+    protected R visitGroupBy(GroupBy node, C context)
+    {
+        return visitNode(node, context);
+    }
+
+    protected R visitGroupingElement(GroupingElement node, C context)
+    {
+        return visitNode(node, context);
+    }
+
+    protected R visitSelect(Select node, C context)
+    {
+        return visitNode(node, context);
+    }
+
+    protected R visitSelectItem(SelectItem node, C context)
+    {
+        return visitNode(node, context);
+    }
+
+    protected R visitAllColumns(AllColumns node, C context)
+    {
+        return visitSelectItem(node, context);
+    }
+
+    protected R visitSingleColumn(SingleColumn node, C context)
+    {
+        return visitSelectItem(node, context);
     }
 }

@@ -77,16 +77,24 @@ tableElement
 
 rangePartitionElement
     : partitionName=identifier
-        partitionCol=identifier (LESS | GREATER | LESSEQ | GREATEREQ) THAN (MINVALUE | partitionCon=expression | MAXVALUE)
-        (AND partitionCol=identifier (LESS | GREATER | LESSEQ | GREATEREQ) THAN (MINVALUE | partitionCon=expression | MAXVALUE))*
+        rangePartitionElementCon
+        (AND rangePartitionElementCon)*
         (ON node=identifier)?
     ;
 
+rangePartitionElementCon
+    : partitionCol=identifier (LESS | GREATER | LESSEQ | GREATEREQ) THAN (MINVALUE | partitionExpr=expression | MAXVALUE)
+    ;
+
 listPartitionElement
-    : (partitionName=identifier
-        partitionCol=identifier IN '('expression (',' expression)*')')
-        (AND partitionCol=identifier IN '('expression (',' expression)*')')*
+    : partitionName=identifier
+        listPartitionElementCon
+        (AND listPartitionElementCon)*
         (ON node=identifier)?
+    ;
+
+listPartitionElementCon
+    : partitionCol=identifier IN '('expression (',' expression)*')'
     ;
 
 columnDefinition
@@ -130,9 +138,6 @@ groupBy
 
 groupingElement
     : groupingExpressions                                               #singleGroupingSet
-    | ROLLUP '(' (qualifiedName (',' qualifiedName)*)? ')'              #rollup
-    | CUBE '(' (qualifiedName (',' qualifiedName)*)? ')'                #cube
-    | GROUPING SETS '(' groupingSet (',' groupingSet)* ')'              #multipleGroupingSets
     ;
 
 groupingExpressions
@@ -199,8 +204,6 @@ columnAliases
 relationPrimary
     : qualifiedName                                                   #tableName
     | '(' query ')'                                                   #subqueryRelation
-    | UNNEST '(' expression (',' expression)* ')' (WITH ORDINALITY)?  #unnest
-    | LATERAL '(' query ')'                                           #lateral
     | '(' relation ')'                                                #parenthesizedRelation
     ;
 

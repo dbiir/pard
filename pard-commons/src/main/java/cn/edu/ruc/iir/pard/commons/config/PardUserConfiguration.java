@@ -1,5 +1,9 @@
 package cn.edu.ruc.iir.pard.commons.config;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 /**
  * pard
  *
@@ -14,7 +18,8 @@ public final class PardUserConfiguration
     }
 
     private PardUserConfiguration()
-    {}
+    {
+    }
 
     private boolean validate()
     {
@@ -30,6 +35,12 @@ public final class PardUserConfiguration
     public void init(String configurationPath)
     {
         // todo read config and validate
+        try {
+            configProps.load(new FileInputStream(configurationPath));
+        }
+        catch (IOException e) {
+            System.out.println("Config file read faield");
+        }
     }
 
     public int getServerPort()

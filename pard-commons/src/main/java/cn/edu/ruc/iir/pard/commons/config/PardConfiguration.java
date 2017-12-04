@@ -9,8 +9,14 @@ import java.util.Properties;
  */
 public abstract class PardConfiguration
 {
-    private Properties configProps;
-    private Properties defaultProps;
+    Properties configProps;
+    Properties defaultProps;
+
+    PardConfiguration()
+    {
+        configProps = new Properties();
+        defaultProps = new Properties();
+    }
 
     PardConfiguration setDefault(String key, String value)
     {

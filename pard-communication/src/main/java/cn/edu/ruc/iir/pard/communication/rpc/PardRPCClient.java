@@ -6,6 +6,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -31,20 +33,25 @@ public class PardRPCClient
 
     public int sendHeartBeat(int beatType, int nodeId, String message)
     {
-        PardProto.ResponseStatus status;
+        PardProto.HeartBeatMsg receiving;
         PardProto.HeartBeatMsg heartBeatMsg = PardProto.HeartBeatMsg.newBuilder()
                 .setBeatType(beatType)
                 .setNodeId(nodeId)
                 .setMessage(message)
                 .build();
         try {
-            status = blockingStub.heartbeat(heartBeatMsg);
+            receiving = blockingStub.heartbeat(heartBeatMsg);
         }
         catch (StatusRuntimeException e) {
-            status = PardProto.ResponseStatus.newBuilder()
-                    .setStatus(-1)
-                    .build();
+            receiving = PardProto.HeartBeatMsg.newBuilder().build();
         }
-        return status.getStatus();
+
+        System.out.println(
+                toStringHelper(this)
+                        .add("type", receiving.getBeatType())
+                        .add("node", receiving.getNodeId())
+                        .add("msg", receiving.getMessage()));
+
+        return receiving.getBeatType();
     }
 }

@@ -14,7 +14,7 @@ public class PardStartupPipeline
 
     PardStartupPipeline()
     {
-        hooks = new ArrayList<PardStartupHook>();
+        hooks = new ArrayList<>();
     }
 
     void addStartupHook(PardStartupHook hook)

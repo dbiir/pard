@@ -14,9 +14,15 @@ public class PardRPCService
 {
     @Override
     public void heartbeat(PardProto.HeartBeatMsg heartBeatMsg,
-                                              StreamObserver<PardProto.ResponseStatus> responseStreamObserve)
+                                              StreamObserver<PardProto.HeartBeatMsg> responseStreamObserve)
     {
-        responseStreamObserve.onNext(PardProto.ResponseStatus.newBuilder().build());
+        PardProto.HeartBeatMsg msg =
+                PardProto.HeartBeatMsg.newBuilder()
+                .setBeatType(2)
+                .setNodeId(1)
+                .setMessage("Hey there this is 1")
+                .build();
+        responseStreamObserve.onNext(msg);
         responseStreamObserve.onCompleted();
     }
 }

@@ -13,7 +13,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public final class ListPartitionElement
         extends Node
 {
-    private final Identifier partitionColumn;
+    private final Identifier partitionName;
     private final List<ListPartitionElementCondition> conditions;
     private String nodeId;
 
@@ -30,7 +30,7 @@ public final class ListPartitionElement
     public ListPartitionElement(Location location, Identifier partitionColumn, List<ListPartitionElementCondition> conditions, String nodeId)
     {
         super(location);
-        this.partitionColumn = partitionColumn;
+        this.partitionName = partitionColumn;
         this.conditions = conditions;
         this.nodeId = nodeId;
     }
@@ -50,7 +50,7 @@ public final class ListPartitionElement
     @Override
     public int hashCode()
     {
-        return Objects.hash(partitionColumn, conditions, nodeId);
+        return Objects.hash(partitionName, conditions, nodeId);
     }
 
     @Override
@@ -64,7 +64,7 @@ public final class ListPartitionElement
         }
 
         ListPartitionElement that = (ListPartitionElement) o;
-        return Objects.equals(partitionColumn, that.partitionColumn) &&
+        return Objects.equals(partitionName, that.partitionName) &&
                 Objects.equals(conditions, that.conditions) &&
                 Objects.equals(nodeId, that.nodeId);
     }
@@ -73,7 +73,7 @@ public final class ListPartitionElement
     public String toString()
     {
         return toStringHelper(this)
-                .add("partition column", partitionColumn)
+                .add("partition column", partitionName)
                 .add("conditions", conditions)
                 .add("node", nodeId == null ? "" : nodeId)
                 .toString();

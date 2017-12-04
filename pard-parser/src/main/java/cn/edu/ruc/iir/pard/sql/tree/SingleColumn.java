@@ -34,7 +34,7 @@ public class SingleColumn
         this(null, expression, Optional.of(alias));
     }
 
-    private SingleColumn(Location location, Expression expression, Optional<Identifier> alias)
+    public SingleColumn(Location location, Expression expression, Optional<Identifier> alias)
     {
         super(location);
         requireNonNull(expression, "expression is null");

@@ -24,7 +24,7 @@ public class Except
         this(null, left, right, distinct);
     }
 
-    private Except(Location location, Relation left, Relation right, boolean distinct)
+    public Except(Location location, Relation left, Relation right, boolean distinct)
     {
         super(location, distinct);
         requireNonNull(left, "left is null");

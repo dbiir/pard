@@ -93,6 +93,56 @@ public abstract class AstVisitor<R, C>
         return visitExpression(node, context);
     }
 
+    protected R visitNotExpression(NotExpression node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitLogicalBinaryExpression(LogicalBinaryExpression node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitQuantifiedComparisonExpression(QuantifiedComparisonExpression node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitSubqueryExpression(SubqueryExpression node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitInPredicate(InPredicate node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitInListExpression(InListExpression node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitIsNullPredicate(IsNullPredicate node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitIsNotNullPredicate(IsNotNullPredicate node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitDereferenceExpression(DereferenceExpression node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
+    protected R visitRow(Row node, C context)
+    {
+        return visitExpression(node, context);
+    }
+
     protected R visitBinaryLiteral(BinaryLiteral node, C context)
     {
         return visitLiteral(node, context);
@@ -125,7 +175,12 @@ public abstract class AstVisitor<R, C>
 
     protected R visitStringLiteral(StringLiteral node, C context)
     {
-        return visitStringLiteral(node, context);
+        return visitLiteral(node, context);
+    }
+
+    protected R visitGenericLiteral(GenericLiteral node, C context)
+    {
+        return visitLiteral(node, context);
     }
 
     protected R visitComparisonExpression(ComparisonExpression node, C context)

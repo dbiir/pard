@@ -18,7 +18,7 @@ public final class Query
 {
     private final QueryBody queryBody;
     private final Optional<OrderBy> orderBy;
-    private final Optional<Limit> limit;
+    private final Optional<String> limit;
 
     public Query(QueryBody queryBody)
     {
@@ -30,17 +30,17 @@ public final class Query
         this(null, queryBody, orderBy, null);
     }
 
-    public Query(QueryBody queryBody, Limit limit)
+    public Query(QueryBody queryBody, String limit)
     {
         this(null, queryBody, null, limit);
     }
 
-    public Query(QueryBody queryBody, OrderBy orderBy, Limit limit)
+    public Query(QueryBody queryBody, OrderBy orderBy, String limit)
     {
         this(null, queryBody, orderBy, limit);
     }
 
-    public Query(Location location, QueryBody queryBody, OrderBy orderBy, Limit limit)
+    public Query(Location location, QueryBody queryBody, OrderBy orderBy, String limit)
     {
         super(location);
         this.queryBody = requireNonNull(queryBody, "query body is null");
@@ -58,7 +58,7 @@ public final class Query
         return orderBy;
     }
 
-    public Optional<Limit> getLimit()
+    public Optional<String> getLimit()
     {
         return limit;
     }
@@ -69,7 +69,6 @@ public final class Query
         ImmutableList.Builder<Node> nodes = ImmutableList.builder();
         nodes.add(queryBody);
         orderBy.ifPresent(nodes::add);
-        limit.ifPresent(nodes::add);
         return nodes.build();
     }
 

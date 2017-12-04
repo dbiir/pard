@@ -1,6 +1,8 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
-import java.nio.ByteBuffer;
+import com.google.common.collect.ImmutableList;
+
+import java.util.List;
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
@@ -10,39 +12,38 @@ import static java.util.Objects.requireNonNull;
  *
  * @author guodong
  */
-public class StringLiteral
-        extends Literal
+public class IsNullPredicate
+        extends Expression
 {
-    private final String value;
-    private final ByteBuffer slice;
+    private final Expression value;
 
-    public StringLiteral(String value)
+    public IsNullPredicate(Expression value)
     {
         this(null, value);
     }
 
-    public StringLiteral(Location location, String value)
+    public IsNullPredicate(Location location, Expression value)
     {
         super(location);
         requireNonNull(value, "value is null");
         this.value = value;
-        this.slice = ByteBuffer.wrap(value.getBytes());
     }
 
-    public String getValue()
+    public Expression getValue()
     {
         return value;
-    }
-
-    public ByteBuffer getSlice()
-    {
-        return slice;
     }
 
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
-        return visitor.visitStringLiteral(this, context);
+        return visitor.visitIsNullPredicate(this, context);
+    }
+
+    @Override
+    public List<Node> getChildren()
+    {
+        return ImmutableList.of(value);
     }
 
     @Override
@@ -55,7 +56,7 @@ public class StringLiteral
             return false;
         }
 
-        StringLiteral that = (StringLiteral) o;
+        IsNullPredicate that = (IsNullPredicate) o;
         return Objects.equals(value, that.value);
     }
 

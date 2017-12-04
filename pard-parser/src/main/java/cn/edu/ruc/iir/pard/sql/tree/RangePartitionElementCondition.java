@@ -16,24 +16,28 @@ public class RangePartitionElementCondition
         extends Node
 {
     public enum Predicate {
-        LESS, GREATER, LESSEQ, GREATEREQ
+        LESS, GREATER, LESSEQ, GREATEREQ, EQUAL, NULL
     }
 
     private final Identifier partitionColumn;
     private final Predicate partitionPredicate;
     private final Expression partitionExpr;
+    private final boolean minValue;
+    private final boolean maxValue;
 
-    public RangePartitionElementCondition(Identifier partitionColumn, Predicate partitionPredicate, Expression partitionExpr)
+    public RangePartitionElementCondition(Identifier partitionColumn, Predicate partitionPredicate, Expression partitionExpr, boolean minValue, boolean maxValue)
     {
-        this(null, partitionColumn, partitionPredicate, partitionExpr);
+        this(null, partitionColumn, partitionPredicate, partitionExpr, minValue, maxValue);
     }
 
-    public RangePartitionElementCondition(Location location, Identifier partitionColumn, Predicate partitionPredicate, Expression partitionExpr)
+    public RangePartitionElementCondition(Location location, Identifier partitionColumn, Predicate partitionPredicate, Expression partitionExpr, boolean minValue, boolean maxValue)
     {
         super(location);
         this.partitionColumn = partitionColumn;
         this.partitionPredicate = partitionPredicate;
         this.partitionExpr = partitionExpr;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
     }
 
     @Override
@@ -51,7 +55,7 @@ public class RangePartitionElementCondition
     @Override
     public int hashCode()
     {
-        return Objects.hash(partitionColumn, partitionPredicate, partitionExpr);
+        return Objects.hash(partitionColumn, partitionPredicate, partitionExpr, maxValue, maxValue);
     }
 
     @Override
@@ -67,7 +71,9 @@ public class RangePartitionElementCondition
 
         return Objects.equals(partitionColumn, that.partitionColumn) &&
                 Objects.equals(partitionPredicate, that.partitionPredicate) &&
-                Objects.equals(partitionExpr, that.partitionExpr);
+                Objects.equals(partitionExpr, that.partitionExpr) &&
+                Objects.equals(minValue, that.minValue) &&
+                Objects.equals(maxValue, that.maxValue);
     }
 
     @Override
@@ -76,7 +82,9 @@ public class RangePartitionElementCondition
         return toStringHelper(this)
                 .add("partition column", partitionColumn)
                 .add("partition predicate", partitionPredicate)
-                .add("partition expression", partitionExpr)
+                .add("partition expression", partitionExpr == null ? "" : partitionExpr)
+                .add("minValue", minValue)
+                .add("maxValue", maxValue)
                 .toString();
     }
 }

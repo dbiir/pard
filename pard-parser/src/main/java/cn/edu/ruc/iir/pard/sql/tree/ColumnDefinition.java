@@ -18,17 +18,19 @@ public final class ColumnDefinition
 {
     private final Identifier name;
     private final String type;
+    private final boolean primary;
 
-    public ColumnDefinition(Identifier name, String type)
+    public ColumnDefinition(Identifier name, String type, boolean primary)
     {
-        this(null, name, type);
+        this(null, name, type, primary);
     }
 
-    public ColumnDefinition(Location location, Identifier name, String type)
+    public ColumnDefinition(Location location, Identifier name, String type, boolean primary)
     {
         super(location);
         this.name = requireNonNull(name, "name is null");
         this.type = requireNonNull(type, "type is null");
+        this.primary = primary;
     }
 
     public Identifier getName()
@@ -64,13 +66,14 @@ public final class ColumnDefinition
         }
         ColumnDefinition o = (ColumnDefinition) obj;
         return Objects.equals(this.name, o.name) &&
-                Objects.equals(this.type, o.type);
+                Objects.equals(this.type, o.type) &&
+                Objects.equals(this.primary, o.primary);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, type);
+        return Objects.hash(name, type, primary);
     }
 
     @Override
@@ -79,6 +82,7 @@ public final class ColumnDefinition
         return toStringHelper(this)
                 .add("name", name)
                 .add("type", type)
+                .add("primary", primary)
                 .toString();
     }
 }

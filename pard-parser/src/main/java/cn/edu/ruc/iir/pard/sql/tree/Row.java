@@ -1,10 +1,10 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -13,50 +13,44 @@ import static java.util.Objects.requireNonNull;
  *
  * @author guodong
  */
-public final class Values
-        extends QueryBody
+public final class Row
+        extends Expression
 {
-    private final List<Expression> rows;
+    private final List<Expression> items;
 
-    public Values(List<Expression> rows)
+    public Row(List<Expression> items)
     {
-        this(null, rows);
+        this(null, items);
     }
 
-    public Values(Location location, List<Expression> rows)
+    public Row(Location location, List<Expression> items)
     {
         super(location);
-        requireNonNull(rows, "rows is null");
-        this.rows = ImmutableList.copyOf(rows);
+        requireNonNull(items, "items is null");
+        this.items = ImmutableList.copyOf(items);
     }
 
-    public List<Expression> getRows()
+    public List<Expression> getItems()
     {
-        return rows;
+        return items;
     }
 
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
-        return visitor.visitValues(this, context);
+        return visitor.visitRow(this, context);
     }
 
     @Override
     public List<? extends Node> getChildren()
     {
-        return rows;
-    }
-
-    @Override
-    public String toString()
-    {
-        return "(" + Joiner.on(", ").join(rows) + ")";
+        return items;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(rows);
+        return Objects.hash(items);
     }
 
     @Override
@@ -68,7 +62,7 @@ public final class Values
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        Values other = (Values) obj;
-        return Objects.equals(this.rows, other.rows);
+        Row other = (Row) obj;
+        return Objects.equals(this.items, other.items);
     }
 }

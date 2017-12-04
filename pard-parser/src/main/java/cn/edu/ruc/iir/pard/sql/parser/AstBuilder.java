@@ -1,37 +1,86 @@
 package cn.edu.ruc.iir.pard.sql.parser;
 
+import cn.edu.ruc.iir.pard.commons.exception.ParsingException;
+import cn.edu.ruc.iir.pard.sql.tree.AliasedRelation;
+import cn.edu.ruc.iir.pard.sql.tree.AllColumns;
+import cn.edu.ruc.iir.pard.sql.tree.BinaryLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.BooleanLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.CharLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.ColumnDefinition;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpressionType;
 import cn.edu.ruc.iir.pard.sql.tree.CreateIndex;
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
 import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
+import cn.edu.ruc.iir.pard.sql.tree.DereferenceExpression;
+import cn.edu.ruc.iir.pard.sql.tree.DoubleLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.DropIndex;
 import cn.edu.ruc.iir.pard.sql.tree.DropSchema;
 import cn.edu.ruc.iir.pard.sql.tree.DropTable;
+import cn.edu.ruc.iir.pard.sql.tree.Except;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.GenericLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.GroupBy;
+import cn.edu.ruc.iir.pard.sql.tree.GroupingElement;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
+import cn.edu.ruc.iir.pard.sql.tree.InListExpression;
+import cn.edu.ruc.iir.pard.sql.tree.InPredicate;
+import cn.edu.ruc.iir.pard.sql.tree.Intersect;
+import cn.edu.ruc.iir.pard.sql.tree.IsNotNullPredicate;
+import cn.edu.ruc.iir.pard.sql.tree.IsNullPredicate;
+import cn.edu.ruc.iir.pard.sql.tree.Join;
+import cn.edu.ruc.iir.pard.sql.tree.JoinCriteria;
+import cn.edu.ruc.iir.pard.sql.tree.JoinOn;
+import cn.edu.ruc.iir.pard.sql.tree.JoinUsing;
 import cn.edu.ruc.iir.pard.sql.tree.ListPartitionElement;
+import cn.edu.ruc.iir.pard.sql.tree.ListPartitionElementCondition;
 import cn.edu.ruc.iir.pard.sql.tree.Location;
+import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
+import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.NaturalJoin;
 import cn.edu.ruc.iir.pard.sql.tree.Node;
+import cn.edu.ruc.iir.pard.sql.tree.NotExpression;
+import cn.edu.ruc.iir.pard.sql.tree.NullLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.OrderBy;
 import cn.edu.ruc.iir.pard.sql.tree.QualifiedName;
+import cn.edu.ruc.iir.pard.sql.tree.QuantifiedComparisonExpression;
+import cn.edu.ruc.iir.pard.sql.tree.Query;
+import cn.edu.ruc.iir.pard.sql.tree.QueryBody;
+import cn.edu.ruc.iir.pard.sql.tree.QuerySpecification;
 import cn.edu.ruc.iir.pard.sql.tree.RangePartitionElement;
+import cn.edu.ruc.iir.pard.sql.tree.RangePartitionElementCondition;
+import cn.edu.ruc.iir.pard.sql.tree.Relation;
+import cn.edu.ruc.iir.pard.sql.tree.Row;
+import cn.edu.ruc.iir.pard.sql.tree.SampledRelation;
+import cn.edu.ruc.iir.pard.sql.tree.Select;
+import cn.edu.ruc.iir.pard.sql.tree.SelectItem;
+import cn.edu.ruc.iir.pard.sql.tree.SingleColumn;
+import cn.edu.ruc.iir.pard.sql.tree.SortItem;
+import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.SubqueryExpression;
+import cn.edu.ruc.iir.pard.sql.tree.Table;
 import cn.edu.ruc.iir.pard.sql.tree.TableElement;
 import cn.edu.ruc.iir.pard.sql.tree.TableHHashPartitioner;
 import cn.edu.ruc.iir.pard.sql.tree.TableHListPartitioner;
 import cn.edu.ruc.iir.pard.sql.tree.TableHPartitioner;
 import cn.edu.ruc.iir.pard.sql.tree.TableHRangePartitioner;
+import cn.edu.ruc.iir.pard.sql.tree.TableSubquery;
 import cn.edu.ruc.iir.pard.sql.tree.TableVPartitioner;
+import cn.edu.ruc.iir.pard.sql.tree.Union;
 import cn.edu.ruc.iir.pard.sql.tree.Use;
+import cn.edu.ruc.iir.pard.sql.tree.Values;
+import com.google.common.collect.ImmutableList;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.ErrorNode;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -233,677 +282,625 @@ public class AstBuilder
     @Override
     public Node visitRangePartitionElement(PardSqlBaseParser.RangePartitionElementContext ctx)
     {
-        return null;
+        return new RangePartitionElement(
+                getLocation(ctx),
+                (Identifier) visit(ctx.partitionName),
+                visit(ctx.rangePartitionElementCon(), RangePartitionElementCondition.class),
+                ((Identifier) visit(ctx.node)).toString());
+    }
+
+    @Override
+    public Node visitRangePartitionElementCon(PardSqlBaseParser.RangePartitionElementConContext ctx)
+    {
+        RangePartitionElementCondition.Predicate predicate = RangePartitionElementCondition.Predicate.NULL;
+        if (ctx.partitionPre.EQUAL() != null) {
+            predicate = RangePartitionElementCondition.Predicate.EQUAL;
+        }
+        if (ctx.partitionPre.LESS() != null) {
+            predicate = RangePartitionElementCondition.Predicate.LESS;
+        }
+        if (ctx.partitionPre.GREATER() != null) {
+            predicate = RangePartitionElementCondition.Predicate.GREATER;
+        }
+        if (ctx.partitionPre.LESSEQ() != null) {
+            predicate = RangePartitionElementCondition.Predicate.LESSEQ;
+        }
+        if (ctx.partitionPre.GREATEREQ() != null) {
+            predicate = RangePartitionElementCondition.Predicate.GREATEREQ;
+        }
+
+        return new RangePartitionElementCondition(
+                getLocation(ctx),
+                (Identifier) visit(ctx.partitionCol),
+                predicate,
+                ctx.partitionExpr == null ? null : (Expression) visit(ctx.partitionExpr),
+                ctx.MINVALUE() != null,
+                ctx.MAXVALUE() != null);
     }
 
     @Override
     public Node visitListPartitionElement(PardSqlBaseParser.ListPartitionElementContext ctx)
     {
-        return null;
+        return new ListPartitionElement(
+                getLocation(ctx),
+                (Identifier) visit(ctx.partitionName),
+                visit(ctx.listPartitionElementCon(), ListPartitionElementCondition.class),
+                ((Identifier) visit(ctx.node)).toString());
+    }
+
+    @Override
+    public Node visitListPartitionElementCon(PardSqlBaseParser.ListPartitionElementConContext ctx)
+    {
+        return new ListPartitionElementCondition(
+                getLocation(ctx),
+                (Identifier) visit(ctx.partitionCol),
+                visit(ctx.expression(), Expression.class));
     }
 
     @Override
     public Node visitColumnDefinition(PardSqlBaseParser.ColumnDefinitionContext ctx)
     {
-        return null;
+        return new ColumnDefinition(
+                getLocation(ctx),
+                (Identifier) visit(ctx.identifier()),
+                getType(ctx.type()),
+                ctx.PRIMARY() != null);
     }
 
     @Override
     public Node visitQuery(PardSqlBaseParser.QueryContext ctx)
     {
-        return null;
+        Optional<String> limitOption = getTextIfPresent(ctx.limit);
+
+        QueryBody term = (QueryBody) visit(ctx.queryTerm());
+
+        Optional<OrderBy> orderBy = Optional.empty();
+        if (ctx.ORDER() != null) {
+            orderBy = Optional.of(new OrderBy(getLocation(ctx.ORDER()), visit(ctx.sortItem(), SortItem.class)));
+        }
+
+        if (term instanceof QuerySpecification) {
+            QuerySpecification query = (QuerySpecification) term;
+
+            return new Query(
+                    getLocation(ctx),
+                    new QuerySpecification(
+                            getLocation(ctx),
+                            query.getSelect(),
+                            query.getFrom(),
+                            query.getWhere(),
+                            query.getGroupBy(),
+                            query.getHaving(),
+                            orderBy,
+                            getTextIfPresent(ctx.limit)),
+                    null,
+                    null);
+        }
+
+        return new Query(
+                getLocation(ctx),
+                term,
+                orderBy.orElse(null),
+                getTextIfPresent(ctx.limit).isPresent() ? getTextIfPresent(ctx.limit).get() : null);
     }
 
     @Override
     public Node visitSetOperation(PardSqlBaseParser.SetOperationContext ctx)
     {
-        return null;
+        QueryBody left = (QueryBody) visit(ctx.left);
+        QueryBody right = (QueryBody) visit(ctx.right);
+
+        boolean distinct = ctx.setQuantifier() == null || ctx.setQuantifier().DISTINCT() != null;
+
+        switch (ctx.operator.getType()) {
+            case PardSqlBaseLexer.UNION:
+                return new Union(getLocation(ctx.UNION()), ImmutableList.of(left, right), distinct);
+            case PardSqlBaseLexer.INTERSECT:
+                return new Intersect(getLocation(ctx.INTERSECT()), ImmutableList.of(left, right), distinct);
+            case PardSqlBaseLexer.EXCEPT:
+                return new Except(getLocation(ctx.EXCEPT()), left, right, distinct);
+        }
+
+        throw new IllegalArgumentException("Unsupported set operation: " + ctx.operator.getText());
     }
 
     @Override
     public Node visitTable(PardSqlBaseParser.TableContext ctx)
     {
-        return null;
+        return new Table(
+                getLocation(ctx),
+                getQualifiedName(ctx.qualifiedName()));
     }
 
     @Override
     public Node visitInlineTable(PardSqlBaseParser.InlineTableContext ctx)
     {
-        return null;
+        return new Values(
+                getLocation(ctx),
+                visit(ctx.expression(), Expression.class));
     }
 
     @Override
     public Node visitSubquery(PardSqlBaseParser.SubqueryContext ctx)
     {
-        return null;
+        return new TableSubquery(
+                getLocation(ctx),
+                (Query) visit(ctx.query()));
     }
 
     @Override
     public Node visitSortItem(PardSqlBaseParser.SortItemContext ctx)
     {
-        return null;
+        return new SortItem(
+                getLocation(ctx),
+                (Expression) visit(ctx.expression()),
+                Optional.ofNullable(ctx.ordering)
+                .map(AstBuilder::getOrderingType)
+                .orElse(SortItem.Ordering.ASCENDING),
+                Optional.ofNullable(ctx.nullOrdering)
+                .map(AstBuilder::getNullOrderingType)
+                .orElse(SortItem.NullOrdering.UNDEFINED));
     }
 
     @Override
     public Node visitQuerySpecification(PardSqlBaseParser.QuerySpecificationContext ctx)
     {
-        return null;
+        Optional<Relation> from = Optional.empty();
+        List<SelectItem> selectItems = visit(ctx.selectItem(), SelectItem.class);
+        List<Relation> relations = visit(ctx.relation(), Relation.class);
+        if (!relations.isEmpty()) {
+            Iterator<Relation> iterator = relations.iterator();
+            Relation relation = iterator.next();
+
+            while (iterator.hasNext()) {
+                relation = new Join(
+                        getLocation(ctx),
+                        Join.Type.IMPLICIT,
+                        relation,
+                        iterator.next(),
+                        Optional.empty());
+            }
+
+            from = Optional.of(relation);
+        }
+
+        return new QuerySpecification(
+                getLocation(ctx),
+                new Select(getLocation(ctx.SELECT()),
+                        isDistinct(ctx.setQuantifier()), selectItems),
+                from,
+                visitIfPresent(ctx.where, Expression.class),
+                visitIfPresent(ctx.groupBy(), GroupBy.class),
+                visitIfPresent(ctx.having, Expression.class),
+                Optional.empty(),
+                Optional.empty());
     }
 
     @Override
     public Node visitGroupBy(PardSqlBaseParser.GroupByContext ctx)
     {
-        return null;
+        return new GroupBy(
+                getLocation(ctx),
+                isDistinct(ctx.setQuantifier()),
+                visit(ctx.groupingElement(), GroupingElement.class));
     }
 
     @Override
     public Node visitSingleGroupingSet(PardSqlBaseParser.SingleGroupingSetContext ctx)
     {
-        return null;
-    }
-
-    @Override
-    public Node visitGroupingExpressions(PardSqlBaseParser.GroupingExpressionsContext ctx)
-    {
-        return null;
-    }
-
-    @Override
-    public Node visitGroupingSet(PardSqlBaseParser.GroupingSetContext ctx)
-    {
-        return null;
-    }
-
-    @Override
-    public Node visitSetQuantifier(PardSqlBaseParser.SetQuantifierContext ctx)
-    {
-        return null;
+        return new GroupingElement(
+                getLocation(ctx),
+                visit(ctx.groupingExpressions().expression(), Expression.class));
     }
 
     @Override
     public Node visitSelectSingle(PardSqlBaseParser.SelectSingleContext ctx)
     {
-        return null;
+        return new SingleColumn(
+                getLocation(ctx),
+                (Expression) visit(ctx.expression()),
+                visitIfPresent(ctx.identifier(), Identifier.class));
     }
 
     @Override
     public Node visitSelectAll(PardSqlBaseParser.SelectAllContext ctx)
     {
-        return null;
-    }
+        if (ctx.qualifiedName() != null) {
+            return new AllColumns(
+                    getLocation(ctx),
+                    getQualifiedName(ctx.qualifiedName()));
+        }
 
-    @Override
-    public Node visitRelationDefault(PardSqlBaseParser.RelationDefaultContext ctx)
-    {
-        return null;
+        return new AllColumns(getLocation(ctx));
     }
 
     @Override
     public Node visitJoinRelation(PardSqlBaseParser.JoinRelationContext ctx)
     {
-        return null;
-    }
+        Relation left = (Relation) visit(ctx.left);
+        Relation right;
 
-    @Override
-    public Node visitJoinType(PardSqlBaseParser.JoinTypeContext ctx)
-    {
-        return null;
-    }
+        if (ctx.CROSS() != null) {
+            right = (Relation) visit(ctx.right);
+            return new Join(getLocation(ctx), Join.Type.CROSS, left, right, Optional.empty());
+        }
 
-    @Override
-    public Node visitJoinCriteria(PardSqlBaseParser.JoinCriteriaContext ctx)
-    {
-        return null;
+        JoinCriteria criteria;
+        if (ctx.NATURAL() != null) {
+            right = (Relation) visit(ctx.right);
+            criteria = new NaturalJoin();
+        }
+        else {
+            right = (Relation) visit(ctx.rightRelation);
+            if (ctx.joinCriteria().ON() != null) {
+                criteria = new JoinOn((Expression) visit(ctx.joinCriteria().booleanExpression()));
+            }
+            else if (ctx.joinCriteria().USING() != null) {
+                criteria = new JoinUsing(visit(ctx.joinCriteria().identifier(), Identifier.class));
+            }
+            else {
+                throw new IllegalArgumentException("Unsupported join criteria");
+            }
+        }
+
+        Join.Type joinType;
+        if (ctx.joinType().LEFT() != null) {
+            joinType = Join.Type.LEFT;
+        }
+        else if (ctx.joinType().RIGHT() != null) {
+            joinType = Join.Type.RIGHT;
+        }
+        else if (ctx.joinType().FULL() != null) {
+            joinType = Join.Type.FULL;
+        }
+        else {
+            joinType = Join.Type.INNER;
+        }
+
+        return new Join(
+                getLocation(ctx),
+                joinType,
+                left,
+                right,
+                Optional.of(criteria));
     }
 
     @Override
     public Node visitSampledRelation(PardSqlBaseParser.SampledRelationContext ctx)
     {
-        return null;
-    }
+        Relation child = (Relation) visit(ctx.aliasedRelation());
 
-    @Override
-    public Node visitSampleType(PardSqlBaseParser.SampleTypeContext ctx)
-    {
-        return null;
+        if (ctx.TABLESAMPLE() == null) {
+            return child;
+        }
+
+        return new SampledRelation(
+                getLocation(ctx),
+                child,
+                getSamplingMethod((Token) ctx.sampleType().getChild(0).getPayload()),
+                (Expression) visit(ctx.percentage));
     }
 
     @Override
     public Node visitAliasedRelation(PardSqlBaseParser.AliasedRelationContext ctx)
     {
-        return null;
-    }
+        Relation child = (Relation) visit(ctx.relationPrimary());
 
-    @Override
-    public Node visitColumnAliases(PardSqlBaseParser.ColumnAliasesContext ctx)
-    {
-        return null;
+        if (ctx.identifier() == null) {
+            return child;
+        }
+
+        List<Identifier> aliases = null;
+        if (ctx.columnAliases() != null) {
+            aliases = visit(ctx.columnAliases().identifier(), Identifier.class);
+        }
+
+        return new AliasedRelation(
+                getLocation(ctx),
+                child,
+                (Identifier) visit(ctx.identifier()),
+                aliases);
     }
 
     @Override
     public Node visitTableName(PardSqlBaseParser.TableNameContext ctx)
     {
-        return null;
+        return new Table(
+                getLocation(ctx),
+                getQualifiedName(ctx.qualifiedName()));
     }
 
     @Override
     public Node visitSubqueryRelation(PardSqlBaseParser.SubqueryRelationContext ctx)
     {
-        return null;
+        return new TableSubquery(
+                getLocation(ctx),
+                (Query) visit(ctx.query()));
     }
 
     @Override
     public Node visitParenthesizedRelation(PardSqlBaseParser.ParenthesizedRelationContext ctx)
     {
-        return null;
-    }
-
-    @Override
-    public Node visitExpression(PardSqlBaseParser.ExpressionContext ctx)
-    {
-        return null;
+        return visit(ctx.relation());
     }
 
     @Override
     public Node visitLogicalNot(PardSqlBaseParser.LogicalNotContext ctx)
     {
-        return null;
-    }
-
-    @Override
-    public Node visitBooleanDefault(PardSqlBaseParser.BooleanDefaultContext ctx)
-    {
-        return null;
+        return new NotExpression(
+                getLocation(ctx),
+                (Expression) visit(ctx.booleanExpression()));
     }
 
     @Override
     public Node visitLogicalBinary(PardSqlBaseParser.LogicalBinaryContext ctx)
     {
-        return null;
+        return new LogicalBinaryExpression(
+                getLocation(ctx),
+                getLogicalBinaryOperator(ctx.operator),
+                (Expression) visit(ctx.left),
+                (Expression) visit(ctx.right));
     }
 
     @Override
     public Node visitPredicated(PardSqlBaseParser.PredicatedContext ctx)
     {
-        return null;
+        if (ctx.predicate() != null) {
+            return visit(ctx.predicate());
+        }
+
+        return visit(ctx.valueExpression);
     }
 
     @Override
     public Node visitComparison(PardSqlBaseParser.ComparisonContext ctx)
     {
-        return null;
+        return new ComparisonExpression(
+                getLocation(ctx),
+                getComparisonOperator(((TerminalNode) ctx.comparisonOperator().getChild(0)).getSymbol()),
+                (Expression) visit(ctx.value),
+                (Expression) visit(ctx.right));
     }
 
     @Override
     public Node visitQuantifiedComparison(PardSqlBaseParser.QuantifiedComparisonContext ctx)
     {
-        return null;
+        return new QuantifiedComparisonExpression(
+                getLocation(ctx),
+                getComparisonOperator(((TerminalNode) ctx.comparisonOperator().getChild(0)).getSymbol()),
+                getComparisonQuantifier(((TerminalNode) ctx.comparisonQuantifier().getChild(0)).getSymbol()),
+                (Expression) visit(ctx.value),
+                new SubqueryExpression(
+                        getLocation(ctx),
+                        (Query) visit(ctx.query())));
     }
 
     @Override
     public Node visitInList(PardSqlBaseParser.InListContext ctx)
     {
-        return null;
+        Expression result = new InPredicate(
+                getLocation(ctx),
+                (Expression) visit(ctx.value),
+                new InListExpression(getLocation(ctx), visit(ctx.expression(), Expression.class)));
+
+        if (ctx.NOT() != null) {
+            result = new NotExpression(getLocation(ctx), result);
+        }
+
+        return result;
     }
 
     @Override
     public Node visitInSubquery(PardSqlBaseParser.InSubqueryContext ctx)
     {
-        return null;
+        Expression result = new InPredicate(
+                getLocation(ctx),
+                (Expression) visit(ctx.value),
+                new SubqueryExpression(getLocation(ctx), (Query) visit(ctx.query())));
+
+        if (ctx.NOT() != null) {
+            result = new NotExpression(getLocation(ctx), result);
+        }
+
+        return result;
     }
 
     @Override
     public Node visitNullPredicate(PardSqlBaseParser.NullPredicateContext ctx)
     {
-        return null;
-    }
+        Expression child = (Expression) visit(ctx.value);
 
-    @Override
-    public Node visitValueExpressionDefault(PardSqlBaseParser.ValueExpressionDefaultContext ctx)
-    {
-        return null;
+        if (ctx.NOT() == null) {
+            return new IsNullPredicate(getLocation(ctx), child);
+        }
+
+        return new IsNotNullPredicate(getLocation(ctx), child);
     }
 
     @Override
     public Node visitArithmeticBinary(PardSqlBaseParser.ArithmeticBinaryContext ctx)
     {
+        // todo arithmetic binary
         return null;
     }
 
     @Override
     public Node visitArithmeticUnary(PardSqlBaseParser.ArithmeticUnaryContext ctx)
     {
+        // todo arithmetic unary
         return null;
     }
 
     @Override
     public Node visitDereference(PardSqlBaseParser.DereferenceContext ctx)
     {
-        return null;
+        return new DereferenceExpression(
+                getLocation(ctx),
+                (Expression) visit(ctx.base),
+                (Identifier) visit(ctx.fieldName));
     }
 
     @Override
     public Node visitTypeConstructor(PardSqlBaseParser.TypeConstructorContext ctx)
     {
-        return null;
+        String value = ((StringLiteral) visit(ctx.string())).getValue();
+
+        if (ctx.DOUBLE_PRECISION() != null) {
+            // TODO: Temporary hack that should be removed with new planner.
+            return new DoubleLiteral(getLocation(ctx), value);
+        }
+
+        String type = ctx.identifier().getText();
+        if (type.equalsIgnoreCase("char")) {
+            return new CharLiteral(getLocation(ctx), value);
+        }
+        if (type.equalsIgnoreCase("int") || type.equalsIgnoreCase("long")) {
+            return new LongLiteral(getLocation(ctx), value);
+        }
+
+        return new GenericLiteral(getLocation(ctx), type, value);
     }
 
     @Override
     public Node visitParenthesizedExpression(PardSqlBaseParser.ParenthesizedExpressionContext ctx)
     {
-        return null;
+        return visit(ctx.expression());
     }
 
-    /**
-     * Visit a parse tree produced by the {@code intervalLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitIntervalLiteral(PardSqlBaseParser.IntervalLiteralContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code numericLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitNumericLiteral(PardSqlBaseParser.NumericLiteralContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code booleanLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitBooleanLiteral(PardSqlBaseParser.BooleanLiteralContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code simpleCase}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitSimpleCase(PardSqlBaseParser.SimpleCaseContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code columnReference}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitColumnReference(PardSqlBaseParser.ColumnReferenceContext ctx)
     {
-        return null;
+        return visit(ctx.identifier());
     }
 
-    /**
-     * Visit a parse tree produced by the {@code nullLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitNullLiteral(PardSqlBaseParser.NullLiteralContext ctx)
     {
-        return null;
+        return new NullLiteral(
+                getLocation(ctx));
     }
 
-    /**
-     * Visit a parse tree produced by the {@code rowConstructor}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitRowConstructor(PardSqlBaseParser.RowConstructorContext ctx)
     {
-        return null;
+        return new Row(getLocation(ctx), visit(ctx.expression(), Expression.class));
     }
 
-    /**
-     * Visit a parse tree produced by the {@code subscript}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitSubscript(PardSqlBaseParser.SubscriptContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code subqueryExpression}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitSubqueryExpression(PardSqlBaseParser.SubqueryExpressionContext ctx)
     {
-        return null;
+        return new SubqueryExpression(
+                getLocation(ctx),
+                (Query) visit(ctx.query()));
     }
 
-    /**
-     * Visit a parse tree produced by the {@code binaryLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitBinaryLiteral(PardSqlBaseParser.BinaryLiteralContext ctx)
     {
-        return null;
+        return new BinaryLiteral(
+                getLocation(ctx),
+                ctx.getText());
     }
 
-    /**
-     * Visit a parse tree produced by the {@code extract}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitExtract(PardSqlBaseParser.ExtractContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code stringLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitStringLiteral(PardSqlBaseParser.StringLiteralContext ctx)
     {
-        return null;
+        return new StringLiteral(
+                getLocation(ctx),
+                ctx.getText());
     }
 
-    @Override
-    public Node visitExists(PardSqlBaseParser.ExistsContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code position}
-     * labeled alternative in {@link PardSqlBaseParser#primaryExpression}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitPosition(PardSqlBaseParser.PositionContext ctx)
-    {
-        return null;
-    }
-
-    @Override
-    public Node visitGroupingOperation(PardSqlBaseParser.GroupingOperationContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code basicStringLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#string}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitBasicStringLiteral(PardSqlBaseParser.BasicStringLiteralContext ctx)
     {
-        return null;
+        return new StringLiteral(
+                getLocation(ctx),
+                unquote(ctx.getText()));
     }
 
-    /**
-     * Visit a parse tree produced by the {@code unicodeStringLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#string}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitUnicodeStringLiteral(PardSqlBaseParser.UnicodeStringLiteralContext ctx)
     {
-        return null;
+        return new StringLiteral(
+                getLocation(ctx),
+                decodeUnicodeLiteral(ctx));
     }
 
-    @Override
-    public Node visitComparisonOperator(PardSqlBaseParser.ComparisonOperatorContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by {@link PardSqlBaseParser#comparisonQuantifier}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitComparisonQuantifier(PardSqlBaseParser.ComparisonQuantifierContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by {@link PardSqlBaseParser#booleanValue}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitBooleanValue(PardSqlBaseParser.BooleanValueContext ctx)
     {
-        return null;
-    }
-
-    @Override
-    public Node visitType(PardSqlBaseParser.TypeContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by {@link PardSqlBaseParser#typeParameter}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitTypeParameter(PardSqlBaseParser.TypeParameterContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by {@link PardSqlBaseParser#baseType}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitBaseType(PardSqlBaseParser.BaseTypeContext ctx)
-    {
-        return null;
+        return new BooleanLiteral(
+                getLocation(ctx),
+                ctx.getText());
     }
 
     @Override
     public Node visitFilter(PardSqlBaseParser.FilterContext ctx)
     {
-        return null;
+        return visit(ctx.booleanExpression());
     }
 
     @Override
     public Node visitReadUncommitted(PardSqlBaseParser.ReadUncommittedContext ctx)
     {
+        // todo read uncommitted
         return null;
     }
 
-    /**
-     * Visit a parse tree produced by the {@code readCommitted}
-     * labeled alternative in {@link PardSqlBaseParser#levelOfIsolation}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitReadCommitted(PardSqlBaseParser.ReadCommittedContext ctx)
     {
+        // todo read committed
         return null;
     }
 
-    /**
-     * Visit a parse tree produced by the {@code repeatableRead}
-     * labeled alternative in {@link PardSqlBaseParser#levelOfIsolation}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitRepeatableRead(PardSqlBaseParser.RepeatableReadContext ctx)
     {
+        // todo repeatable read
         return null;
     }
 
-    /**
-     * Visit a parse tree produced by the {@code serializable}
-     * labeled alternative in {@link PardSqlBaseParser#levelOfIsolation}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitSerializable(PardSqlBaseParser.SerializableContext ctx)
     {
-        return null;
-    }
-
-    @Override
-    public Node visitPrivilege(PardSqlBaseParser.PrivilegeContext ctx)
-    {
-        return null;
-    }
-
-    @Override
-    public Node visitQualifiedName(PardSqlBaseParser.QualifiedNameContext ctx)
-    {
+        // todo serializable
         return null;
     }
 
     @Override
     public Node visitUnquotedIdentifier(PardSqlBaseParser.UnquotedIdentifierContext ctx)
     {
-        return null;
+        return new Identifier(
+                getLocation(ctx),
+                ctx.getText(),
+                false);
     }
 
     @Override
     public Node visitQuotedIdentifier(PardSqlBaseParser.QuotedIdentifierContext ctx)
     {
-        return null;
+        String token = ctx.getText();
+        String identifier = token.substring(1, token.length() - 1)
+                .replace("\"\"", "\"");
+
+        return new Identifier(getLocation(ctx), identifier, true);
     }
 
-    /**
-     * Visit a parse tree produced by the {@code backQuotedIdentifier}
-     * labeled alternative in {@link PardSqlBaseParser#identifier}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitBackQuotedIdentifier(PardSqlBaseParser.BackQuotedIdentifierContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code digitIdentifier}
-     * labeled alternative in {@link PardSqlBaseParser#identifier}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitDigitIdentifier(PardSqlBaseParser.DigitIdentifierContext ctx)
-    {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by the {@code decimalLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#number}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitDecimalLiteral(PardSqlBaseParser.DecimalLiteralContext ctx)
     {
-        return null;
+        return new DoubleLiteral(
+                getLocation(ctx),
+                ctx.getText());
     }
 
-    /**
-     * Visit a parse tree produced by the {@code integerLiteral}
-     * labeled alternative in {@link PardSqlBaseParser#number}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
     @Override
     public Node visitIntegerLiteral(PardSqlBaseParser.IntegerLiteralContext ctx)
     {
-        return null;
-    }
-
-    /**
-     * Visit a parse tree produced by {@link PardSqlBaseParser#nonReserved}.
-     *
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    @Override
-    public Node visitNonReserved(PardSqlBaseParser.NonReservedContext ctx)
-    {
-        return null;
-    }
-
-    @Override
-    public Node visit(ParseTree parseTree)
-    {
-        return null;
+        return new LongLiteral(
+                getLocation(ctx),
+                ctx.getText());
     }
 
     private <T> Optional<T> visitIfPresent(ParserRuleContext context, Class<T> clazz)
@@ -911,24 +908,6 @@ public class AstBuilder
         return Optional.ofNullable(context)
                 .map(this::visit)
                 .map(clazz::cast);
-    }
-
-    @Override
-    public Node visitChildren(RuleNode ruleNode)
-    {
-        return null;
-    }
-
-    @Override
-    public Node visitTerminal(TerminalNode terminalNode)
-    {
-        return null;
-    }
-
-    @Override
-    public Node visitErrorNode(ErrorNode errorNode)
-    {
-        return null;
     }
 
     private QualifiedName getQualifiedName(PardSqlBaseParser.QualifiedNameContext context)
@@ -964,5 +943,270 @@ public class AstBuilder
     {
         requireNonNull(token, "token is null");
         return new Location(token.getLine(), token.getCharPositionInLine());
+    }
+
+    private static Optional<String> getTextIfPresent(Token token)
+    {
+        return Optional.ofNullable(token)
+                .map(Token::getText);
+    }
+
+    private String getType(PardSqlBaseParser.TypeContext type)
+    {
+        if (type.baseType() != null) {
+            String signature = type.baseType().getText();
+            if (type.baseType().DOUBLE_PRECISION() != null) {
+                // TODO: Temporary hack that should be removed with new planner.
+                signature = "DOUBLE";
+            }
+            if (!type.typeParameter().isEmpty()) {
+                String typeParameterSignature = type
+                        .typeParameter()
+                        .stream()
+                        .map(this::typeParameterToString)
+                        .collect(Collectors.joining(","));
+                signature += "(" + typeParameterSignature + ")";
+            }
+            return signature;
+        }
+
+        if (type.ARRAY() != null) {
+            return "ARRAY(" + getType(type.type(0)) + ")";
+        }
+
+        if (type.MAP() != null) {
+            return "MAP(" + getType(type.type(0)) + "," + getType(type.type(1)) + ")";
+        }
+
+        if (type.ROW() != null) {
+            StringBuilder builder = new StringBuilder("(");
+            for (int i = 0; i < type.identifier().size(); i++) {
+                if (i != 0) {
+                    builder.append(",");
+                }
+                builder.append(visit(type.identifier(i)))
+                        .append(" ")
+                        .append(getType(type.type(i)));
+            }
+            builder.append(")");
+            return "ROW" + builder.toString();
+        }
+
+        throw new IllegalArgumentException("Unsupported type specification: " + type.getText());
+    }
+
+    private String typeParameterToString(PardSqlBaseParser.TypeParameterContext typeParameter)
+    {
+        if (typeParameter.INTEGER_VALUE() != null) {
+            return typeParameter.INTEGER_VALUE().toString();
+        }
+        if (typeParameter.type() != null) {
+            return getType(typeParameter.type());
+        }
+        throw new IllegalArgumentException("Unsupported typeParameter: " + typeParameter.getText());
+    }
+
+    private static SortItem.Ordering getOrderingType(Token token)
+    {
+        switch (token.getType()) {
+            case PardSqlBaseLexer.ASC:
+                return SortItem.Ordering.ASCENDING;
+            case PardSqlBaseLexer.DESC:
+                return SortItem.Ordering.DESCENDING;
+        }
+
+        throw new IllegalArgumentException("Unsupported ordering: " + token.getText());
+    }
+
+    private static SortItem.NullOrdering getNullOrderingType(Token token)
+    {
+        switch (token.getType()) {
+            case PardSqlBaseLexer.FIRST:
+                return SortItem.NullOrdering.FIRST;
+            case PardSqlBaseLexer.LAST:
+                return SortItem.NullOrdering.LAST;
+        }
+
+        throw new IllegalArgumentException("Unsupported ordering: " + token.getText());
+    }
+
+    private static boolean isDistinct(PardSqlBaseParser.SetQuantifierContext setQuantifier)
+    {
+        return setQuantifier != null && setQuantifier.DISTINCT() != null;
+    }
+
+    private static SampledRelation.Type getSamplingMethod(Token token)
+    {
+        switch (token.getType()) {
+            case PardSqlBaseLexer.BERNOULLI:
+                return SampledRelation.Type.USER;
+            case PardSqlBaseLexer.SYSTEM:
+                return SampledRelation.Type.SYSTEM;
+        }
+
+        throw new IllegalArgumentException("Unsupported sampling method: " + token.getText());
+    }
+
+    private static LogicalBinaryExpression.Type getLogicalBinaryOperator(Token token)
+    {
+        switch (token.getType()) {
+            case PardSqlBaseLexer.AND:
+                return LogicalBinaryExpression.Type.AND;
+            case PardSqlBaseLexer.OR:
+                return LogicalBinaryExpression.Type.OR;
+        }
+
+        throw new IllegalArgumentException("Unsupported operator: " + token.getText());
+    }
+
+    private static ComparisonExpressionType getComparisonOperator(Token symbol)
+    {
+        switch (symbol.getType()) {
+            case PardSqlBaseLexer.EQ:
+                return ComparisonExpressionType.EQUAL;
+            case PardSqlBaseLexer.NEQ:
+                return ComparisonExpressionType.NOT_EQUAL;
+            case PardSqlBaseLexer.LT:
+                return ComparisonExpressionType.LESS_THAN;
+            case PardSqlBaseLexer.LTE:
+                return ComparisonExpressionType.LESS_THAN_OR_EQUAL;
+            case PardSqlBaseLexer.GT:
+                return ComparisonExpressionType.GREATER_THAN;
+            case PardSqlBaseLexer.GTE:
+                return ComparisonExpressionType.GREATER_THAN_OR_EQUAL;
+        }
+
+        throw new IllegalArgumentException("Unsupported operator: " + symbol.getText());
+    }
+
+    private static QuantifiedComparisonExpression.Quantifier getComparisonQuantifier(Token symbol)
+    {
+        switch (symbol.getType()) {
+            case PardSqlBaseLexer.ALL:
+                return QuantifiedComparisonExpression.Quantifier.ALL;
+            case PardSqlBaseLexer.ANY:
+                return QuantifiedComparisonExpression.Quantifier.ANY;
+            case PardSqlBaseLexer.SOME:
+                return QuantifiedComparisonExpression.Quantifier.SOME;
+        }
+
+        throw new IllegalArgumentException("Unsupported quantifier: " + symbol.getText());
+    }
+
+    private static String unquote(String value)
+    {
+        return value.substring(1, value.length() - 1)
+                .replace("''", "'");
+    }
+
+    private enum UnicodeDecodeState
+    {
+        EMPTY,
+        ESCAPED,
+        UNICODE_SEQUENCE
+    }
+
+    private static String decodeUnicodeLiteral(PardSqlBaseParser.UnicodeStringLiteralContext context)
+    {
+        char escape;
+        if (context.UESCAPE() != null) {
+            String escapeString = unquote(context.STRING().getText());
+            check(!escapeString.isEmpty(), "Empty Unicode escape character", context);
+            check(escapeString.length() == 1, "Invalid Unicode escape character: " + escapeString, context);
+            escape = escapeString.charAt(0);
+            check(isValidUnicodeEscape(escape), "Invalid Unicode escape character: " + escapeString, context);
+        }
+        else {
+            escape = '\\';
+        }
+
+        String rawContent = unquote(context.UNICODE_STRING().getText().substring(2));
+        StringBuilder unicodeStringBuilder = new StringBuilder();
+        StringBuilder escapedCharacterBuilder = new StringBuilder();
+        int charactersNeeded = 0;
+        UnicodeDecodeState state = UnicodeDecodeState.EMPTY;
+        for (int i = 0; i < rawContent.length(); i++) {
+            char ch = rawContent.charAt(i);
+            switch (state) {
+                case EMPTY:
+                    if (ch == escape) {
+                        state = UnicodeDecodeState.ESCAPED;
+                    }
+                    else {
+                        unicodeStringBuilder.append(ch);
+                    }
+                    break;
+                case ESCAPED:
+                    if (ch == escape) {
+                        unicodeStringBuilder.append(escape);
+                        state = UnicodeDecodeState.EMPTY;
+                    }
+                    else if (ch == '+') {
+                        state = UnicodeDecodeState.UNICODE_SEQUENCE;
+                        charactersNeeded = 6;
+                    }
+                    else if (isHexDigit(ch)) {
+                        state = UnicodeDecodeState.UNICODE_SEQUENCE;
+                        charactersNeeded = 4;
+                        escapedCharacterBuilder.append(ch);
+                    }
+                    else {
+                        throw parseError("Invalid hexadecimal digit: " + ch, context);
+                    }
+                    break;
+                case UNICODE_SEQUENCE:
+                    check(isHexDigit(ch), "Incomplete escape sequence: " + escapedCharacterBuilder.toString(), context);
+                    escapedCharacterBuilder.append(ch);
+                    if (charactersNeeded == escapedCharacterBuilder.length()) {
+                        String currentEscapedCode = escapedCharacterBuilder.toString();
+                        escapedCharacterBuilder.setLength(0);
+                        int codePoint = Integer.parseInt(currentEscapedCode, 16);
+                        check(Character.isValidCodePoint(codePoint), "Invalid escaped character: " + currentEscapedCode, context);
+                        if (Character.isSupplementaryCodePoint(codePoint)) {
+                            unicodeStringBuilder.appendCodePoint(codePoint);
+                        }
+                        else {
+                            char currentCodePoint = (char) codePoint;
+                            check(!Character.isSurrogate(currentCodePoint), format("Invalid escaped character: %s. Escaped character is a surrogate. Use '\\+123456' instead.", currentEscapedCode), context);
+                            unicodeStringBuilder.append(currentCodePoint);
+                        }
+                        state = UnicodeDecodeState.EMPTY;
+                        charactersNeeded = -1;
+                    }
+                    else {
+                        check(charactersNeeded > escapedCharacterBuilder.length(), "Unexpected escape sequence length: " + escapedCharacterBuilder.length(), context);
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
+        }
+
+        check(state == UnicodeDecodeState.EMPTY, "Incomplete escape sequence: " + escapedCharacterBuilder.toString(), context);
+        return unicodeStringBuilder.toString();
+    }
+
+    private static boolean isHexDigit(char c)
+    {
+        return ((c >= '0') && (c <= '9')) ||
+                ((c >= 'A') && (c <= 'F')) ||
+                ((c >= 'a') && (c <= 'f'));
+    }
+
+    private static boolean isValidUnicodeEscape(char c)
+    {
+        return c < 0x7F && c > 0x20 && !isHexDigit(c) && c != '"' && c != '+' && c != '\'';
+    }
+
+    private static void check(boolean condition, String message, ParserRuleContext context)
+    {
+        if (!condition) {
+            throw parseError(message, context);
+        }
+    }
+
+    private static ParsingException parseError(String message, ParserRuleContext context)
+    {
+        return new ParsingException(message, null, context.getStart().getLine(), context.getStart().getCharPositionInLine());
     }
 }

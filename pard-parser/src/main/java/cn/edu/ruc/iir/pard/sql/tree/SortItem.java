@@ -34,7 +34,7 @@ public class SortItem
         this(null, sortKey, ordering, nullOrdering);
     }
 
-    private SortItem(Location location, Expression sortKey, Ordering ordering, NullOrdering nullOrdering)
+    public SortItem(Location location, Expression sortKey, Ordering ordering, NullOrdering nullOrdering)
     {
         super(location);
         this.ordering = ordering;

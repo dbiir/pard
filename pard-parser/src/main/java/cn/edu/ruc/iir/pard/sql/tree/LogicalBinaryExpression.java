@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -12,19 +13,36 @@ import static java.util.Objects.requireNonNull;
  *
  * @author guodong
  */
-public class ComparisonExpression
+public class LogicalBinaryExpression
         extends Expression
 {
-    private final ComparisonExpressionType type;
+    public enum Type
+    {
+        AND, OR;
+
+        public Type flip()
+        {
+            switch (this) {
+                case AND:
+                    return LogicalBinaryExpression.Type.OR;
+                case OR:
+                    return LogicalBinaryExpression.Type.AND;
+                default:
+                    throw new IllegalArgumentException("Unsupported logical expression type: " + this);
+            }
+        }
+    }
+
+    private final Type type;
     private final Expression left;
     private final Expression right;
 
-    public ComparisonExpression(ComparisonExpressionType type, Expression left, Expression right)
+    public LogicalBinaryExpression(Type type, Expression left, Expression right)
     {
         this(null, type, left, right);
     }
 
-    public ComparisonExpression(Location location, ComparisonExpressionType type, Expression left, Expression right)
+    public LogicalBinaryExpression(Location location, Type type, Expression left, Expression right)
     {
         super(location);
         requireNonNull(type, "type is null");
@@ -36,7 +54,7 @@ public class ComparisonExpression
         this.right = right;
     }
 
-    public ComparisonExpressionType getType()
+    public Type getType()
     {
         return type;
     }
@@ -54,13 +72,23 @@ public class ComparisonExpression
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
-        return visitor.visitComparisonExpression(this, context);
+        return visitor.visitLogicalBinaryExpression(this, context);
     }
 
     @Override
     public List<Node> getChildren()
     {
         return ImmutableList.of(left, right);
+    }
+
+    public static LogicalBinaryExpression and(Expression left, Expression right)
+    {
+        return new LogicalBinaryExpression(null, Type.AND, left, right);
+    }
+
+    public static LogicalBinaryExpression or(Expression left, Expression right)
+    {
+        return new LogicalBinaryExpression(null, Type.OR, left, right);
     }
 
     @Override
@@ -73,8 +101,8 @@ public class ComparisonExpression
             return false;
         }
 
-        ComparisonExpression that = (ComparisonExpression) o;
-        return (type == that.type) &&
+        LogicalBinaryExpression that = (LogicalBinaryExpression) o;
+        return type == that.type &&
                 Objects.equals(left, that.left) &&
                 Objects.equals(right, that.right);
     }

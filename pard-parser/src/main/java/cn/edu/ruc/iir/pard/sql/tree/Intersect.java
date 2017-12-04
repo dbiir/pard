@@ -23,7 +23,7 @@ public class Intersect
         this(null, relations, distinct);
     }
 
-    private Intersect(Location location, List<Relation> relations, boolean distinct)
+    public Intersect(Location location, List<Relation> relations, boolean distinct)
     {
         super(location, distinct);
         requireNonNull(relations, "relations is null");

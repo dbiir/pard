@@ -1,4 +1,3 @@
-
 grammar PardSqlBase;
 
 tokens {
@@ -84,7 +83,15 @@ rangePartitionElement
     ;
 
 rangePartitionElementCon
-    : partitionCol=identifier (LESS | GREATER | LESSEQ | GREATEREQ) THAN (MINVALUE | partitionExpr=expression | MAXVALUE)
+    : partitionCol=identifier partitionPre=partitionPredicate THAN (MINVALUE | partitionExpr=expression | MAXVALUE)
+    ;
+
+partitionPredicate
+    : LESS
+    | GREATER
+    | LESSEQ
+    | GREATEREQ
+    | EQUAL
     ;
 
 listPartitionElement
@@ -144,11 +151,6 @@ groupingElement
 groupingExpressions
     : '(' (expression (',' expression)*)? ')'
     | expression
-    ;
-
-groupingSet
-    : '(' (qualifiedName (',' qualifiedName)*)? ')'
-    | qualifiedName
     ;
 
 setQuantifier
@@ -481,6 +483,7 @@ DISTRIBUTED: 'DISTRIBUTED';
 DROP: 'DROP';
 ELSE: 'ELSE';
 END: 'END';
+EQUAL: 'EQUAL';
 ESCAPE: 'ESCAPE';
 EXCEPT: 'EXCEPT';
 EXCLUDING: 'EXCLUDING';

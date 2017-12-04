@@ -23,7 +23,7 @@ public class Union
         this(null, relations, distinct);
     }
 
-    private Union(Location location, List<Relation> relations, boolean distinct)
+    public Union(Location location, List<Relation> relations, boolean distinct)
     {
         super(location, distinct);
         requireNonNull(relations, "relations is null");

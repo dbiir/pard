@@ -23,7 +23,7 @@ public final class QuerySpecification
     private final Optional<GroupBy> groupBy;
     private final Optional<Expression> having;
     private final Optional<OrderBy> orderBy;
-    private final Optional<Limit> limit;
+    private final Optional<String> limit;
 
     public QuerySpecification(
             Select select,
@@ -32,7 +32,7 @@ public final class QuerySpecification
             Optional<GroupBy> groupBy,
             Optional<Expression> having,
             Optional<OrderBy> orderBy,
-            Optional<Limit> limit)
+            Optional<String> limit)
     {
         this(null, select, from, where, groupBy, having, orderBy, limit);
     }
@@ -45,7 +45,7 @@ public final class QuerySpecification
             Optional<GroupBy> groupBy,
             Optional<Expression> having,
             Optional<OrderBy> orderBy,
-            Optional<Limit> limit)
+            Optional<String> limit)
     {
         super(location);
         requireNonNull(select, "select is null");
@@ -95,7 +95,7 @@ public final class QuerySpecification
         return orderBy;
     }
 
-    public Optional<Limit> getLimit()
+    public Optional<String> getLimit()
     {
         return limit;
     }

@@ -74,7 +74,7 @@ public final class TableHHashPartitioner
     public String toString()
     {
         return toStringHelper(this)
-                .add("key", keyExpr)
+                .add("key", keyExpr.toString())
                 .add("bucket num", bucketNum)
                 .toString();
     }

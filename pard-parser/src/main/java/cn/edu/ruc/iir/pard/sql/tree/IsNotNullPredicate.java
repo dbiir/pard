@@ -66,4 +66,3 @@ public class IsNotNullPredicate
         return value.hashCode();
     }
 }
-

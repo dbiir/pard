@@ -83,15 +83,7 @@ rangePartitionElement
     ;
 
 rangePartitionElementCon
-    : partitionCol=identifier partitionPre=partitionPredicate THAN (MINVALUE | partitionExpr=expression | MAXVALUE)
-    ;
-
-partitionPredicate
-    : LESS
-    | GREATER
-    | LESSEQ
-    | GREATEREQ
-    | EQUAL
+    : partitionCol=identifier partitionPre=comparisonOperator (MINVALUE | partitionExpr=predicated | MAXVALUE)
     ;
 
 listPartitionElement

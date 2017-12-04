@@ -80,7 +80,7 @@ public final class ColumnDefinition
     public String toString()
     {
         return toStringHelper(this)
-                .add("name", name)
+                .add("name", name.getValue())
                 .add("type", type)
                 .add("primary", primary)
                 .toString();

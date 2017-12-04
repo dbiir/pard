@@ -73,9 +73,9 @@ public final class RangePartitionElement
     public String toString()
     {
         return toStringHelper(this)
-                .add("partition name", partitionName)
+                .add("partition name", partitionName.getValue())
                 .add("conditions", conditions)
-                .add("node", nodeId == null ? "" : nodeId)
+                .add("node", nodeId == null ? "null" : nodeId)
                 .toString();
     }
 }

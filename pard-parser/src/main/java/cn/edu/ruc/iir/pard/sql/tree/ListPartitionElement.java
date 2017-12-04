@@ -73,7 +73,7 @@ public final class ListPartitionElement
     public String toString()
     {
         return toStringHelper(this)
-                .add("partition column", partitionName)
+                .add("partition name", partitionName.getValue())
                 .add("conditions", conditions)
                 .add("node", nodeId == null ? "" : nodeId)
                 .toString();

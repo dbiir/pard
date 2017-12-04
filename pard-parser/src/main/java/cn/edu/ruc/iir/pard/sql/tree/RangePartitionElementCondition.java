@@ -80,9 +80,9 @@ public class RangePartitionElementCondition
     public String toString()
     {
         return toStringHelper(this)
-                .add("partition column", partitionColumn)
-                .add("partition predicate", partitionPredicate)
-                .add("partition expression", partitionExpr == null ? "" : partitionExpr)
+                .add("partition column", partitionColumn.getValue())
+                .add("partition predicate", partitionPredicate.toString())
+                .add("partition expression", partitionExpr == null ? "" : partitionExpr.toString())
                 .add("minValue", minValue)
                 .add("maxValue", maxValue)
                 .toString();

@@ -1,5 +1,9 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
+import cn.edu.ruc.iir.pard.sql.utils.ExpressionFormatter;
+
+import java.util.Optional;
+
 /**
  * pard
  *
@@ -22,6 +26,6 @@ public abstract class Expression
     @Override
     public final String toString()
     {
-        return "";
+        return ExpressionFormatter.formatExpression(this, Optional.empty());
     }
 }

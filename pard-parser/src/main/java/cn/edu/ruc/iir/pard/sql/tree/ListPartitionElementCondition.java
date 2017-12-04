@@ -65,7 +65,7 @@ public class ListPartitionElementCondition
     public String toString()
     {
         return toStringHelper(this)
-                .add("partition column", partitionColumn)
+                .add("partition column", partitionColumn.getValue())
                 .add("in list", inList)
                 .toString();
     }

@@ -71,4 +71,3 @@ public class InPredicate
         return Objects.hash(value, valueList);
     }
 }
-

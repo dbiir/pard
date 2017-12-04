@@ -286,26 +286,26 @@ public class AstBuilder
                 getLocation(ctx),
                 (Identifier) visit(ctx.partitionName),
                 visit(ctx.rangePartitionElementCon(), RangePartitionElementCondition.class),
-                ((Identifier) visit(ctx.node)).toString());
+                ctx.node == null ? null : ((Identifier) visit(ctx.node)).toString());
     }
 
     @Override
     public Node visitRangePartitionElementCon(PardSqlBaseParser.RangePartitionElementConContext ctx)
     {
         RangePartitionElementCondition.Predicate predicate = RangePartitionElementCondition.Predicate.NULL;
-        if (ctx.partitionPre.EQUAL() != null) {
+        if (ctx.partitionPre.EQ() != null) {
             predicate = RangePartitionElementCondition.Predicate.EQUAL;
         }
-        if (ctx.partitionPre.LESS() != null) {
+        if (ctx.partitionPre.LT() != null) {
             predicate = RangePartitionElementCondition.Predicate.LESS;
         }
-        if (ctx.partitionPre.GREATER() != null) {
+        if (ctx.partitionPre.GT() != null) {
             predicate = RangePartitionElementCondition.Predicate.GREATER;
         }
-        if (ctx.partitionPre.LESSEQ() != null) {
+        if (ctx.partitionPre.LTE() != null) {
             predicate = RangePartitionElementCondition.Predicate.LESSEQ;
         }
-        if (ctx.partitionPre.GREATEREQ() != null) {
+        if (ctx.partitionPre.GTE() != null) {
             predicate = RangePartitionElementCondition.Predicate.GREATEREQ;
         }
 
@@ -325,7 +325,7 @@ public class AstBuilder
                 getLocation(ctx),
                 (Identifier) visit(ctx.partitionName),
                 visit(ctx.listPartitionElementCon(), ListPartitionElementCondition.class),
-                ((Identifier) visit(ctx.node)).toString());
+                ctx.node == null ? null : ((Identifier) visit(ctx.node)).toString());
     }
 
     @Override

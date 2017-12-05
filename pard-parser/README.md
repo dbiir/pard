@@ -1,4 +1,9 @@
 ## SQL Parser
+Pard parser is to parse a SQL string into an abstract syntax tree.
+And apply semantic checks on it.\
+To use the parser, create an object of `SqlParser`, and call the method `createStatement`.
+An `Statement` object is returned as the parsing result.
+
 ### SQL SYNTAX
 #### HORIZONTAL PARTITION
 We support three kinds of horizontal partitions.

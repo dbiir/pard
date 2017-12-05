@@ -21,6 +21,7 @@
         <module>pard-optimizer</module>
         <module>pard-executor</module>
         <module>pard-commons</module>
+        <module>pard-client</module>
     </modules>
 
     <properties>

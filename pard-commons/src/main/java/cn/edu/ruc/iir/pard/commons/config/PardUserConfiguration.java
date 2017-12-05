@@ -2,7 +2,6 @@ package cn.edu.ruc.iir.pard.commons.config;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * pard

@@ -8,7 +8,8 @@ When starting up, the server needs act as following:
 + Start the catalog.
 + Start the executor.
 + Start the node keeper.
-+ Start the socket server and session manager.
++ Initialize the socket server and session manager.
++ Initialize the sql query manager.
 + Start the web server for UI.
 + Ready for client connection.
 

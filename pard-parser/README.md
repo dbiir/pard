@@ -1,9 +1,14 @@
-## SQL Parser
+## Pard Parser
 Pard parser is to parse a SQL string into an abstract syntax tree.
-And apply semantic checks on it.\
+After that, `Analyzer` applies semantic checks on it.\
 To use the parser, create an object of `SqlParser`, and call the method `createStatement`.
-An `Statement` object is returned as the parsing result.\
-During parsing, 
+An `Statement` object is returned as the parsing result.
+
+### Lexer and Grammar parsing
+Pard parser makes good use of ANTLRv4, which is an excellent parser library.
+
+### Semantic Analyzing
+Analyzer applies semantic checks and bind semantic information to the AST, 
 
 ### SQL SYNTAX
 #### HORIZONTAL PARTITION

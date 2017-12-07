@@ -9,15 +9,17 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import test.ByteServerHandler;
 
 /**
  * Discards any incoming data.
+ * 可以轻易改造成 echo server, time server
  */
-public class DiscardServer {
+public class Server0 {
 
     private int port;
 
-    public DiscardServer(int port) {
+    public Server0(int port) {
         this.port = port;
     }
 
@@ -31,7 +33,9 @@ public class DiscardServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new DiscardServerHandler());
+//                            ch.pipeline().addLast(new DiscardServerHandler()); //for ByteServer
+                            ch.pipeline().addLast(new TimeServerHandler());
+//                            ch.pipeline().addLast(new ByteServerHandler());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)          // (5)
@@ -58,6 +62,6 @@ public class DiscardServer {
         } else {
             port = 8080;
         }
-        new DiscardServer(port).run();
+        new Server0(port).run();
     }
 }

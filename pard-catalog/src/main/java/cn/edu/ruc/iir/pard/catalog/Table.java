@@ -11,12 +11,12 @@ public class Table
     private HashMap<String, Fragment> fragment;
     private List<Privilege> privilegeList;
     private int isFragment;
-    private Statics statics;
+    private HashMap<String, Statics> staticsMap;
     public Table()
     {
     }
 
-    public Table(String tablename, int id, HashMap<String, Column> columns, HashMap<String, Fragment> fragment, List<Privilege> privilegeList, int isFragment, Statics statics)
+    public Table(String tablename, int id, HashMap<String, Column> columns, HashMap<String, Fragment> fragment, List<Privilege> privilegeList, int isFragment, HashMap<String, Statics> staticsMap)
     {
         this.tablename = tablename;
         this.id = id;
@@ -24,7 +24,7 @@ public class Table
         this.fragment = fragment;
         this.privilegeList = privilegeList;
         this.isFragment = isFragment;
-        this.statics = statics;
+        this.staticsMap = staticsMap;
     }
 
     public String getTablename()
@@ -57,11 +57,6 @@ public class Table
         return isFragment;
     }
 
-    public Statics getStatics()
-    {
-        return statics;
-    }
-
     public void setTablename(String tablename)
     {
         this.tablename = tablename;
@@ -92,8 +87,13 @@ public class Table
         this.isFragment = isFragment;
     }
 
-    public void setStatics(Statics statics)
+    public void setStaticsMap(HashMap<String, Statics> staticsMap)
     {
-        this.statics = statics;
+        this.staticsMap = staticsMap;
+    }
+
+    public HashMap<String, Statics> getStaticsMap()
+    {
+        return staticsMap;
     }
 }

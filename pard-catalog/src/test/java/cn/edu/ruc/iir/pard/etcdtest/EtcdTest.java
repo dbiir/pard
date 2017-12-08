@@ -13,6 +13,7 @@ import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.catalog.User;
 
 import cn.edu.ruc.iir.pard.etcd.EtcdUtil;
+import net.sf.json.JSONObject;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -25,6 +26,10 @@ public class EtcdTest
     public void TestEtcd()
     {
         EtcdUtil.TransGddToEtcd(CreateGdd());
+    }
+    @Test void TestLoadData()
+    {
+        EtcdUtil.LoadGddFromEtcd();
     }
     @Test
     public GDD CreateGdd()
@@ -164,9 +169,9 @@ public class EtcdTest
         //fragment.setStatics(CreateStatics());
         fragment.setFragmentType(GddUtil.fragmentVERTICAL);
         fragment.setFragmentName(name);
-        List<Table> tableList = new ArrayList<Table>();
-        tableList.add(CreateTable("table1", false));
-        fragment.setTableList(tableList);
+        //List<Table> tableList = new ArrayList<Table>();
+        //tableList.add(CreateTable("table1", false));
+        fragment.setSubTable(CreateTable("table1", false));
         List<Condition> conditionList = new ArrayList<Condition>();
         conditionList.add(CreateCondition());
         fragment.setCondition(conditionList);
@@ -191,5 +196,12 @@ public class EtcdTest
         column.setDataType(GddUtil.datatypeINT);
         column.setColumnName(name);
         return column;
+    }
+    @Test
+    public void PrintGdd()
+    {
+        GDD gdd = EtcdUtil.LoadGddFromEtcd();
+        JSONObject jsonObject = JSONObject.fromObject(gdd);
+        System.out.println(jsonObject.toString());
     }
 }

@@ -15,6 +15,17 @@ public class Statics
     {
     }
 
+    public Statics(String columnName, String min, String max, String mean, String mode, String median, HashMap<String, Integer> staticList)
+    {
+        this.columnName = columnName;
+        this.min = min;
+        this.max = max;
+        this.mean = mean;
+        this.mode = mode;
+        this.median = median;
+        this.staticList = staticList;
+    }
+
     public String getColumnName()
     {
         return columnName;

@@ -12,6 +12,16 @@ public class Column
     {
     }
 
+    public Column(int id, int dataType, String columnName, int len, int index, int key)
+    {
+        this.id = id;
+        this.dataType = dataType;
+        this.columnName = columnName;
+        this.len = len;
+        this.index = index;
+        this.key = key;
+    }
+
     public int getId()
     {
         return id;

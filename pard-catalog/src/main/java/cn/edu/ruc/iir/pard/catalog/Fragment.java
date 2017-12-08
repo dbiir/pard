@@ -6,7 +6,7 @@ public class Fragment
 {
     private int fragmentType; //0: horizontal;1:vertical
     private List<Condition> condition;
-    private List<Table> tableList;
+    private Table subTable;
     private String siteName;
     //private Statics statics;
     private String fragmentName;
@@ -24,11 +24,11 @@ public class Fragment
         return siteName;
     }
 
-    public Fragment(int fragmentType, List<Condition> condition, List<Table> tableList, String siteName, String fragmentName)
+    public Fragment(int fragmentType, List<Condition> condition, Table subTable, String siteName, String fragmentName)
     {
         this.fragmentType = fragmentType;
         this.condition = condition;
-        this.tableList = tableList;
+        this.subTable = subTable;
         this.siteName = siteName;
         this.fragmentName = fragmentName;
     }
@@ -63,13 +63,13 @@ public class Fragment
         return fragmentName;
     }
 
-    public List<Table> getTableList()
+    public void setSubTable(Table subTable)
     {
-        return tableList;
+        this.subTable = subTable;
     }
 
-    public void setTableList(List<Table> tableList)
+    public Table getSubTable()
     {
-        this.tableList = tableList;
+        return subTable;
     }
 }

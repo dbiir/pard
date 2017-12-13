@@ -11,7 +11,6 @@ import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.catalog.Statics;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.catalog.User;
-
 import cn.edu.ruc.iir.pard.etcd.EtcdUtil;
 import net.sf.json.JSONObject;
 import org.testng.annotations.Test;

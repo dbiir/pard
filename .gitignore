@@ -33,3 +33,6 @@ target/
 .classpath
 .project
 .settings
+
+#Test ng
+test-output

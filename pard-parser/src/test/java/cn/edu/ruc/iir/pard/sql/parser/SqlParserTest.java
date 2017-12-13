@@ -103,7 +103,7 @@ public class SqlParserTest
     public void testSelectJoin()
     {
         String sql =
-                "SELECT id, name FROM test0 JOIN test1 ON test0.id=test1.id";
+                "SELECT id, name FROM test0 JOIN test1 ON test0.id=test1.id where test0.id>10";
         Statement statement = parser.createStatement(sql);
         System.out.println(statement.toString());
     }

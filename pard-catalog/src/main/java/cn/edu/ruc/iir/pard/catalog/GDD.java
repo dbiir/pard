@@ -4,9 +4,12 @@ import java.util.HashMap;
 
 public class GDD
 {
-    HashMap<String, Site> siteMap;
-    HashMap<String, Schema> schemaMap;
-    HashMap<String, User> userMap;
+    private HashMap<String, Site> siteMap;
+    private HashMap<String, Schema> schemaMap;
+    private HashMap<String, User> userMap;
+    private int nextSiteId = 1;
+    private int nextSchemaId = 1;
+    private int nextUserId = 1;
     public GDD()
     {
     }
@@ -46,5 +49,43 @@ public class GDD
     public void setUserMap(HashMap<String, User> userMap)
     {
         this.userMap = userMap;
+    }
+
+    public int getNextSiteId()
+    {
+        return nextSiteId;
+    }
+
+    public int getNextSchemaId()
+    {
+        return nextSchemaId;
+    }
+
+    public int getNextUserId()
+    {
+        return nextUserId;
+    }
+    public int nextSiteId()
+    {
+        return ++nextSiteId;
+    }
+    public int nextSchemaId()
+    {
+        return ++nextSchemaId;
+    }
+
+    public void setNextSiteId(int nextSiteId)
+    {
+        this.nextSiteId = nextSiteId;
+    }
+
+    public void setNextSchemaId(int nextSchemaId)
+    {
+        this.nextSchemaId = nextSchemaId;
+    }
+
+    public void setNextUserId(int nextUserId)
+    {
+        this.nextUserId = nextUserId;
     }
 }

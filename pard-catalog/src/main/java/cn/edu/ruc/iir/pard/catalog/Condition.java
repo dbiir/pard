@@ -13,7 +13,7 @@ public class Condition
     public Condition(String columnName, int compareType, String value, int dataType)
     {
         this.columnName = columnName;
-        compareType = compareType;
+        this.compareType = compareType;
         this.value = value;
         this.dataType = dataType;
     }
@@ -45,7 +45,7 @@ public class Condition
 
     public void setCompareType(int compareType)
     {
-        compareType = compareType;
+        this.compareType = compareType;
     }
 
     public void setValue(String value)

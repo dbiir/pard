@@ -12,6 +12,7 @@ public class Table
     private List<Privilege> privilegeList;
     private int isFragment;
     private HashMap<String, Statics> staticsMap;
+    private int nextColumnId;
     public Table()
     {
     }
@@ -95,5 +96,18 @@ public class Table
     public HashMap<String, Statics> getStaticsMap()
     {
         return staticsMap;
+    }
+
+    public int getNextColumnId()
+    {
+        return nextColumnId;
+    }
+    public int nextColumnId()
+    {
+        return ++nextColumnId;
+    }
+    public void setNextColumnId(int nextColumnId)
+    {
+        this.nextColumnId = nextColumnId;
     }
 }

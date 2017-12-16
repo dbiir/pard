@@ -12,16 +12,19 @@ import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.catalog.Statics;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.catalog.User;
+import cn.edu.ruc.iir.pard.commons.util.Lib;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.data.KeyValue;
 import com.coreos.jetcd.kv.GetResponse;
+import com.coreos.jetcd.kv.PutResponse;
 import net.sf.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class EtcdUtil
 {
@@ -36,12 +39,57 @@ public class EtcdUtil
     {
         return client;
     }
+    private static CompletableFuture<PutResponse> putIntKV(KV etcd, String key, int value)
+    {
+        byte[] bv = new byte[4];
+        Lib.bytesFromInt(value);
+        ByteSequence bkey = ByteSequence.fromString(key);
+        ByteSequence bvalue = ByteSequence.fromBytes(bv);
+        return etcd.put(bkey, bvalue);
+    }
+    private static CompletableFuture<GetResponse> getIntKV(KV etcd, String key)
+    {
+        ByteSequence bkey = ByteSequence.fromString(key);
+        return etcd.get(bkey);
+    }
+    private static int parseInt(CompletableFuture<GetResponse> resp)
+    {
+        try {
+            GetResponse res = resp.get();
+            List<KeyValue> kv = res.getKvs();
+            if (kv.isEmpty()) {
+                return 0;
+            }
+            byte[] bvalue = kv.get(0).getValue().getBytes();
+            return Lib.bytesToInt(bvalue, 0);
+        }
+        catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
     public static boolean TransGddToEtcd(GDD gdd)
     {
         KV etcd = client.getClient();
         JSONObject jsonObject = JSONObject.fromObject(gdd.getSiteMap());
         ByteSequence key = ByteSequence.fromString("site");
         ByteSequence value = ByteSequence.fromString(jsonObject.toString());
+        try {
+            putIntKV(etcd, "nextSchemaId", gdd.getNextSchemaId()).get();
+            putIntKV(etcd, "nextSiteId", gdd.getNextSiteId()).get();
+            putIntKV(etcd, "nextUserId", gdd.getNextUserId()).get();
+        }
+        catch (InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+            return false;
+        }
+        catch (ExecutionException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+            return false;
+        }
+
         try {
             etcd.put(key, value).get();
         }
@@ -74,6 +122,9 @@ public class EtcdUtil
     public static GDD LoadGddFromEtcd()
     {
         GDD gdd = new GDD();
+        gdd.setNextSchemaId(parseInt(getIntKV(client.getClient(), "nextSchemaId")));
+        gdd.setNextSiteId(parseInt(getIntKV(client.getClient(), "nextSiteId")));
+        gdd.setNextUserId(parseInt(getIntKV(client.getClient(), "nextUserId")));
         HashMap<String, Site> siteHashMap = LoadSiteFromEtcd();
         for (String name : siteHashMap.keySet()) {
            //  System.out.println(siteHashMap.get(name).getName());

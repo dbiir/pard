@@ -29,6 +29,10 @@
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-parser</artifactId>
         </dependency>
+                <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-catalog</artifactId>
+        </dependency>
         <!-- grpc -->
         <dependency>
             <groupId>io.grpc</groupId>

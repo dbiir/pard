@@ -31,5 +31,9 @@
             <version>2.4</version>
             <classifier>jdk15</classifier>
         </dependency>
+                <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-commons</artifactId>
+        </dependency>
     </dependencies>
 </project>

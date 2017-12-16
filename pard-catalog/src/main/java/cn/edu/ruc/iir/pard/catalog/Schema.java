@@ -8,6 +8,7 @@ public class Schema
     private int id;
     private List<Table> tableList;
     private List<Privilege> userList;
+    private int nextTableId;
     public Schema()
     {
     }
@@ -58,5 +59,19 @@ public class Schema
     public void setUserList(List<Privilege> userList)
     {
         this.userList = userList;
+    }
+
+    public int getNextTableId()
+    {
+        return nextTableId;
+    }
+
+    public void setNextTableId(int nextTableId)
+    {
+        this.nextTableId = nextTableId;
+    }
+    public int nextTableId()
+    {
+        return ++nextTableId;
     }
 }

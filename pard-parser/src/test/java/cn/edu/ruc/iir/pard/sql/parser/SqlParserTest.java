@@ -25,7 +25,13 @@ public class SqlParserTest
         System.out.println(statement.toString());
         assertEquals(statement.toString(), expected.toString());
     }
-
+    @Test
+    public void testDropSchema()
+    {
+        String sql = "Drop SCHEMA IF EXISTS test";
+        Statement statement = parser.createStatement(sql);
+        System.out.println(statement.toString());
+    }
     @Test
     public void testCreateTableVP()
     {

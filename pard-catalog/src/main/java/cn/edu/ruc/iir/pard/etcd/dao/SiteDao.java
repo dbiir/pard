@@ -36,7 +36,8 @@ public class SiteDao
                 return false;
             }
         }
-        site.setId(gdd.nextSiteId());
+        site.setId(gdd.getNextSiteId());
+        gdd.setNextSiteId(gdd.getNextSiteId() + 1);
         siteMap.put(site.getName(), site);
         return persistGDD(gdd);
     }
@@ -45,6 +46,13 @@ public class SiteDao
         GDD gdd = load();
         Map<String, Site> siteMap = gdd.getSiteMap();
         siteMap.put(name, null);
+        return persistGDD(gdd);
+    }
+    public boolean dropAll()
+    {
+        GDD gdd = load();
+        Map<String, Site> siteMap = gdd.getSiteMap();
+        siteMap.clear();
         return persistGDD(gdd);
     }
 }

@@ -49,4 +49,11 @@ public class SchemaDao
         schemaMap.put(name, null);
         return persistGDD(gdd);
     }
+    public boolean dropAll()
+    {
+        GDD gdd = load();
+        Map<String, Schema> schemaMap = gdd.getSchemaMap();
+        schemaMap.clear();
+        return persistGDD(gdd);
+    }
 }

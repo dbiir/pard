@@ -19,6 +19,7 @@ import com.coreos.jetcd.data.KeyValue;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
 import net.sf.json.JSONObject;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 public class EtcdUtil
 {
     private static EtcdClient client = new EtcdClient();
+    private static Logger log = Logger.getLogger(EtcdUtil.class);
     private EtcdUtil()
     {
         if (client == null) {
@@ -42,9 +44,10 @@ public class EtcdUtil
     private static CompletableFuture<PutResponse> putIntKV(KV etcd, String key, int value)
     {
         byte[] bv = new byte[4];
-        Lib.bytesFromInt(value);
+        bv = Lib.bytesFromInt(value);
         ByteSequence bkey = ByteSequence.fromString(key);
         ByteSequence bvalue = ByteSequence.fromBytes(bv);
+        System.out.println(" put bvalue leng " + bv.length + " value" + value + " " + bv[0] + bv[1] + bv[2] + bv[3]);
         return etcd.put(bkey, bvalue);
     }
     private static CompletableFuture<GetResponse> getIntKV(KV etcd, String key)
@@ -61,6 +64,7 @@ public class EtcdUtil
                 return 0;
             }
             byte[] bvalue = kv.get(0).getValue().getBytes();
+            System.out.println("get bvalue leng " + bvalue.length + " value" + Lib.bytesToInt(bvalue, 0) + " " + bvalue[0] + bvalue[1] + bvalue[2] + bvalue[3]);
             return Lib.bytesToInt(bvalue, 0);
         }
         catch (InterruptedException | ExecutionException e) {
@@ -80,12 +84,10 @@ public class EtcdUtil
             putIntKV(etcd, "nextUserId", gdd.getNextUserId()).get();
         }
         catch (InterruptedException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
             return false;
         }
         catch (ExecutionException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
             return false;
         }

@@ -92,4 +92,11 @@ public class TableDao
         parseMap2List();
         return schemaDao.update(schema);
     }
+    public boolean dropAll()
+    {
+        tmap.clear();
+        tpos.clear();
+        schema.getTableList().clear();
+        return schemaDao.update(schema);
+    }
 }

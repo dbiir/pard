@@ -25,4 +25,10 @@ public class QueryPlan
     {
         return statement;
     }
+    @Override
+    public ErrorMessage semanticAnalysis()
+    {
+        // TODO semantic analysis
+        return null;
+    }
 }

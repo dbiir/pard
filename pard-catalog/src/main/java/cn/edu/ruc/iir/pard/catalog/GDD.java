@@ -67,13 +67,19 @@ public class GDD
     }
     public int nextSiteId()
     {
-        return ++nextSiteId;
+        ++nextSiteId;
+        return nextSiteId;
     }
     public int nextSchemaId()
     {
-        return ++nextSchemaId;
+        nextSchemaId++;
+        return nextSchemaId;
     }
-
+    public int nextUserId()
+    {
+        nextUserId++;
+        return nextUserId;
+    }
     public void setNextSiteId(int nextSiteId)
     {
         this.nextSiteId = nextSiteId;

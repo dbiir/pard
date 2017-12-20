@@ -1,8 +1,10 @@
-package cn.edu.ruc.iir.pard.planner;
+package cn.edu.ruc.iir.pard.planner.ddl;
 
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
+import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage.ErrCode;
+import cn.edu.ruc.iir.pard.planner.SchemaPlan;
 import cn.edu.ruc.iir.pard.sql.tree.DropSchema;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 

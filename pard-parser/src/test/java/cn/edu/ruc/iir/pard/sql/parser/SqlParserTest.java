@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.sql.parser;
 
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
+import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
 import cn.edu.ruc.iir.pard.sql.tree.QualifiedName;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import org.testng.annotations.Test;
@@ -33,6 +34,13 @@ public class SqlParserTest
         System.out.println(statement.toString());
     }
     @Test
+    public void testUse()
+    {
+        String sql = "use schema";
+        Statement statement = parser.createStatement(sql);
+        System.out.println(statement.toString());
+    }
+    @Test
     public void testCreateTableVP()
     {
         String sql =
@@ -54,6 +62,12 @@ public class SqlParserTest
                         "order_date DATE\n" +
                         ") PARTITION BY HASH(id) PARTITIONS 4";
         Statement statement = parser.createStatement(sql);
+        CreateTable ctstmt = (CreateTable) statement;
+        QualifiedName name = ctstmt.getName();
+        System.out.println("prefix:" + (name.getPrefix().isPresent() ? name.getPrefix().get() : null));
+        System.out.println("suffix:" + name.getSuffix());
+        System.out.println("orignal part:");
+        name.getOriginalParts().forEach(System.out::println);
         System.out.println(statement.toString());
     }
 

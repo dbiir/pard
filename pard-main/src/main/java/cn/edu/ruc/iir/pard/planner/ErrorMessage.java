@@ -26,6 +26,9 @@ public class ErrorMessage
         public static final int ParseError = -10000;
         public static final int SchemaExsits = -10001;
         public static final int SchemaNotExsits = -10002;
+        public static final int SchemaNotSpecified = -10003;
+        public static final int TableExists = -10004;
+        public static final int NotaColumnDefinition = -10005;
     }
     public static void init()
     {
@@ -33,6 +36,9 @@ public class ErrorMessage
         template.put(ErrCode.ParseError, "parse error! it is not a %s!");
         template.put(ErrCode.SchemaExsits, "Schema %s  exsits!");
         template.put(ErrCode.SchemaNotExsits, "Schema %s  does not exsit!");
+        template.put(ErrCode.SchemaNotSpecified, "Schema not specified! Please use 'Use [Schema]' statement to specify.");
+        template.put(ErrCode.TableExists, "Table %s is already exsits in Schema %s!");
+        template.put(ErrCode.NotaColumnDefinition, "string %s is not a column definition!");
         template.put(ErrCode.OK, "success");
     }
     public Map<Integer, String> getTemplate()

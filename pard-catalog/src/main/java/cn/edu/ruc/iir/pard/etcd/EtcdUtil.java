@@ -47,7 +47,7 @@ public class EtcdUtil
         bv = Lib.bytesFromInt(value);
         ByteSequence bkey = ByteSequence.fromString(key);
         ByteSequence bvalue = ByteSequence.fromBytes(bv);
-        System.out.println(" put bvalue leng " + bv.length + " value" + value + " " + bv[0] + bv[1] + bv[2] + bv[3]);
+        //System.out.println(" put bvalue leng " + bv.length + " value" + value + " " + bv[0] + bv[1] + bv[2] + bv[3]);
         return etcd.put(bkey, bvalue);
     }
     private static CompletableFuture<GetResponse> getIntKV(KV etcd, String key)
@@ -64,7 +64,7 @@ public class EtcdUtil
                 return 0;
             }
             byte[] bvalue = kv.get(0).getValue().getBytes();
-            System.out.println("get bvalue leng " + bvalue.length + " value" + Lib.bytesToInt(bvalue, 0) + " " + bvalue[0] + bvalue[1] + bvalue[2] + bvalue[3]);
+            //System.out.println("get bvalue leng " + bvalue.length + " value" + Lib.bytesToInt(bvalue, 0) + " " + bvalue[0] + bvalue[1] + bvalue[2] + bvalue[3]);
             return Lib.bytesToInt(bvalue, 0);
         }
         catch (InterruptedException | ExecutionException e) {

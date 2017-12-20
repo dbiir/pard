@@ -27,11 +27,12 @@ public class GDDTest
         p.load(fis);
         String[] iplist = p.getProperty("iplist").split(",");
         boolean hasLeader = false;
+        int k = 1;
         for (String ip : iplist) {
             System.out.println(ip);
             Site s = new Site();
             s.setIp(ip);
-            s.setName(ip);
+            s.setName("node" + k++);
             s.setPort(1239);
             if (!hasLeader) {
                 s.setLeader(1);

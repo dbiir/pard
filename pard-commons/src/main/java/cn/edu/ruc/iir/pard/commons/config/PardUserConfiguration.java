@@ -46,4 +46,24 @@ public final class PardUserConfiguration
     {
         return Integer.parseInt(getProperty("pard.server.port"));
     }
+
+    public String getConnectorHost()
+    {
+        return getProperty("pard.connector.host");
+    }
+
+    public String getConnectorUser()
+    {
+        return getProperty("pard.connector.user");
+    }
+
+    public String getConnectorPassword()
+    {
+        return getProperty("pard.connector.password");
+    }
+
+    public String getConnectorDriver()
+    {
+        return getProperty("pard.connector.driver");
+    }
 }

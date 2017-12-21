@@ -6,6 +6,6 @@ package cn.edu.ruc.iir.pard.planner;
  * @author guodong
  */
 public class JoinNode
-        extends PlanNode
+        extends CartesianNode
 {
 }

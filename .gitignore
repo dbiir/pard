@@ -27,3 +27,12 @@ hs_err_pid*
 
 pub/
 target/
+
+# eclipse project file
+.checkstyle
+.classpath
+.project
+.settings
+
+#Test ng
+test-output

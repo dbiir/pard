@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.sql.parser;
 
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
+import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
 import cn.edu.ruc.iir.pard.sql.tree.QualifiedName;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import org.testng.annotations.Test;
@@ -25,7 +26,20 @@ public class SqlParserTest
         System.out.println(statement.toString());
         assertEquals(statement.toString(), expected.toString());
     }
-
+    @Test
+    public void testDropSchema()
+    {
+        String sql = "Drop SCHEMA IF EXISTS test";
+        Statement statement = parser.createStatement(sql);
+        System.out.println(statement.toString());
+    }
+    @Test
+    public void testUse()
+    {
+        String sql = "use schema";
+        Statement statement = parser.createStatement(sql);
+        System.out.println(statement.toString());
+    }
     @Test
     public void testCreateTableVP()
     {
@@ -48,6 +62,12 @@ public class SqlParserTest
                         "order_date DATE\n" +
                         ") PARTITION BY HASH(id) PARTITIONS 4";
         Statement statement = parser.createStatement(sql);
+        CreateTable ctstmt = (CreateTable) statement;
+        QualifiedName name = ctstmt.getName();
+        System.out.println("prefix:" + (name.getPrefix().isPresent() ? name.getPrefix().get() : null));
+        System.out.println("suffix:" + name.getSuffix());
+        System.out.println("orignal part:");
+        name.getOriginalParts().forEach(System.out::println);
         System.out.println(statement.toString());
     }
 
@@ -103,7 +123,7 @@ public class SqlParserTest
     public void testSelectJoin()
     {
         String sql =
-                "SELECT id, name FROM test0 JOIN test1 ON test0.id=test1.id";
+                "SELECT id, name FROM test0 JOIN test1 ON test0.id=test1.id where test0.id>10";
         Statement statement = parser.createStatement(sql);
         System.out.println(statement.toString());
     }

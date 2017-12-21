@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 import java.util.List;
 
 /**
@@ -55,6 +57,9 @@ public final class Use
     @Override
     public String toString()
     {
-        return null;
+        return toStringHelper(this)
+                .add("schema", schema.toString())
+                .omitNullValues()
+                .toString();
     }
 }

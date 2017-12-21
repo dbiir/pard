@@ -25,11 +25,23 @@
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-communication</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-parser</artifactId>
+        </dependency>
+                <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-catalog</artifactId>
+        </dependency>
         <!-- grpc -->
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty</artifactId>
+        </dependency>
+                <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

@@ -5,6 +5,6 @@ package cn.edu.ruc.iir.pard.scheduler;
  *
  * @author guodong
  */
-public class Task
+public abstract class Task
 {
 }

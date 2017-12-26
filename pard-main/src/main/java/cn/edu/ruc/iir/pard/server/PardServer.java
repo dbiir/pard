@@ -7,6 +7,8 @@ import io.grpc.ServerBuilder;
 import io.grpc.netty.NettyServerBuilder;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 /**
  * pard
@@ -17,7 +19,8 @@ public class PardServer
 {
     private final PardUserConfiguration configuration;
 
-    private Server server;
+    private Server server;       // rpc server
+    private ServerListener serverListener;
 
     PardServer(String configurationPath)
     {
@@ -50,6 +53,9 @@ public class PardServer
                 () -> Runtime.getRuntime().addShutdownHook(
                         new Thread(PardServer.this::stop)));
 
+        // start socket listener
+        pipeline.addStartupHook(this::startListener);
+
         // add server running in loop hook
         pipeline.addStartupHook(
                 this::blockUntilTermination);
@@ -74,12 +80,43 @@ public class PardServer
         }
     }
 
+    private void startListener()
+    {
+        this.serverListener = new ServerListener(configuration.getSocketPort());
+        new Thread(serverListener).start();
+    }
+
     private void stop()
     {
         if (server != null) {
             System.out.println("****** Pard shutting down...");
             server.shutdown();
             System.out.println("****** Pard is down");
+        }
+    }
+
+    public class ServerListener
+            implements Runnable
+    {
+        private final int port;
+
+        ServerListener(int port)
+        {
+            this.port = port;
+        }
+
+        @Override
+        public void run()
+        {
+            try (ServerSocket serverSocket = new ServerSocket(configuration.getSocketPort())) {
+                while (true) {
+                    Socket socket = serverSocket.accept();
+                    new PardQueryHandler(socket).start();
+                }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

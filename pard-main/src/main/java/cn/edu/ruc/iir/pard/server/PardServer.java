@@ -62,6 +62,7 @@ public class PardServer
 
         try {
             pipeline.startup();
+            System.out.println("Pard started successfully.");
         }
         catch (Exception e) {
             System.out.println("Pard started failed.");

@@ -1,12 +1,22 @@
 package cn.edu.ruc.iir.pard.server;
 
-import cn.edu.ruc.iir.pard.utils.ResultSet;
+import cn.edu.ruc.iir.pard.communication.rpc.PardRPCClient;
+import cn.edu.ruc.iir.pard.planner.PardPlanner;
+import cn.edu.ruc.iir.pard.planner.Plan;
+import cn.edu.ruc.iir.pard.scheduler.Task;
+import cn.edu.ruc.iir.pard.scheduler.TaskGenerator;
+import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
+import cn.edu.ruc.iir.pard.sql.tree.Statement;
+import cn.edu.ruc.iir.pard.utils.PardResultSet;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -29,9 +39,16 @@ public class PardQueryHandler
         }
     }
 
+    private Map<Integer, PardRPCClient> rpcClients;
+    private SqlParser sqlParser = new SqlParser();
+    private PardPlanner planner = new PardPlanner();
+    private TaskGenerator taskGenerator = new TaskGenerator();
+
     public PardQueryHandler(Socket socket)
     {
         this.socket = socket;
+        this.rpcClients = new HashMap<>();
+        // todo fill map with nodes
     }
 
     @Override
@@ -47,7 +64,7 @@ public class PardQueryHandler
                     break;
                 }
                 logger.info("QUERY: " + line);
-                ResultSet result = executeQuery(line);
+                PardResultSet result = executeQuery(line);
                 objectOutputStream.writeObject(result);
                 objectOutputStream.flush();
             }
@@ -57,10 +74,15 @@ public class PardQueryHandler
         }
     }
 
-    private ResultSet executeQuery(String sql)
+    private PardResultSet executeQuery(String sql)
     {
         // execute query
         logger.info("Executing query: " + sql);
-        return new ResultSet(ResultSet.ResultStatus.OK);
+        Statement statement = sqlParser.createStatement(sql);
+        Plan plan = planner.plan(statement);
+        List<Task> tasks = taskGenerator.generateTasks(plan);
+        // todo distribute tasks and collect results
+
+        return new PardResultSet(PardResultSet.ResultStatus.OK);
     }
 }

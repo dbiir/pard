@@ -10,7 +10,7 @@ import java.util.List;
  *
  * @author guodong
  */
-public class ResultSet
+public class PardResultSet
 {
     public enum ResultStatus
     {
@@ -20,7 +20,7 @@ public class ResultSet
     private List<Block> blocks;
     private final ResultStatus resultStatus;
 
-    public ResultSet(ResultStatus resultStatus)
+    public PardResultSet(ResultStatus resultStatus)
     {
         blocks = new ArrayList<>();
         this.resultStatus = resultStatus;

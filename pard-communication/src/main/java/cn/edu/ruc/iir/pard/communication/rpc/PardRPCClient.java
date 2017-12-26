@@ -54,4 +54,14 @@ public class PardRPCClient
 
         return receiving.getBeatType();
     }
+
+    public void shutdown()
+    {
+        this.channel.shutdown();
+    }
+
+    public void shutdownNow()
+    {
+        this.channel.shutdownNow();
+    }
 }

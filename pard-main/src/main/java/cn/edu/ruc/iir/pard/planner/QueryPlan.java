@@ -12,10 +12,9 @@ public class QueryPlan
 {
     private PlanNode node;
     private Statement statement;
-    public QueryPlan(Statement stmt, PlanNode planNode)
+    public QueryPlan(Statement stmt)
     {
         statement = stmt;
-        node = planNode;
     }
     public PlanNode getNode()
     {

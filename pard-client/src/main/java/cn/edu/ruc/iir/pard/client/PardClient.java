@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.client;
 
+import cn.edu.ruc.iir.pard.utils.PardResultSet;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,14 +16,13 @@ import java.util.Scanner;
  */
 public class PardClient
 {
-    private final Socket socket;
     private final ObjectInputStream inputStream;
     private final BufferedWriter outWriter;
     private final Scanner scanner;
 
     public PardClient(String host, int port) throws IOException
     {
-        this.socket = new Socket(host, port);
+        Socket socket = new Socket(host, port);
         this.inputStream = new ObjectInputStream(socket.getInputStream());
         this.outWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         this.scanner = new Scanner(System.in);
@@ -29,9 +30,9 @@ public class PardClient
 
     public void run()
     {
+        System.out.println("Welcome to Pard.");
+        System.out.println("pard>");
         while (true) {
-            System.out.println("Welcome to Pard.");
-            System.out.println("pard>");
             String line = scanner.nextLine();
             if (line.equalsIgnoreCase("QUIT") || line.equalsIgnoreCase("EXIT")) {
                 break;
@@ -39,20 +40,52 @@ public class PardClient
             else {
                 try {
                     String[] queries = line.split(";");
-                    for (String q : queries)
-                    {
+                    for (String q : queries) {
                         outWriter.write(q);
                         outWriter.newLine();
                         outWriter.flush();
+                        PardResultSet resultSet = (PardResultSet) inputStream.readObject();
+                        switch (resultSet.getStatus()) {
+                            case PARSING_ERR:
+                                System.out.println("Parsing error");
+                                break;
+                            case EXEC_ERR:
+                                System.out.println("Execution error");
+                                break;
+                            case OK:
+                                System.out.println(resultSet.toString());
+                                break;
+                        }
                     }
                 }
                 catch (IOException e) {
                     e.printStackTrace();
                     break;
                 }
+                catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
             }
         }
         System.out.println("Bye Pard");
         System.exit(0);
+    }
+
+    public static void main(String[] args)
+    {
+        if (args.length != 2) {
+            System.out.println("PardClient <host> <port>");
+            System.exit(-1);
+        }
+        String host = args[0];
+        int port = Integer.parseInt(args[1]);
+        System.out.println("Connecting to " + host + ":" + port);
+        try {
+            PardClient client = new PardClient(host, port);
+            client.run();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

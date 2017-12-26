@@ -277,27 +277,29 @@ public class EtcdUtil
     public static Fragment ConvertFragment(Fragment fragment)
     {
         Table table = fragment.getSubTable();
-        JSONObject jsonObject = JSONObject.fromObject(table.getColumns());
-        HashMap<String, Column> columnHashMap = new HashMap<String, Column>();
-        for (Object obj : jsonObject.keySet()) {
-            JSONObject json = (JSONObject) jsonObject.get(obj);
-            Column col = (Column) JSONObject.toBean(json, Column.class);
-            columnHashMap.put(obj.toString(), col);
+        if (table != null) {
+            JSONObject jsonObject = JSONObject.fromObject(table.getColumns());
+            HashMap<String, Column> columnHashMap = new HashMap<String, Column>();
+            for (Object obj : jsonObject.keySet()) {
+                JSONObject json = (JSONObject) jsonObject.get(obj);
+                Column col = (Column) JSONObject.toBean(json, Column.class);
+                columnHashMap.put(obj.toString(), col);
+            }
+            table.setColumns(columnHashMap);
+            HashMap<String, Statics> staticsHashMap = new HashMap<String, Statics>();
+            jsonObject = JSONObject.fromObject(table.getStaticsMap());
+            for (Object obj : jsonObject.keySet()) {
+                JSONObject json = (JSONObject) jsonObject.get(obj);
+                Statics statics = (Statics) JSONObject.toBean(json, Statics.class);
+                statics = ConvertStatic(statics);
+                staticsHashMap.put(obj.toString(), statics);
+            }
+            table.setStaticsMap(staticsHashMap);
+            List<Privilege> list = new ArrayList<Privilege>();
+            table.setPrivilegeList(list);
+            HashMap<String, Fragment> fragmentHashMap = new HashMap<String, Fragment>();
+            table.setFragment(fragmentHashMap);
         }
-        table.setColumns(columnHashMap);
-        HashMap<String, Statics> staticsHashMap = new HashMap<String, Statics>();
-        jsonObject = JSONObject.fromObject(table.getStaticsMap());
-        for (Object obj : jsonObject.keySet()) {
-            JSONObject json = (JSONObject) jsonObject.get(obj);
-            Statics statics = (Statics) JSONObject.toBean(json, Statics.class);
-            statics = ConvertStatic(statics);
-            staticsHashMap.put(obj.toString(), statics);
-        }
-        table.setStaticsMap(staticsHashMap);
-        List<Privilege> list = new ArrayList<Privilege>();
-        table.setPrivilegeList(list);
-        HashMap<String, Fragment> fragmentHashMap = new HashMap<String, Fragment>();
-        table.setFragment(fragmentHashMap);
         return fragment;
     }
     public static Statics ConvertStatic(Statics statics)

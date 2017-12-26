@@ -43,7 +43,7 @@ public final class ColumnDefinition
         return type;
     }
 
-    public boolean getPrimary()
+    public boolean isPrimary()
     {
         return primary;
     }

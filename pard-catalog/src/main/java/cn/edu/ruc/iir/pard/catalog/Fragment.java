@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.catalog;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Fragment
@@ -12,6 +13,7 @@ public class Fragment
     private String fragmentName;
     public Fragment()
     {
+        condition = new ArrayList<Condition>();
     }
 
     public void setSiteName(String siteName)

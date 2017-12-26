@@ -6,7 +6,7 @@ import com.coreos.jetcd.KV;
 
 public class EtcdClient
 {
-    private static String url = "http://10.77.40.30:2379";
+    private static String url = "http://10.77.40.41:2379";
     private KV client;
     public EtcdClient()
     {

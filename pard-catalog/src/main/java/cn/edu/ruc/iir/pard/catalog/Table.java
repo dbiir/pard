@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.catalog;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -15,6 +16,10 @@ public class Table
     private int nextColumnId;
     public Table()
     {
+        columns = new HashMap<String, Column>();
+        fragment = new HashMap<String, Fragment>();
+        privilegeList = new ArrayList<Privilege>();
+        staticsMap = new HashMap<String, Statics>();
     }
 
     public Table(String tablename, int id, HashMap<String, Column> columns, HashMap<String, Fragment> fragment, List<Privilege> privilegeList, int isFragment, HashMap<String, Statics> staticsMap)

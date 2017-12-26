@@ -22,7 +22,7 @@ public class DataType
         int pos1 = type.indexOf("(");
         int pos2 = type.indexOf(")");
         if (pos1 > 0 && pos2 > 0) {
-            length = Integer.parseInt(type.substring(pos1, pos2));
+            length = Integer.parseInt(type.substring(pos1 + 1, pos2));
             dt = type.substring(0, pos1);
         }
         else {

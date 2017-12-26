@@ -30,6 +30,7 @@ public class TableDao
 //        for (Table table : schema.getTableList()) {
 //            tmap.put(table.getTablename(), table);
 //        }
+        parseList2Map();
     }
     protected void parseList2Map()
     {

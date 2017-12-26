@@ -12,6 +12,9 @@ public class GDD
     private int nextUserId = 1;
     public GDD()
     {
+        siteMap = new HashMap<String, Site>();
+        schemaMap = new HashMap<String, Schema>();
+        userMap = new HashMap<String, User>();
     }
 
     public GDD(HashMap<String, Site> siteMap, HashMap<String, Schema> schemaMap, HashMap<String, User> userMap)

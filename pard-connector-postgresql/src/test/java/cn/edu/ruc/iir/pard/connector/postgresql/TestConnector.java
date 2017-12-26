@@ -13,7 +13,7 @@ public class TestConnector
     @Test
     public void testCreateSchema()
     {
-        CreateSchemaTask task = new CreateSchemaTask("test", false);
+        CreateSchemaTask task = new CreateSchemaTask("test", false, -1);
     }
 
     @Test

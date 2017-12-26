@@ -39,8 +39,7 @@ public class PardClient
             else {
                 try {
                     String[] queries = line.split(";");
-                    for (String q : queries)
-                    {
+                    for (String q : queries) {
                         outWriter.write(q);
                         outWriter.newLine();
                         outWriter.flush();

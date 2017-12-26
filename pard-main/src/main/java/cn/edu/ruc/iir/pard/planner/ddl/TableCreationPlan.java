@@ -95,6 +95,7 @@ public class TableCreationPlan
         }
         for (ColumnDefinition cd : list) {
             //TODO: check each column's name and type.
+            String type = cd.getType();
         }
         return null;
     }

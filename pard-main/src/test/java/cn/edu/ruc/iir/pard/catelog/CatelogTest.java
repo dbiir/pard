@@ -43,27 +43,30 @@ public class CatelogTest
     public void createTable()
     {
         String sql =
-                "CREATE TABLE if not exists orders_range\n" +
-                "(\n" +
-                "id INT PRIMARY KEY,\n" +
-                "name VARCHAR(30),\n" +
-                "order_date DATE\n" +
-                ") PARTITION BY RANGE\n" +
-                "(\n" +
-                "p0 id < 5 AND order_date >= '2017-01-01' ON node1,\n" +
-                "p1 id < 10 ON node2,\n" +
-                "p2 id < 15 ON node3\n" +
-                ")";
+                "create table emp\n"
+                + "("
+                + "eno char(20) primary key,"
+                + "ename char(100),"
+                + "title char(100)"
+                + ")"
+                + "partition by  range"
+                + "("
+                + "p0 eno < 'E1000' AND title < 'N' on node1,"
+                + "p1 eno < 'E1000' AND title >='N' on node2,"
+                + "p2 eno >= 'E1000' AND title < 'N' on node3,"
+                + "p3 eno >= 'E1000' AND title < 'N' on node4"
+                + ")";
         Statement stmt = parser.createStatement(sql);
+        System.out.println(stmt.toString());
         String sql2 = "use testSchema";
         Statement useStmt = parser.createStatement(sql2);
-        UsePlan plan = new UsePlan();
-        plan.setStatment(useStmt);
+        UsePlan plan = new UsePlan(useStmt);
+        //plan.setStatment(useStmt);
         ErrorMessage msg = plan.semanticAnalysis();
         System.out.println(msg.toString());
 
-        TableCreationPlan tcp = new TableCreationPlan();
-        tcp.setStatment(stmt);
+        TableCreationPlan tcp = new TableCreationPlan(stmt);
+        //tcp.setStatment(stmt);
         msg = tcp.semanticAnalysis();
         System.out.println(msg);
         tcp.afterExecution(true);
@@ -71,8 +74,22 @@ public class CatelogTest
         TableDao tdao = new TableDao(schemaName);
         SchemaDao schemaDao = new SchemaDao();
         Table t = schemaDao.loadByName(schemaName).getTableList().get(0);
-        t = tdao.loadByName("orders_range");
+        t = tdao.loadByName("emp");
         System.out.println(JSONObject.fromObject(t).toString(1));
         tdao.dropAll();
+    }
+    @Test
+    public void insertInto()
+    {
+        String sql = "insert into emp (eno, ename, title) values ('E0001', 'J. Doe', 'Elect. Eng.')";
+        Statement stmt = parser.createStatement(sql);
+        System.out.println(stmt.getClass());
+    }
+    @Test
+    public void select()
+    {
+        String sql = "select * from EMP where eno < 'E0010' and eno > 'E0000'";
+        Statement stmt = parser.createStatement(sql);
+        System.out.println(stmt);
     }
 }

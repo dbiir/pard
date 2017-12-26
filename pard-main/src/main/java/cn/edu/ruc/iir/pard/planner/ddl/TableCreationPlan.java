@@ -32,6 +32,10 @@ import java.util.List;
 public class TableCreationPlan
         extends TablePlan
 {
+    public TableCreationPlan(Statement stmt)
+    {
+        super(stmt);
+    }
     private CreateTable stmt = null;
     private String tableName = null;
     private String schemaName = null;
@@ -126,7 +130,7 @@ public class TableCreationPlan
         for (ColumnDefinition cd : list) {
             String type = cd.getType();
             String colName = cd.getName().toString();
-            System.out.println("type:" + type + " colName: " + colName);
+            //System.out.println("type:" + type + " colName: " + colName);
             DataType dt = DataType.getDataType(type);
             if (dt == null) {
                 return ErrorMessage.throwMessage(ErrCode.ColumnDataTypeNotExists, colName, type);
@@ -223,5 +227,11 @@ public class TableCreationPlan
         condition.setValue(cond.getPartitionExpr().toString());
         condition.setDataType(col.getDataType());
         return condition;
+    }
+
+    @Override
+    public boolean isAlreadyDone()
+    {
+        return alreadyDone;
     }
 }

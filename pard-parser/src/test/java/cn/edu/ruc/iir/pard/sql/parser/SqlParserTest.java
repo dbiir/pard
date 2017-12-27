@@ -127,4 +127,13 @@ public class SqlParserTest
         Statement statement = parser.createStatement(sql);
         System.out.println(statement.toString());
     }
+
+    @Test
+    public void testInsert()
+    {
+        String sql =
+                "INSERT INTO test VALUES(10, abc, 10.0)";
+        Statement statement = parser.createStatement(sql);
+        System.out.println(statement.toString());
+    }
 }

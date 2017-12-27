@@ -25,6 +25,7 @@ import cn.edu.ruc.iir.pard.sql.tree.GroupingElement;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 import cn.edu.ruc.iir.pard.sql.tree.InListExpression;
 import cn.edu.ruc.iir.pard.sql.tree.InPredicate;
+import cn.edu.ruc.iir.pard.sql.tree.Insert;
 import cn.edu.ruc.iir.pard.sql.tree.Intersect;
 import cn.edu.ruc.iir.pard.sql.tree.IsNotNullPredicate;
 import cn.edu.ruc.iir.pard.sql.tree.IsNullPredicate;
@@ -72,6 +73,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Values;
 import com.google.common.collect.ImmutableList;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
@@ -187,8 +189,10 @@ public class AstBuilder
     @Override
     public Node visitInsertInto(PardSqlBaseParser.InsertIntoContext ctx)
     {
-        // todo insert into
-        return null;
+        return new Insert(
+                getQualifiedName(ctx.qualifiedName()),
+                Optional.ofNullable(getColumnAliases(ctx.columnAliases())),
+                (Query) visit(ctx.query()));
     }
 
     @Override
@@ -993,6 +997,18 @@ public class AstBuilder
         }
 
         throw new IllegalArgumentException("Unsupported type specification: " + type.getText());
+    }
+
+    private static List<String> getColumnAliases(PardSqlBaseParser.ColumnAliasesContext columnAliasesContext)
+    {
+        if (columnAliasesContext == null) {
+            return null;
+        }
+
+        return columnAliasesContext
+                .identifier().stream()
+                .map(ParseTree::getText)
+                .collect(toList());
     }
 
     private String typeParameterToString(PardSqlBaseParser.TypeParameterContext typeParameter)

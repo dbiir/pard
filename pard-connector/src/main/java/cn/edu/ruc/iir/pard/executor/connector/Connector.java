@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.executor.connector;
 
 import cn.edu.ruc.iir.pard.scheduler.Task;
-
 /**
  * pard
  *

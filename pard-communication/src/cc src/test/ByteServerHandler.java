@@ -12,12 +12,18 @@ import static io.netty.buffer.Unpooled.wrappedBuffer;
 
 public class ByteServerHandler  extends ChannelInboundHandlerAdapter {
 
+    byte[] data;//data to be sent
+
+    void setData(byte[] data){
+        this.data=data;
+    }
+
+    /**
+     * call setData() to set the data.
+     * @param ctx
+     */
     @Override
     public void channelActive(final ChannelHandlerContext ctx) { // (1)
-        TableSchema ts= TestObj.tableSchema1();
-        System.out.println("server sent ts:");
-        System.out.println(ts);
-        byte[] data = transfer.SerializationUtils.serialize(ts);
 
         //尝试不用 ByteBuf 收发
         final ByteBuf data1 = wrappedBuffer(data);

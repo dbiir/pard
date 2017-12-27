@@ -16,7 +16,7 @@ public class GddUtil
     public static int compareLESS = 2;
     public static int compareLESSEQUAL = 3;
     public static int compareGREAT = 4;
-    public static int compareREATEQUAL = 5;
+    public static int compareGREATEQUAL = 5;
     public static int compareNOTEQUAL = 6;
     public static int indexHASHINDEX = 1;
     public static int indexBTREEINDEX = 2;

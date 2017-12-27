@@ -10,9 +10,9 @@ import java.util.Date;
 import static transfer.SerializationUtils.deserialize;
 
 public class ByteClientHandler extends ChannelInboundHandlerAdapter {
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        System.out.println("aaaaaaaa");
         ByteBuf m = (ByteBuf) msg; // (1)
         byte[] bytes = new byte[m.readableBytes()];
         m.readBytes(bytes);

@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.catalog;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Schema
@@ -11,6 +12,8 @@ public class Schema
     private int nextTableId;
     public Schema()
     {
+        tableList = new ArrayList<Table>();
+        userList = new ArrayList<Privilege>();
     }
 
     public Schema(String name, int id, List<Table> tableList, List<Privilege> userList)

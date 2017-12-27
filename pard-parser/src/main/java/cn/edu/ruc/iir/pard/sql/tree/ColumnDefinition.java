@@ -43,6 +43,11 @@ public final class ColumnDefinition
         return type;
     }
 
+    public boolean isPrimary()
+    {
+        return primary;
+    }
+
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {

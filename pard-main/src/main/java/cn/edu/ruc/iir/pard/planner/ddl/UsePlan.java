@@ -11,6 +11,10 @@ import cn.edu.ruc.iir.pard.sql.tree.Use;
 public class UsePlan
         extends Plan
 {
+    public UsePlan(Statement stmt)
+    {
+        super(stmt);
+    }
     protected boolean alreadyDone = false;
     private String schemaName = null;
     private static Use stmt = null;
@@ -56,5 +60,17 @@ public class UsePlan
     public boolean isAlreadyDone()
     {
         return alreadyDone;
+    }
+    @Override
+    public boolean beforeExecution()
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    @Override
+    public boolean afterExecution(boolean executeSuccess)
+    {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

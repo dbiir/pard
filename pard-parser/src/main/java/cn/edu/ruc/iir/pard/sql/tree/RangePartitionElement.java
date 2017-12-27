@@ -78,4 +78,18 @@ public final class RangePartitionElement
                 .add("node", nodeId == null ? "null" : nodeId)
                 .toString();
     }
+
+    public Identifier getPartitionName()
+    {
+        return partitionName;
+    }
+
+    public List<RangePartitionElementCondition> getConditions()
+    {
+        return conditions;
+    }
+    public String getNodeId()
+    {
+        return nodeId;
+    }
 }

@@ -4,13 +4,16 @@ import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage.ErrCode;
-import cn.edu.ruc.iir.pard.planner.SchemaPlan;
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
 public class SchemaCreationPlan
         extends SchemaPlan
 {
+    public SchemaCreationPlan(Statement stmt)
+    {
+        super(stmt);
+    }
     private String schemaName = null;
     private Schema schema = null;
     private boolean isNotExists = false;

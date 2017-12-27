@@ -37,13 +37,7 @@ public class SemanticAnalysisTest
         }
         System.out.println(statement.toString());
     }
-    @Test
-    public void analysisSchema()
-    {
-        String sql =
-                "";
-        Statement statement = parser.createStatement(sql);
-    }
+
     private PlanNode parseOrderBy(PlanNode node, OrderBy orderBy)
     {
         List<SortItem> item = orderBy.getSortItems();

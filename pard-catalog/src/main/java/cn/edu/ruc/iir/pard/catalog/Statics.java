@@ -13,6 +13,7 @@ public class Statics
     private HashMap<String, Integer> staticList;
     public Statics()
     {
+        staticList = new HashMap<String, Integer>();
     }
 
     public Statics(String columnName, String min, String max, String mean, String mode, String median, HashMap<String, Integer> staticList)

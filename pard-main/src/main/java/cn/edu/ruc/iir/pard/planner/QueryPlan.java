@@ -14,6 +14,7 @@ public class QueryPlan
     private Statement statement;
     public QueryPlan(Statement stmt)
     {
+        super(stmt);
         statement = stmt;
     }
     public PlanNode getNode()
@@ -29,5 +30,23 @@ public class QueryPlan
     {
         // TODO semantic analysis
         return null;
+    }
+
+    @Override
+    public boolean isAlreadyDone()
+    {
+        return false;
+    }
+
+    @Override
+    public boolean beforeExecution()
+    {
+        return false;
+    }
+
+    @Override
+    public boolean afterExecution(boolean executeSuccess)
+    {
+        return false;
     }
 }

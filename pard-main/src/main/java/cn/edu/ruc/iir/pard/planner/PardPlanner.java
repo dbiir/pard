@@ -28,20 +28,20 @@ public class PardPlanner
         }
         if (statement instanceof CreateSchema) {
             // create schema
-            return new SchemaCreationPlan();
+            return new SchemaCreationPlan(statement);
         }
         if (statement instanceof CreateTable) {
             // create table
-            return new TableCreationPlan();
+            return new TableCreationPlan(statement);
         }
         if (statement instanceof Use) {
-            return new UsePlan();
+            return new UsePlan(statement);
         }
         if (statement instanceof DropSchema) {
-            return new SchemaDropPlan();
+            return new SchemaDropPlan(statement);
         }
         if (statement instanceof DropTable) {
-            return new TableDropPlan();
+            return new TableDropPlan(statement);
         }
 
         return null;

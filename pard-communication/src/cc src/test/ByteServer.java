@@ -8,6 +8,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import transfer.TableSchema;
 
 /**
  * Discards any incoming data.
@@ -16,12 +17,22 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 public class ByteServer {
 
     private int port;
+    private byte[] data;
+    ByteServerHandler byteServerHandler;
 
-    public ByteServer(int port) {
+    public ByteServer(int port, byte[] data) {
         this.port = port;
+        this.data =data;
+        byteServerHandler =new ByteServerHandler();
+    }
+
+
+    public void setData(byte[] data){
+        byteServerHandler.setData(data);
     }
 
     public void run() throws Exception {
+
         EventLoopGroup bossGroup = new NioEventLoopGroup(); //  is a multithreaded event loop that handles I/O operation.
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
@@ -33,7 +44,7 @@ public class ByteServer {
                         public void initChannel(SocketChannel ch) throws Exception {
 //                            ch.pipeline().addLast(new DiscardServerHandler()); //for ByteServer
 //                            ch.pipeline().addLast(new TimeServerHandler());
-                            ch.pipeline().addLast(new ByteServerHandler());
+                            ch.pipeline().addLast(byteServerHandler);
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)          // (5)
@@ -47,8 +58,10 @@ public class ByteServer {
             // shut down your server.
             f.channel().closeFuture().sync();
         } finally {
+            System.out.println("hahaha");
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
+
         }
     }
 
@@ -58,8 +71,16 @@ public class ByteServer {
         if (args.length > 0) {
             port = Integer.parseInt(args[0]);
         } else {
-            port = 8080;
+            port = 8081;
         }
-        new ByteServer(port).run();
+
+        TableSchema ts= TestObj.tableSchema1();
+        System.out.println("server  ts:");
+        System.out.println(ts);
+        byte[] data = transfer.SerializationUtils.serialize(ts);
+        ByteServer bs=new ByteServer(port, data);
+        bs.setData(data);
+        bs.run();
+
     }
 }

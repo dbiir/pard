@@ -4,12 +4,12 @@ import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage.ErrCode;
-import cn.edu.ruc.iir.pard.planner.Plan;
+import cn.edu.ruc.iir.pard.planner.GDDPlan;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import cn.edu.ruc.iir.pard.sql.tree.Use;
 
 public class UsePlan
-        extends Plan
+        extends GDDPlan
 {
     public UsePlan(Statement stmt)
     {
@@ -64,13 +64,11 @@ public class UsePlan
     @Override
     public boolean beforeExecution()
     {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
     @Override
     public boolean afterExecution(boolean executeSuccess)
     {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 }

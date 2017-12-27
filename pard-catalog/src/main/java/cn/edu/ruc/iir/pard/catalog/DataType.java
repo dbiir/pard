@@ -15,6 +15,7 @@ public class DataType
     public static final DataType DATE = new DataType(0x89, 4);
     public static final DataType TIME = new DataType(0x90, 8);
     public static final DataType TIMESTAMP = new DataType(0x91, 8);
+    //TODO: 检查用户输入长度和最大长度的关系，如果大于最大长度，该抛出异常
     public static DataType getDataType(String type)
     {
         String dt = null;

@@ -1,7 +1,20 @@
 package cn.edu.ruc.iir.pard.planner;
 
-public interface GDDPlan
+import cn.edu.ruc.iir.pard.sql.tree.Statement;
+
+public abstract class GDDPlan
+        extends Plan implements EarlyStopPlan
 {
-    public boolean beforeExecution();
-    public boolean afterExecution(boolean executeSuccess);
+    public GDDPlan(Statement stmt)
+    {
+        super(stmt);
+    }
+    public boolean beforeExecution()
+    {
+        return true;
+    }
+    public boolean afterExecution(boolean executeSuccess)
+    {
+        return true;
+    }
 }

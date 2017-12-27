@@ -5,6 +5,7 @@ import cn.edu.ruc.iir.pard.planner.ddl.SchemaDropPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableDropPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
 import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
 import cn.edu.ruc.iir.pard.sql.tree.DropSchema;

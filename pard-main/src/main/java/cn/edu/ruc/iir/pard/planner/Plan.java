@@ -3,15 +3,22 @@ package cn.edu.ruc.iir.pard.planner;
 import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
+import java.util.Map;
+
 /**
  * pard
  *
  * @author guodong
  */
 public abstract class Plan
-        implements GDDPlan, EarlyStopPlan
 {
     private Statement statment = null;
+    /**
+     *
+     * @throws SemanticException
+     *
+     * @author hagen
+     * */
     public Plan(Statement stmt)
     {
         statment = stmt;
@@ -31,4 +38,9 @@ public abstract class Plan
         this.statment = statment;
     }
     public abstract ErrorMessage semanticAnalysis();
+
+    public Map<String, Object> getDistributionHints()
+    {
+        return null;
+    }
 }

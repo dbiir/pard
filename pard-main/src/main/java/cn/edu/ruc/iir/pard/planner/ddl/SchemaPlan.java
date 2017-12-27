@@ -1,11 +1,10 @@
 package cn.edu.ruc.iir.pard.planner.ddl;
 
 import cn.edu.ruc.iir.pard.planner.GDDPlan;
-import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
 public abstract class SchemaPlan
-        extends Plan
+        extends GDDPlan
 {
     public SchemaPlan(Statement stmt)
     {

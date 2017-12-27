@@ -1,5 +1,10 @@
 package cn.edu.ruc.iir.pard.catalog;
-
+/**
+ * site
+ * We only need id,name,status
+ *
+ * @author hagen
+ * */
 public class Site
 {
     private int id;
@@ -7,6 +12,7 @@ public class Site
     private String ip;
     private int port;
     private int leader;
+    private int status;
     public Site()
     {
     }
@@ -68,5 +74,15 @@ public class Site
     public int getLeader()
     {
         return leader;
+    }
+
+    public int getStatus()
+    {
+        return status;
+    }
+
+    public void setStatus(int status)
+    {
+        this.status = status;
     }
 }

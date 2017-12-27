@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.planner.dml;
 
+import cn.edu.ruc.iir.pard.planner.EarlyStopPlan;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.PlanNode;
@@ -11,7 +12,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Statement;
  * @author hagen
  */
 public class QueryPlan
-        extends Plan
+        extends Plan implements EarlyStopPlan
 {
     private PlanNode node;
     public QueryPlan(Statement stmt)
@@ -32,18 +33,6 @@ public class QueryPlan
     {
         // TODO semantic analysis
         return null;
-    }
-    @Override
-    public boolean beforeExecution()
-    {
-        // TODO Auto-generated method stub
-        return false;
-    }
-    @Override
-    public boolean afterExecution(boolean executeSuccess)
-    {
-        // TODO Auto-generated method stub
-        return false;
     }
     @Override
     public boolean isAlreadyDone()

@@ -22,34 +22,22 @@ public class SchemaCreationPlan
     {
         return schemaName;
     }
-    public void setSchemaName(String schemaName)
-    {
-        this.schemaName = schemaName;
-    }
+
     public Schema getSchema()
     {
         return schema;
     }
-    public void setSchema(Schema schema)
-    {
-        this.schema = schema;
-    }
+
     public boolean isNotExists()
     {
         return isNotExists;
     }
-    public void setNotExists(boolean isNotExists)
-    {
-        this.isNotExists = isNotExists;
-    }
+
     public CreateSchema getStmt()
     {
         return stmt;
     }
-    public void setStmt(CreateSchema stmt)
-    {
-        this.stmt = stmt;
-    }
+
     @Override
     public ErrorMessage semanticAnalysis()
     {

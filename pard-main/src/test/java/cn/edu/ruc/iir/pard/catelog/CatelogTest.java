@@ -7,6 +7,7 @@ import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import net.sf.json.JSONArray;
@@ -25,6 +26,7 @@ public class CatelogTest
         schemaDao.add(schema, true);
        // schema = schemaDao.loadByName("testSchema");
         TableDao tableDao = new TableDao("testSchema");
+        tableDao.dropAll();
     }
     @Test
     public void viewTable()
@@ -76,14 +78,18 @@ public class CatelogTest
         Table t = schemaDao.loadByName(schemaName).getTableList().get(0);
         t = tdao.loadByName("emp");
         System.out.println(JSONObject.fromObject(t).toString(1));
-        tdao.dropAll();
+        //tdao.dropAll();
     }
     @Test
     public void insertInto()
     {
-        String sql = "insert into emp (eno, ename, title) values ('E0001', 'J. Doe', 'Elect. Eng.')";
+        String sql2 = "use testSchema";
+        Statement useStmt = parser.createStatement(sql2);
+        UsePlan plan = new UsePlan(useStmt);
+        String sql = "insert into emp (eno, ename, title) values (0, 'J. Doe', 'Elect. Eng.'),('E0002', 'J. Doe', 'Elect. Eng.')";
         Statement stmt = parser.createStatement(sql);
-        System.out.println(stmt.getClass());
+        System.out.println(stmt);
+        InsertPlan iplan = new InsertPlan(stmt);
     }
     @Test
     public void select()

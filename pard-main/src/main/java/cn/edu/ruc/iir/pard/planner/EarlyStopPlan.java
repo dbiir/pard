@@ -2,5 +2,8 @@ package cn.edu.ruc.iir.pard.planner;
 
 public interface EarlyStopPlan
 {
-    public boolean isAlreadyDone();
+    public default boolean isAlreadyDone()
+    {
+        return false;
+    }
 }

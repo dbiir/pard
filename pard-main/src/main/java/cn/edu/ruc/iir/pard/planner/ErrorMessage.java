@@ -36,6 +36,12 @@ public class ErrorMessage
         public static final int SiteNotExist = -10010;
         public static final int PartitionColumnNotFound = -10011;
         public static final int UnkownPartition = -10012;
+        public static final int TableNotExists = -10013;
+        public static final int ColumnInTableNotFound = -10014;
+        public static final int InsertFromSelectNotImplemented = -10015;
+        public static final int InsertExpectedRow = -10016;
+        public static final int InsertRowValuesNotMatchColumns = -10017;
+        public static final int ValuesTypeNotMatch = -10018;
     }
     public static void init()
     {
@@ -53,6 +59,12 @@ public class ErrorMessage
         template.put(ErrCode.SiteNotExist, "Site [%s] not exists!");
         template.put(ErrCode.PartitionColumnNotFound, "Column %s in partition condition %s was not found in table definition.");
         template.put(ErrCode.UnkownPartition, "unkown partition method.");
+        template.put(ErrCode.TableNotExists, "Table %s is not exists!");
+        template.put(ErrCode.ColumnInTableNotFound, "Column [%s] in table [%s] not found.");
+        template.put(ErrCode.InsertFromSelectNotImplemented, "Insert statement can only from a list of values, expect \"values\" rather rhan \"select\" or \"tables\"");
+        template.put(ErrCode.InsertExpectedRow, "Insert statement expects a list of row.");
+        template.put(ErrCode.InsertRowValuesNotMatchColumns, "Insert row values size %d not matches the column size %d");
+        template.put(ErrCode.ValuesTypeNotMatch, "values %s type  not match!");
         template.put(ErrCode.OK, "success");
     }
     static

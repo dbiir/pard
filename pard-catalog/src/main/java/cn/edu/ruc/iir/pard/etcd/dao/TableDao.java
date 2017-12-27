@@ -20,6 +20,12 @@ public class TableDao
     private Schema schema = null;
     Map<String, Table> tmap = new HashMap<String, Table>();
     Map<String, Integer> tpos = new HashMap<String, Integer>();
+    public TableDao(Schema schema)
+    {
+        schemaDao = new SchemaDao();
+        this.schema = schema;
+        parseList2Map();
+    }
     public TableDao(String schemaName)
     {
         schemaDao = new SchemaDao();

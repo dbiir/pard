@@ -62,4 +62,24 @@ public class SchemaDropPlan
         }
         return true;
     }
+
+    public DropSchema getStmt()
+    {
+        return stmt;
+    }
+
+    public String getSchemaName()
+    {
+        return schemaName;
+    }
+
+    public boolean isExists()
+    {
+        return exists;
+    }
+
+    public Schema getSchema()
+    {
+        return schema;
+    }
 }

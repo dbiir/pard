@@ -45,8 +45,7 @@ public class TableCreationPlan
     @Override
     public boolean beforeExecution()
     {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     @Override
@@ -143,6 +142,7 @@ public class TableCreationPlan
             column.setKey(cd.isPrimary() ? 1 : 0);
             table.getColumns().put(column.getColumnName(), column);
         }
+
         // check partition
         if (hp != null && hp instanceof TableHRangePartitioner) {
             // do sth
@@ -167,7 +167,8 @@ public class TableCreationPlan
                             return ErrorMessage.throwMessage(ErrCode.VerticalPartitionNotImplement);
                         }
                         else {
-                            return ErrorMessage.throwMessage(ErrCode.UnkownPartition);
+                            // 单垂直分片
+                            return ErrorMessage.throwMessage(ErrCode.VerticalPartitionNotImplement);
                         }
     }
 

@@ -15,15 +15,15 @@ public class GDDDao
     public GDDDao(){}
     public GDD load()
     {
-        gdd = EtcdUtil.LoadGddFromEtcd();
+        gdd = EtcdUtil.loadGddFromEtcd();
         return gdd;
     }
     public boolean persist()
     {
-        return EtcdUtil.TransGddToEtcd(gdd);
+        return EtcdUtil.transGddToEtcd(gdd);
     }
     public boolean persistGDD(GDD gdd)
     {
-        return EtcdUtil.TransGddToEtcd(gdd);
+        return EtcdUtil.transGddToEtcd(gdd);
     }
 }

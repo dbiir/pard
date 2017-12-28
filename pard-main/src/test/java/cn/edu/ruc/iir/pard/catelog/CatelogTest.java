@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.catelog;
 
+import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
@@ -9,10 +10,15 @@ import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
+import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.Row;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.testng.annotations.Test;
+
+import java.util.List;
+import java.util.Map;
 
 public class CatelogTest
 {
@@ -56,7 +62,7 @@ public class CatelogTest
                 + "p0 eno < 'E1000' AND title < 'N' on node1,"
                 + "p1 eno < 'E1000' AND title >='N' on node2,"
                 + "p2 eno >= 'E1000' AND title < 'N' on node3,"
-                + "p3 eno >= 'E1000' AND title < 'N' on node4"
+                + "p3 eno >= 'E1000' AND title >= 'N' on node4"
                 + ")";
         Statement stmt = parser.createStatement(sql);
         System.out.println(stmt.toString());
@@ -86,10 +92,27 @@ public class CatelogTest
         String sql2 = "use testSchema";
         Statement useStmt = parser.createStatement(sql2);
         UsePlan plan = new UsePlan(useStmt);
-        String sql = "insert into emp (eno, ename, title) values (0, 'J. Doe', 'Elect. Eng.'),('E0002', 'J. Doe', 'Elect. Eng.')";
+        String sql = "insert into emp (eno, ename, title) values ('E0001', 'J. Doe', 'Elect. Eng.'),('E1002', 'J. Doe', 'Elect. Eng.')";
         Statement stmt = parser.createStatement(sql);
         System.out.println(stmt);
         InsertPlan iplan = new InsertPlan(stmt);
+        Map<String, Object> map = iplan.getDistributionHints();
+        System.out.print("node\t");
+        List<Column> clist = iplan.getColList();
+        for (Column col : clist) {
+            System.out.print(col.getColumnName() + "\t");
+        }
+        System.out.println();
+        for (String key : map.keySet()) {
+            List<Row> row = (List<Row>) map.get(key);
+            for (Row r : row) {
+                System.out.print(key + "\t");
+                for (Expression e : r.getItems()) {
+                    System.out.print(e + "\t");
+                }
+                System.out.println("");
+            }
+        }
     }
     @Test
     public void select()

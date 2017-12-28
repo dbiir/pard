@@ -2,19 +2,35 @@ package cn.edu.ruc.iir.pard.catalog;
 
 public class DataType
 {
-    public static final DataType SMALLINT = new DataType(0x81, 2);
-    public static final DataType INT = new DataType(0x82, 4);
-    public static final DataType BIGINT = new DataType(0x83, 8);
-    public static final DataType FLOAT = new DataType(0x84, 4);
-    public static final DataType DOUBLE = new DataType(0x85, 8);
+    public static class DataTypeInt
+    {
+        public static final int SMALLINT = 0x81;
+        public static final int INT = 0x82;
+        public static final int BIGINT = 0x83;
+        public static final int FLOAT = 0x84;
+        public static final int DOUBLE = 0x85;
 
-    public static final DataType VARCHAR = new DataType(0x86, 255);
-    public static final DataType CHAR = new DataType(0x87, 255);
-    public static final DataType TEXT = new DataType(0x88, 0);
+        public static final int VARCHAR = 0x86;
+        public static final int CHAR = 0x87;
+        public static final int TEXT = 0x88;
 
-    public static final DataType DATE = new DataType(0x89, 4);
-    public static final DataType TIME = new DataType(0x90, 8);
-    public static final DataType TIMESTAMP = new DataType(0x91, 8);
+        public static final int DATE = 0x89;
+        public static final int TIME = 0x90;
+        public static final int TIMESTAMP = 0x91;
+    }
+    public static final DataType SMALLINT = new DataType(DataTypeInt.SMALLINT, 2);
+    public static final DataType INT = new DataType(DataTypeInt.INT, 4);
+    public static final DataType BIGINT = new DataType(DataTypeInt.BIGINT, 8);
+    public static final DataType FLOAT = new DataType(DataTypeInt.FLOAT, 4);
+    public static final DataType DOUBLE = new DataType(DataTypeInt.DOUBLE, 8);
+
+    public static final DataType VARCHAR = new DataType(DataTypeInt.VARCHAR, 255);
+    public static final DataType CHAR = new DataType(DataTypeInt.CHAR, 255);
+    public static final DataType TEXT = new DataType(DataTypeInt.TEXT, 0);
+
+    public static final DataType DATE = new DataType(DataTypeInt.DATE, 4);
+    public static final DataType TIME = new DataType(DataTypeInt.TIME, 8);
+    public static final DataType TIMESTAMP = new DataType(DataTypeInt.TIMESTAMP, 8);
     //TODO: 检查用户输入长度和最大长度的关系，如果大于最大长度，该抛出异常
     public static DataType getDataType(String type)
     {

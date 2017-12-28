@@ -1,10 +1,12 @@
 package cn.edu.ruc.iir.pard.planner.dml;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
+import cn.edu.ruc.iir.pard.planner.ConditionComparator;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage.ErrCode;
 import cn.edu.ruc.iir.pard.planner.Plan;
@@ -35,16 +37,17 @@ public class InsertPlan
     private String schemaName = null;
     private String tableName = null;
     private Table table = null;
-    private List<Column> colList = null;
-    private Map<String, Object> distributionHints = null;
+    private List<Column> colList;
+    private Map<String, Object> distributionHints;
     public InsertPlan(Statement stmt)
     {
         super(stmt);
-        distributionHints = new HashMap<String, Object>();
     }
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        distributionHints = new HashMap<String, Object>();
+        colList = new ArrayList<Column>();
         Statement statement = this.getStatment();
         Schema schema = null;
         if (!(statement instanceof Insert)) {
@@ -79,7 +82,6 @@ public class InsertPlan
             return ErrorMessage.throwMessage(ErrCode.TableNotExists, schemaName + "." + tableName);
         }
         // prepared for col.
-        colList = new ArrayList<Column>();
         if (insert.getColumns().isPresent()) {
             List<String> colStrList = insert.getColumns().get();
             int i = 0;
@@ -106,6 +108,7 @@ public class InsertPlan
             return ErrorMessage.throwMessage(ErrCode.InsertFromSelectNotImplemented);
         }
         Values values = (Values) qb;
+
         for (Expression expr : values.getRows()) {
             if (!(expr instanceof Row)) {
                 return ErrorMessage.throwMessage(ErrCode.InsertExpectedRow);
@@ -114,16 +117,35 @@ public class InsertPlan
             if (row.getItems().size() != colList.size()) {
                 return ErrorMessage.throwMessage(ErrCode.InsertRowValuesNotMatchColumns, row.getItems().size(), colList.size());
             }
+            Map<String, Literal> literalMap = new HashMap<String, Literal>();
             for (int i = 0; i < row.getItems().size(); i++) {
                 Expression item = row.getItems().get(i);
-                System.out.println(item.getClass().getName());
+                //System.out.println(item.getClass().getName());
                 Literal literal = (Literal) item;
                 if (!typeMatch(colList.get(i), literal)) {
                     return ErrorMessage.throwMessage(ErrCode.ValuesTypeNotMatch, literal.toString());
                 }
+                literalMap.put(colList.get(i).getColumnName(), literal);
+            }
+            for (String key : table.getFragment().keySet()) {
+                Fragment f = table.getFragment().get(key);
+                boolean belongTo = ConditionComparator.match(f.getCondition(), literalMap);
+                //System.out.println(belongTo + " " + key);
+                if (belongTo) {
+                    Object o = distributionHints.get(key);
+                    List<Row> rlist = null;
+                    if (o == null) {
+                        rlist = new ArrayList<Row>();
+                        distributionHints.put(key, rlist);
+                    }
+                    else {
+                        rlist = (List<Row>) o;
+                    }
+                    rlist.add(row);
+                }
             }
         }
-        return null;
+        return ErrorMessage.getOKMessage();
     }
     //TODO: type check.
     public boolean typeMatch(Column col, Literal literal)

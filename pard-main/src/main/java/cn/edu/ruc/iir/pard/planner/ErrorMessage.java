@@ -42,6 +42,8 @@ public class ErrorMessage
         public static final int InsertExpectedRow = -10016;
         public static final int InsertRowValuesNotMatchColumns = -10017;
         public static final int ValuesTypeNotMatch = -10018;
+        public static final int MissingPartitionColumnsWhenInsert = -10019;
+        public static final int UnkownCompareTypeWhenPartition = -10020;
     }
     public static void init()
     {
@@ -65,6 +67,8 @@ public class ErrorMessage
         template.put(ErrCode.InsertExpectedRow, "Insert statement expects a list of row.");
         template.put(ErrCode.InsertRowValuesNotMatchColumns, "Insert row values size %d not matches the column size %d");
         template.put(ErrCode.ValuesTypeNotMatch, "values %s type  not match!");
+        template.put(ErrCode.MissingPartitionColumnsWhenInsert, "Column '%s' is necessary when determine which site receive this insert statement, but missing.");
+        template.put(ErrCode.UnkownCompareTypeWhenPartition, "Unkown compare type when partition");
         template.put(ErrCode.OK, "success");
     }
     static

@@ -12,10 +12,33 @@ import cn.edu.ruc.iir.pard.etcd.EtcdUtil;
 public class GDDDao
 {
     private static GDD gdd = null;
-    public GDDDao(){}
+    private static boolean watchStart = false;
+    private static void initWatch()
+    {
+        EtcdUtil.addWatch();
+        watchStart = true;
+    }
+    public GDDDao()
+    {
+        if (!watchStart) {
+            initWatch();
+            Runtime.getRuntime().addShutdownHook(new Thread(()-> {
+                EtcdUtil.stopWatch();
+                watchStart = false; }));
+        }
+    }
     public GDD load()
     {
-        gdd = EtcdUtil.loadGddFromEtcd();
+        if (gdd == null) {
+            gdd = EtcdUtil.loadGddFromEtcd();
+        }
+
+        if (EtcdUtil.isSiteChanged() || EtcdUtil.isSchemaChanged()) {
+            gdd = EtcdUtil.loadGddFromEtcd();
+            EtcdUtil.setSiteChanged(false);
+            EtcdUtil.setSchemaChanged(false);
+        }
+
         return gdd;
     }
     public boolean persist()

@@ -10,30 +10,34 @@ import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
 public class ConditionComparator
 {
-    public Comparable parseFromLiteral(Literal literal)
+    public Comparable<?> parseFromString(int dataType, String value)
+    {
+        return null;
+    }
+    public Comparable<?> parseFromLiteral(Literal literal)
     {
         if (literal instanceof LongLiteral) {
             return Long.parseLong(literal.toString());
         }
         else
             if (literal instanceof DoubleLiteral) {
-             // check literal type
+                return Double.parseDouble(literal.toString());
             }
             else
                 if (literal instanceof BooleanLiteral) {
-                 // check literal type
+                    return Boolean.parseBoolean(literal.toString());
                 }
                 else
                     if (literal instanceof CharLiteral) {
-                     // check literal type
+                        return literal.toString();
                     }
                     else
                         if (literal instanceof NullLiteral) {
-                         // check literal type
+                            return null;
                         }
                         else
                             if (literal instanceof StringLiteral) {
-                             // check literal type
+                                return literal.toString();
                             }
         return null;
     }

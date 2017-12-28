@@ -18,8 +18,8 @@ public class SchemaDao
     private WatchThread watchThread;
     public SchemaDao()
     {
-        watchThread = new WatchThread("schema");
-        watchThread.start();
+        //watchThread = new WatchThread("schema");
+        //watchThread.start();
     }
     public Schema loadByName(String name)
     {

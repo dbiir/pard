@@ -11,7 +11,9 @@ import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.catalog.Statics;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.catalog.User;
+
 import cn.edu.ruc.iir.pard.etcd.EtcdUtil;
+import com.coreos.jetcd.data.ByteSequence;
 import net.sf.json.JSONObject;
 import org.testng.annotations.Test;
 
@@ -21,14 +23,33 @@ import java.util.List;
 
 public class EtcdTest
 {
+    public static void main(String[] args)
+    {
+        ByteSequence key = ByteSequence.fromString("test");
+        EtcdUtil.addWatch(); //initial the thread process
+        while (true) {
+            try {
+                Thread.sleep(1000);
+                if (EtcdUtil.isSiteChanged()) {
+                    System.out.println("yes");
+                    EtcdUtil.setSiteChanged(false); //set the current state as the global state
+                    break;
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        EtcdUtil.stopWatch();
+    }
     @Test
     public void TestEtcd()
     {
-        EtcdUtil.TransGddToEtcd(CreateGdd());
+        EtcdUtil.transGddToEtcd(CreateGdd());
     }
     @Test void TestLoadData()
     {
-        EtcdUtil.LoadGddFromEtcd();
+        EtcdUtil.loadGddFromEtcd();
     }
     @Test
     public GDD CreateGdd()
@@ -199,7 +220,7 @@ public class EtcdTest
     @Test
     public void PrintGdd()
     {
-        GDD gdd = EtcdUtil.LoadGddFromEtcd();
+        GDD gdd = EtcdUtil.loadGddFromEtcd();
         JSONObject jsonObject = JSONObject.fromObject(gdd);
         System.out.println(jsonObject.toString());
     }

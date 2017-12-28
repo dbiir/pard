@@ -28,7 +28,7 @@ public class CatalogUtil
     }
     public GDD refreshGDD()
     {
-        return EtcdUtil.LoadGddFromEtcd();
+        return EtcdUtil.loadGddFromEtcd();
     }
     public Schema getSchema(String name)
     {

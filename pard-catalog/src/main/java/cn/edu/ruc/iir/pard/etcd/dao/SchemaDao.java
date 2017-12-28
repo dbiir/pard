@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.etcd.dao;
 
 import cn.edu.ruc.iir.pard.catalog.GDD;
 import cn.edu.ruc.iir.pard.catalog.Schema;
+import cn.edu.ruc.iir.pard.etcd.WatchThread;
 
 import java.util.Map;
 /**
@@ -14,7 +15,12 @@ import java.util.Map;
 public class SchemaDao
         extends GDDDao
 {
-    public SchemaDao(){}
+    private WatchThread watchThread;
+    public SchemaDao()
+    {
+        watchThread = new WatchThread("schema");
+        watchThread.start();
+    }
     public Schema loadByName(String name)
     {
         Schema schema = null;

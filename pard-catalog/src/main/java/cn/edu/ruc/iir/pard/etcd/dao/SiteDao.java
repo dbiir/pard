@@ -15,6 +15,9 @@ public class SiteDao
         extends GDDDao
 {
     public SiteDao(){}
+    public void initialSiteDao()
+    {
+    }
     public Site loadByName(String name)
     {
         GDD gdd = load();

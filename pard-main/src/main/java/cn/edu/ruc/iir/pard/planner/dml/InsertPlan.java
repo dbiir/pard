@@ -132,11 +132,11 @@ public class InsertPlan
                 boolean belongTo = ConditionComparator.match(f.getCondition(), literalMap);
                 //System.out.println(belongTo + " " + key);
                 if (belongTo) {
-                    Object o = distributionHints.get(key);
+                    Object o = distributionHints.get(f.getSiteName());
                     List<Row> rlist = null;
                     if (o == null) {
                         rlist = new ArrayList<Row>();
-                        distributionHints.put(key, rlist);
+                        distributionHints.put(f.getSiteName(), rlist);
                     }
                     else {
                         rlist = (List<Row>) o;

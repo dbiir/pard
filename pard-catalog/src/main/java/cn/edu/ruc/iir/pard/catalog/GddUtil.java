@@ -1,5 +1,8 @@
 package cn.edu.ruc.iir.pard.catalog;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class GddUtil
 {
     public static final int privilegeREADONLY = 1;
@@ -21,7 +24,26 @@ public class GddUtil
     public static final int indexHASHINDEX = 1;
     public static final int indexBTREEINDEX = 2;
     public static final int indexOTHERINDEX = 3;
+
+    private static final Map<Integer, String> cmpMap = new HashMap<Integer, String>();
+
     private GddUtil()
     {
+    }
+    private static void initCmpMap()
+    {
+        cmpMap.put(compareEQUAL, "=");
+        cmpMap.put(compareGREAT, ">");
+        cmpMap.put(compareGREATEQUAL, ">=");
+        cmpMap.put(compareLESS, "<");
+        cmpMap.put(compareLESSEQUAL, "<=");
+        cmpMap.put(compareNOTEQUAL, "!=");
+    }
+    public static String cmpInt2Str(int compare)
+    {
+        if (cmpMap.size() <= 0) {
+            initCmpMap();
+        }
+        return cmpMap.get(compare);
     }
 }

@@ -42,6 +42,11 @@ public final class PardUserConfiguration
         }
     }
 
+    public String getNodeName()
+    {
+        return getProperty("pard.name");
+    }
+
     public int getServerPort()
     {
         return Integer.parseInt(getProperty("pard.server.port"));

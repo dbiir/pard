@@ -20,7 +20,7 @@ public class TestConnector
     @Test
     public void testCreateSchema()
     {
-        CreateSchemaTask task = new CreateSchemaTask("test", false, -1);
+        CreateSchemaTask task = new CreateSchemaTask("test", false, "-1");
         pConn.execute(task);
     }
 
@@ -37,7 +37,7 @@ public class TestConnector
         columnDefinitions.add(cd1);
         columnDefinitions.add(cd2);
         columnDefinitions.add(cd3);
-        CreateTableTask task = new CreateTableTask("testschema", "table1", false, columnDefinitions, -1);
+        CreateTableTask task = new CreateTableTask("testschema", "table1", false, columnDefinitions, "-1");
         pConn.execute(task);
     }
 

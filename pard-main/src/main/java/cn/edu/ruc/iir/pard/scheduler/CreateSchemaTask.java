@@ -14,9 +14,9 @@ public class CreateSchemaTask
     public CreateSchemaTask(
             String schemaName,
             boolean isNotExists,
-            int nodeId)
+            String taskId)
     {
-        super(nodeId);
+        super(taskId);
         this.schemaName = schemaName;
         this.isNotExists = isNotExists;
     }

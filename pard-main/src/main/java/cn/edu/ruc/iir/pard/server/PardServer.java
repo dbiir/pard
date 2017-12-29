@@ -38,15 +38,17 @@ public class PardServer
                     ServerBuilder<NettyServerBuilder> serverBuilder =
                             NettyServerBuilder.forPort(port);
                     serverBuilder.addService(new PardRPCService());
-                    try {
-                        server = serverBuilder.build();
-                        server.start();
-                        System.out.println("RPC Server Started");
-                    }
-                    catch (IOException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-                    }
+                    server = serverBuilder.build();
+//                        server.start();
+                    new Thread(() -> {
+                        try {
+                            server.start();
+                            System.out.println("RPC Server Started");
+                        }
+                        catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
                 });
 
         pipeline.addStartupHook(

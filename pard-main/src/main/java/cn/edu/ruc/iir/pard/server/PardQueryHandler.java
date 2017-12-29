@@ -3,8 +3,11 @@ package cn.edu.ruc.iir.pard.server;
 import cn.edu.ruc.iir.pard.communication.rpc.PardRPCClient;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
+import cn.edu.ruc.iir.pard.scheduler.Job;
+import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
 import cn.edu.ruc.iir.pard.scheduler.Task;
 import cn.edu.ruc.iir.pard.scheduler.TaskGenerator;
+import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import cn.edu.ruc.iir.pard.utils.PardResultSet;
@@ -17,6 +20,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -29,7 +33,9 @@ public class PardQueryHandler
 {
     private Socket socket;
     private Logger logger = Logger.getLogger("pard server");
+    private JobScheduler jobScheduler = JobScheduler.INSTANCE();
     private ObjectOutputStream objectOutputStream;
+
     {
         try {
             objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -43,6 +49,7 @@ public class PardQueryHandler
     private SqlParser sqlParser = new SqlParser();
     private PardPlanner planner = new PardPlanner();
     private TaskGenerator taskGenerator = new TaskGenerator();
+    private TaskScheduler taskScheduler = TaskScheduler.INSTANCE();
 
     public PardQueryHandler(Socket socket)
     {
@@ -76,13 +83,50 @@ public class PardQueryHandler
 
     private PardResultSet executeQuery(String sql)
     {
-        // execute query
+        // todo this logic should be abstracted as a automated state machine
         logger.info("Executing query: " + sql);
-        Statement statement = sqlParser.createStatement(sql);
-        Plan plan = planner.plan(statement);
-        List<Task> tasks = taskGenerator.generateTasks(plan);
-        // todo distribute tasks and collect results
+        Job job = jobScheduler.newJob();
+        if (job == null) {
+            logger.log(Level.WARNING, "Cannot create job for sql: " + sql);
+            return new PardResultSet(PardResultSet.ResultStatus.BEGIN_ERR);
+        }
+        job.setSql(sql);
+        jobScheduler.updateJob(job.getJobId());
 
-        return new PardResultSet(PardResultSet.ResultStatus.OK);
+        Statement statement = sqlParser.createStatement(sql);
+        if (statement == null) {
+            jobScheduler.failJob(job.getJobId());
+            logger.log(Level.WARNING, "Cannot create statement for sql: " + sql);
+            return new PardResultSet(PardResultSet.ResultStatus.PARSING_ERR);
+        }
+        job.setStatement(statement);
+        jobScheduler.updateJob(job.getJobId());
+
+        Plan plan = planner.plan(statement);
+        if (plan == null) {
+            jobScheduler.failJob(job.getJobId());
+            logger.log(Level.WARNING, "Cannot create plan for sql: " + sql);
+            return new PardResultSet(PardResultSet.ResultStatus.PLANNING_ERR);
+        }
+        job.setPlan(plan);
+        jobScheduler.updateJob(job.getJobId());
+
+        List<Task> tasks = taskGenerator.generateTasks(plan);
+        if (tasks == null || tasks.isEmpty()) {
+            jobScheduler.failJob(job.getJobId());
+            logger.log(Level.WARNING, "Cannot create tasks for sql: " + sql);
+            return new PardResultSet(PardResultSet.ResultStatus.SCHEDULING_ERR);
+        }
+        tasks.forEach(job::addTask);
+        jobScheduler.updateJob(job.getJobId());
+
+        PardResultSet resultSet = taskScheduler.executeJob(job);
+        if (resultSet.getStatus() != PardResultSet.ResultStatus.OK) {
+            jobScheduler.failJob(job.getJobId());
+            logger.log(Level.WARNING, "Failed to execute job for sql: " + sql);
+        }
+        jobScheduler.updateJob(job.getJobId());
+
+        return resultSet;
     }
 }

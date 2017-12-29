@@ -7,11 +7,12 @@ package cn.edu.ruc.iir.pard.scheduler;
  */
 public abstract class Task
 {
-    private final int nodeId;
+    private final String taskId;
+    private int nodeId;
 
-    public Task(int nodeId)
+    public Task(String taskId)
     {
-        this.nodeId = nodeId;
+        this.taskId = taskId;
     }
 
     public int getNodeId()

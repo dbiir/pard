@@ -22,9 +22,9 @@ public class CreateTableTask
             String tableName,
             boolean isNotExists,
             List<ColumnDefinition> columnDefinitions,
-            int nodeId)
+            String taskId)
     {
-        super(nodeId);
+        super(taskId);
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.isNotExists = isNotExists;

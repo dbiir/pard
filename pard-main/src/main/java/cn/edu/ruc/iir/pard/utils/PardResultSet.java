@@ -14,7 +14,25 @@ public class PardResultSet
 {
     public enum ResultStatus
     {
-        OK, PARSING_ERR, EXEC_ERR
+        OK(""),
+        BEGIN_ERR("Create job error"),
+        PARSING_ERR("Parse error"),
+        PLANNING_ERR("Plan error"),
+        SCHEDULING_ERR("Schedule error"),
+        EXECUTING_ERR("Execution error");
+
+        private String msg;
+
+        ResultStatus(String msg)
+        {
+            this.msg = msg;
+        }
+
+        @Override
+        public String toString()
+        {
+            return this.msg;
+        }
     }
 
     private List<Block> blocks;

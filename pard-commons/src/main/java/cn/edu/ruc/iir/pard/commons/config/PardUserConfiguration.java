@@ -47,9 +47,9 @@ public final class PardUserConfiguration
         return getProperty("pard.name");
     }
 
-    public int getServerPort()
+    public int getRPCPort()
     {
-        return Integer.parseInt(getProperty("pard.server.port"));
+        return Integer.parseInt(getProperty("pard.rpc.port"));
     }
 
     public int getSocketPort()

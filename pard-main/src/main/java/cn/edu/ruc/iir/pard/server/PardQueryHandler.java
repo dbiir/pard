@@ -1,6 +1,5 @@
 package cn.edu.ruc.iir.pard.server;
 
-import cn.edu.ruc.iir.pard.communication.rpc.PardRPCClient;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.scheduler.Job;
@@ -17,9 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,7 +42,6 @@ public class PardQueryHandler
         }
     }
 
-    private Map<Integer, PardRPCClient> rpcClients;
     private SqlParser sqlParser = new SqlParser();
     private PardPlanner planner = new PardPlanner();
     private TaskGenerator taskGenerator = new TaskGenerator();
@@ -54,7 +50,6 @@ public class PardQueryHandler
     public PardQueryHandler(Socket socket)
     {
         this.socket = socket;
-        this.rpcClients = new HashMap<>();
         // todo fill map with nodes
     }
 

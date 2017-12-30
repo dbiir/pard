@@ -32,16 +32,18 @@ import java.util.List;
 public class TableCreationPlan
         extends TablePlan
 {
-    public TableCreationPlan(Statement stmt)
-    {
-        super(stmt);
-    }
     private CreateTable stmt = null;
     private String tableName = null;
     private String schemaName = null;
     private Table table = null;
     private boolean isNotExists = false;
     private TableDao tableDao = null;
+
+    public TableCreationPlan(Statement stmt)
+    {
+        super(stmt);
+    }
+
     @Override
     public boolean beforeExecution()
     {
@@ -64,6 +66,7 @@ public class TableCreationPlan
             return true;
         }
     }
+
 /**
  * 目前只考虑垂直分区和水平分区，不考虑混合分区
  *
@@ -172,7 +175,7 @@ public class TableCreationPlan
                         }
     }
 
-    public ErrorMessage parseRangePartition(TableHRangePartitioner thp)
+    private ErrorMessage parseRangePartition(TableHRangePartitioner thp)
     {
         SiteDao siteDao = new SiteDao();
         for (RangePartitionElement elem : thp.getElements()) {
@@ -201,7 +204,8 @@ public class TableCreationPlan
         }
         return ErrorMessage.getOKMessage();
     }
-    public Condition parse(RangePartitionElementCondition cond, Column col)
+
+    private Condition parse(RangePartitionElementCondition cond, Column col)
     {
         Condition condition = new Condition();
         condition.setColumnName(col.getColumnName());

@@ -37,6 +37,10 @@
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-connector-postgresql</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-nodekeeper</artifactId>
+        </dependency>
         <!-- grpc -->
         <dependency>
             <groupId>io.grpc</groupId>

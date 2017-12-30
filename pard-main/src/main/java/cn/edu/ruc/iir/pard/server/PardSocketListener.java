@@ -1,5 +1,8 @@
 package cn.edu.ruc.iir.pard.server;
 
+import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
+import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,13 +19,17 @@ public class PardSocketListener
         implements Runnable
 {
     private final int port;
+    private final JobScheduler jobScheduler;
+    private final TaskScheduler taskScheduler;
     private boolean stopFlag = false;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final Logger logger = Logger.getLogger(PardSocketListener.class.getName());
 
-    PardSocketListener(int port)
+    PardSocketListener(int port, JobScheduler jobScheduler, TaskScheduler taskScheduler)
     {
         this.port = port;
+        this.jobScheduler = jobScheduler;
+        this.taskScheduler = taskScheduler;
     }
 
     @Override
@@ -32,7 +39,7 @@ public class PardSocketListener
             logger.info("Pard socket server started at port " + port);
             while (!stopFlag) {
                 Socket socket = serverSocket.accept();
-                executorService.submit(new PardQueryHandler(socket));
+                executorService.submit(new PardQueryHandler(socket, jobScheduler, taskScheduler));
 //                new PardQueryHandler(socket).start();
             }
         }

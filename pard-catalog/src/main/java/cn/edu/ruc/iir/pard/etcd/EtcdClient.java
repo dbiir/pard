@@ -3,7 +3,6 @@ package cn.edu.ruc.iir.pard.etcd;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Watch;
-//import com.coreos.jetcd.data.ByteSequence;
 
 public class EtcdClient
 {

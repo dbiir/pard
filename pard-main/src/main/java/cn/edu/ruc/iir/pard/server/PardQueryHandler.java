@@ -7,7 +7,6 @@ import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.scheduler.Job;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
-import cn.edu.ruc.iir.pard.scheduler.TaskGenerator;
 import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
@@ -31,16 +30,20 @@ public class PardQueryHandler
 {
     private Socket socket;
     private Logger logger = Logger.getLogger("pard server");
-    private JobScheduler jobScheduler = JobScheduler.INSTANCE();
+    private JobScheduler jobScheduler;
     private ObjectOutputStream objectOutputStream;
     private SqlParser sqlParser = new SqlParser();
     private PardPlanner planner = new PardPlanner();
-    private TaskGenerator taskGenerator = new TaskGenerator();
-    private TaskScheduler taskScheduler = TaskScheduler.INSTANCE();
+    private TaskScheduler taskScheduler;
 
-    public PardQueryHandler(Socket socket)
+    public PardQueryHandler(
+            Socket socket,
+            JobScheduler jobScheduler,
+            TaskScheduler taskScheduler)
     {
         this.socket = socket;
+        this.jobScheduler = jobScheduler;
+        this.taskScheduler = taskScheduler;
         try {
             objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
         }
@@ -108,7 +111,7 @@ public class PardQueryHandler
         job.setPlan(plan);
         jobScheduler.updateJob(job.getJobId());
 
-        List<Task> tasks = taskGenerator.generateTasks(plan);
+        List<Task> tasks = taskScheduler.generateTasks(plan);
         if (tasks == null || tasks.isEmpty()) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create tasks for sql: " + sql);

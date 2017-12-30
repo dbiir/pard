@@ -1,8 +1,13 @@
 package cn.edu.ruc.iir.pard.server;
 
+import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.connector.postgresql.PostgresConnector;
+import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
+import cn.edu.ruc.iir.pard.nodekeeper.Keeper;
+import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
+import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
 
 /**
  * pard
@@ -15,6 +20,9 @@ public class PardServer
     private PardRPCServer rpcServer;
     private PardSocketListener socketListener;
     private Connector connector;
+    private Keeper keeper;
+    private JobScheduler jobScheduler;
+    private TaskScheduler taskScheduler;
 
     PardServer(String configurationPath)
     {
@@ -28,8 +36,20 @@ public class PardServer
 
         // todo validate configuration first
 
+        // register node
+        pipeline.addStartupHook(this::registerNode);
+
         // load connector
         pipeline.addStartupHook(this::loadConnector);
+
+        // load node keeper
+        pipeline.addStartupHook(this::loadNodeKeeper);
+
+        // load job scheduler
+        pipeline.addStartupHook(this::loadJobScheduler);
+
+        // load task scheduler
+        pipeline.addStartupHook(this::loadTaskScheduler);
 
         // start rpc server
         pipeline.addStartupHook(this::startRPCServer);
@@ -50,6 +70,14 @@ public class PardServer
         }
     }
 
+    private void registerNode()
+    {
+        SiteDao siteDao = new SiteDao();
+        Site currentSite = new Site();
+        currentSite.setName(configuration.getNodeName());
+        siteDao.add(currentSite, true);
+    }
+
     private void loadConnector()
     {
         this.connector = PostgresConnector.INSTANCE();
@@ -63,8 +91,24 @@ public class PardServer
 
     private void startSocketListener()
     {
-        PardSocketListener socketListener = new PardSocketListener(configuration.getSocketPort());
+        PardSocketListener socketListener = new PardSocketListener(configuration.getSocketPort(),
+                jobScheduler, taskScheduler);
         new Thread(socketListener).start();
+    }
+
+    private void loadNodeKeeper()
+    {
+        this.keeper = Keeper.INSTANCE();
+    }
+
+    private void loadJobScheduler()
+    {
+        this.jobScheduler = JobScheduler.INSTANCE();
+    }
+
+    private void loadTaskScheduler()
+    {
+        this.taskScheduler = TaskScheduler.INSTANCE();
     }
 
     private void stop()

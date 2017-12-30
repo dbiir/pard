@@ -76,4 +76,22 @@ public final class PardUserConfiguration
     {
         return getProperty("pard.connector.driver");
     }
+
+    /**
+     * name:host:ip, name:host:ip, ...
+     * */
+    public String getEtcdServers()
+    {
+        return getProperty("pard.etcd.servers");
+    }
+
+    public String getNettyServers()
+    {
+        return getProperty("pard.netty.servers");
+    }
+
+    public String getRPCServers()
+    {
+        return getProperty("pard.rpc.servers");
+    }
 }

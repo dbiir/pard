@@ -10,13 +10,28 @@ public class CreateSchemaTask
 {
     private final String schemaName;
     private final boolean isNotExists;
+    private String site;
 
     public CreateSchemaTask(
             String schemaName,
             boolean isNotExists)
     {
+        this(schemaName, isNotExists, null);
+    }
+
+    public CreateSchemaTask(
+            String schemaName,
+            boolean isNotExists,
+            String site)
+    {
         this.schemaName = schemaName;
         this.isNotExists = isNotExists;
+        this.site = site;
+    }
+
+    public String getSite()
+    {
+        return site;
     }
 
     public String getSchemaName()

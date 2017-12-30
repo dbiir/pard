@@ -1,4 +1,4 @@
-package cn.edu.ruc.iir.pard.memory;
+package cn.edu.ruc.iir.pard.commons.memory;
 
 import com.google.common.collect.ImmutableList;
 

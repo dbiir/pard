@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.server;
 
 import cn.edu.ruc.iir.pard.communication.rpc.PardRPCService;
+import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.netty.NettyServerBuilder;
@@ -18,11 +19,13 @@ public class PardRPCServer
 {
     private final Logger logger = Logger.getLogger(PardRPCServer.class.getName());
     private final int port;
+    private final Connector connector;
     private Server server;       // rpc server
 
-    public PardRPCServer(int port)
+    public PardRPCServer(int port, Connector connector)
     {
         this.port = port;
+        this.connector = connector;
     }
 
     @Override
@@ -30,7 +33,7 @@ public class PardRPCServer
     {
         ServerBuilder<NettyServerBuilder> serverBuilder =
                 NettyServerBuilder.forPort(port);
-        serverBuilder.addService(new PardRPCService());
+        serverBuilder.addService(new PardRPCService(connector));
         server = serverBuilder.build();
         try {
             server.start();

@@ -1,15 +1,15 @@
 package cn.edu.ruc.iir.pard.server;
 
+import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.scheduler.Job;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
-import cn.edu.ruc.iir.pard.scheduler.Task;
 import cn.edu.ruc.iir.pard.scheduler.TaskGenerator;
 import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
-import cn.edu.ruc.iir.pard.utils.PardResultSet;
 
 import java.io.BufferedReader;
 import java.io.IOException;

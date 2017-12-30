@@ -1,6 +1,8 @@
 package cn.edu.ruc.iir.pard.server;
 
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
+import cn.edu.ruc.iir.pard.connector.postgresql.PostgresConnector;
+import cn.edu.ruc.iir.pard.executor.connector.Connector;
 
 /**
  * pard
@@ -12,6 +14,7 @@ public class PardServer
     private final PardUserConfiguration configuration;
     private PardRPCServer rpcServer;
     private PardSocketListener socketListener;
+    private Connector connector;
 
     PardServer(String configurationPath)
     {
@@ -24,6 +27,9 @@ public class PardServer
         PardStartupPipeline pipeline = new PardStartupPipeline();
 
         // todo validate configuration first
+
+        // load connector
+        pipeline.addStartupHook(this::loadConnector);
 
         // start rpc server
         pipeline.addStartupHook(this::startRPCServer);
@@ -44,9 +50,14 @@ public class PardServer
         }
     }
 
+    private void loadConnector()
+    {
+        this.connector = PostgresConnector.INSTANCE();
+    }
+
     private void startRPCServer()
     {
-        PardRPCServer rpcServer = new PardRPCServer(configuration.getRPCPort());
+        PardRPCServer rpcServer = new PardRPCServer(configuration.getRPCPort(), connector);
         new Thread(rpcServer).start();
     }
 

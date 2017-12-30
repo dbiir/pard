@@ -1,6 +1,6 @@
 package cn.edu.ruc.iir.pard.client;
 
-import cn.edu.ruc.iir.pard.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package cn.edu.ruc.iir.pard.scheduler;
 
+import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.server.PardStartupHook;
-import cn.edu.ruc.iir.pard.utils.PardResultSet;
 
 /**
  * pard task scheduler.

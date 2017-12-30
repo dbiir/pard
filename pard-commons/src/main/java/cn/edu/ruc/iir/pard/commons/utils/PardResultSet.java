@@ -1,6 +1,6 @@
-package cn.edu.ruc.iir.pard.utils;
+package cn.edu.ruc.iir.pard.commons.utils;
 
-import cn.edu.ruc.iir.pard.memory.Block;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
 
 import java.util.ArrayList;
 import java.util.List;

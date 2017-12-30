@@ -1,6 +1,6 @@
-package cn.edu.ruc.iir.pard.utils;
+package cn.edu.ruc.iir.pard.commons.utils;
 
-import cn.edu.ruc.iir.pard.memory.Row;
+import cn.edu.ruc.iir.pard.commons.memory.Row;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package cn.edu.ruc.iir.pard.scheduler;
+package cn.edu.ruc.iir.pard.executor.connector;
 
 /**
  * pard
@@ -7,13 +7,8 @@ package cn.edu.ruc.iir.pard.scheduler;
  */
 public abstract class Task
 {
-    private final String taskId;
+    private String taskId;
     private int nodeId;
-
-    public Task(String taskId)
-    {
-        this.taskId = taskId;
-    }
 
     public int getNodeId()
     {

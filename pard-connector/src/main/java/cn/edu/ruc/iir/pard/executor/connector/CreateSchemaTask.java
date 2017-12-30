@@ -1,4 +1,4 @@
-package cn.edu.ruc.iir.pard.scheduler;
+package cn.edu.ruc.iir.pard.executor.connector;
 
 /**
  * pard
@@ -13,10 +13,8 @@ public class CreateSchemaTask
 
     public CreateSchemaTask(
             String schemaName,
-            boolean isNotExists,
-            String taskId)
+            boolean isNotExists)
     {
-        super(taskId);
         this.schemaName = schemaName;
         this.isNotExists = isNotExists;
     }

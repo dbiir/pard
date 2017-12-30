@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.scheduler;
 
+import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 

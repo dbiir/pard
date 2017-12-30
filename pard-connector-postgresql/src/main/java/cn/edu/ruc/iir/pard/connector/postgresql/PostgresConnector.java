@@ -1,11 +1,12 @@
 package cn.edu.ruc.iir.pard.connector.postgresql;
 
+import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
+import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
-import cn.edu.ruc.iir.pard.scheduler.CreateSchemaTask;
-import cn.edu.ruc.iir.pard.scheduler.CreateTableTask;
-import cn.edu.ruc.iir.pard.scheduler.Task;
-import cn.edu.ruc.iir.pard.sql.tree.ColumnDefinition;
+import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
+import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.Task;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -22,7 +23,17 @@ public class PostgresConnector
 {
     private final ConnectionPool connectionPool;
 
-    public PostgresConnector()
+    private static final class PostgresConnectorHolder
+    {
+        private static final PostgresConnector instance = new PostgresConnector();
+    }
+
+    public static final PostgresConnector INSTANCE()
+    {
+        return PostgresConnectorHolder.instance;
+    }
+
+    private PostgresConnector()
     {
         PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
 
@@ -34,21 +45,22 @@ public class PostgresConnector
     }
 
     @Override
-    public void execute(Task task)
+    public PardResultSet execute(Task task)
     {
         try {
             Connection conn = connectionPool.getConnection();
             if (task instanceof CreateSchemaTask) {
-                executeCreateSchema(conn, (CreateSchemaTask) task);
+                return executeCreateSchema(conn, (CreateSchemaTask) task);
             }
             if (task instanceof CreateTableTask) {
-                executeCreateTable(conn, (CreateTableTask) task);
+                return executeCreateTable(conn, (CreateTableTask) task);
             }
         }
         catch (SQLException e) {
             System.out.println("GET CONNECTION FAILED");
             e.printStackTrace();
         }
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
     @Override
@@ -57,46 +69,53 @@ public class PostgresConnector
         connectionPool.close();
     }
 
-    public void executeCreateSchema(Connection conn, CreateSchemaTask task)
+    public PardResultSet executeCreateSchema(Connection conn, CreateSchemaTask task)
     {
         try {
             Statement statement = conn.createStatement();
             String createSchemaSQL;
             createSchemaSQL = "create schema if not exists " + task.getSchemaName();
-            statement.executeUpdate(createSchemaSQL);
+            int status = statement.executeUpdate(createSchemaSQL);
+            if (status != 0) {
+                return new PardResultSet(PardResultSet.ResultStatus.OK);
+            }
             System.out.println("CREATE SCHEMA SUCCESSFULLY");
         }
         catch (SQLException e) {
             System.out.println("CREATE SCHEMA FAILED");
             e.printStackTrace();
         }
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
-    public void executeCreateTable(Connection conn, CreateTableTask task)
+    public PardResultSet executeCreateTable(Connection conn, CreateTableTask task)
     {
         try {
-            int size = task.getColumnDefinitions().size();
             String createTableSQL = "create table if not exists " + task.getSchemaName() + "." + task.getTableName() + "(";
-            Iterator<ColumnDefinition> it = task.getColumnDefinitions().iterator();
+            Iterator<Column> it = task.getColumnDefinitions().iterator();
             while (it.hasNext()) {
-                ColumnDefinition cd = it.next();
+                Column cd = it.next();
                 //if (cd.getPrimary() == true) {
                 //    createTableSQL = createTableSQL + cd.getName().getValue() + " " + cd.getType() + " primary key ";
                 //}
                 //else {
-                createTableSQL = createTableSQL + cd.getName().getValue() + " " + cd.getType();
+                createTableSQL = createTableSQL + cd.getColumnName() + " " + cd.getDataType();
                 //}
                 createTableSQL = createTableSQL + " ,";
             }
             createTableSQL = createTableSQL.substring(0, createTableSQL.length() - 1);
             createTableSQL = createTableSQL + ")";
             Statement statement = conn.createStatement();
-            statement.executeUpdate(createTableSQL);
+            int status = statement.executeUpdate(createTableSQL);
+            if (status != 0) {
+                return new PardResultSet(PardResultSet.ResultStatus.OK);
+            }
             System.out.println("CREATE TABLE SUCCESSFULLY");
         }
         catch (SQLException e) {
             System.out.println("CREATE TABLE FAILED");
             e.printStackTrace();
         }
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 }

@@ -1,6 +1,6 @@
 // PART OF THE MACHINE SIMULATION. DO NOT CHANGE.
 
-package cn.edu.ruc.iir.pard.commons.util;
+package cn.edu.ruc.iir.pard.commons.utils;
 
 import java.util.Random;
 

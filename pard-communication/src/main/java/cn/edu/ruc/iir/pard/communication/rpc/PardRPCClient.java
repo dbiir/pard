@@ -12,7 +12,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 import static com.google.common.base.MoreObjects.toStringHelper;

@@ -18,11 +18,11 @@
     <dependencies>
         <dependency>
             <groupId>cn.edu.ruc.iir</groupId>
-            <artifactId>pard-optimizer</artifactId>
+            <artifactId>pard-commons</artifactId>
         </dependency>
         <dependency>
             <groupId>cn.edu.ruc.iir</groupId>
-            <artifactId>pard-main</artifactId>
+            <artifactId>pard-catalog</artifactId>
         </dependency>
     </dependencies>
 </project>

@@ -1,7 +1,8 @@
-package cn.edu.ruc.iir.pard.memory;
+package cn.edu.ruc.iir.pard.commons.memory;
 
 import com.google.common.collect.ImmutableList;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -11,7 +12,9 @@ import java.util.List;
  * @author guodong
  */
 public class Block
+        implements Serializable
 {
+    private static final long serialVersionUID = 4306066541526735236L;
     private final ImmutableList<String> columnNames;   // column names in schema
     private final ImmutableList<String> columnTypes;   // column types in schema
     private final int capacity;                        // capacity in bytes

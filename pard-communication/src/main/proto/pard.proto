@@ -6,12 +6,43 @@ option objc_class_prefix = "PARD";
 
 service Pard {
     rpc heartbeat(HeartBeatMsg) returns (HeartBeatMsg) {}
+    rpc createSchema(SchemaMsg) returns (ResponseStatus) {}
+    rpc createTable(TableMsg) returns (ResponseStatus) {}
+    rpc insertInto(InsertMsg) returns (ResponseStatus) {}
 }
 
 message HeartBeatMsg {
     int32 beatType = 1;
     int32 nodeId = 2;
     string message = 3;
+}
+
+message SchemaMsg {
+    string name = 1;
+    bool isNotExists = 2;
+}
+
+message TableMsg {
+    string name = 1;
+    string schemaName = 2;
+    bool isNotExists = 3;
+    repeated ColumnMsg columns = 4;
+}
+
+message ColumnMsg {
+    string columnName = 1;
+    int32 columnType = 2;
+    int32 columnLength = 3;
+    bool isPrimary = 4;
+}
+
+message InsertMsg {
+    repeated ColumnMsg columns = 1;
+    repeated RowMsg rows = 2;
+}
+
+message RowMsg {
+    repeated string columnValues = 2;     // column values
 }
 
 message ResponseStatus {

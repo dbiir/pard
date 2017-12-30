@@ -42,9 +42,14 @@ public final class PardUserConfiguration
         }
     }
 
-    public int getServerPort()
+    public String getNodeName()
     {
-        return Integer.parseInt(getProperty("pard.server.port"));
+        return getProperty("pard.name");
+    }
+
+    public int getRPCPort()
+    {
+        return Integer.parseInt(getProperty("pard.rpc.port"));
     }
 
     public int getSocketPort()

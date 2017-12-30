@@ -20,6 +20,10 @@
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-connector</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-catalog</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.zaxxer</groupId>

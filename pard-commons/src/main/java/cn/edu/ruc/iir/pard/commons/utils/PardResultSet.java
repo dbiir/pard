@@ -1,7 +1,8 @@
-package cn.edu.ruc.iir.pard.utils;
+package cn.edu.ruc.iir.pard.commons.utils;
 
-import cn.edu.ruc.iir.pard.memory.Block;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,10 +12,31 @@ import java.util.List;
  * @author guodong
  */
 public class PardResultSet
+        implements Serializable
 {
+    private static final long serialVersionUID = 8184501795566412803L;
+
     public enum ResultStatus
     {
-        OK, PARSING_ERR, EXEC_ERR
+        OK(""),
+        BEGIN_ERR("Create job error"),
+        PARSING_ERR("Parse error"),
+        PLANNING_ERR("Plan error"),
+        SCHEDULING_ERR("Schedule error"),
+        EXECUTING_ERR("Execution error");
+
+        private String msg;
+
+        ResultStatus(String msg)
+        {
+            this.msg = msg;
+        }
+
+        @Override
+        public String toString()
+        {
+            return this.msg;
+        }
     }
 
     private List<Block> blocks;

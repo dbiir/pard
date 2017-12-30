@@ -22,16 +22,14 @@ public class ConnectionPool
             String connectorPassword)
     {
         HikariConfig config = new HikariConfig();
-        /*
         config.setDriverClassName(connectorDriver);
         config.setJdbcUrl(connectorHost);
         config.setUsername(connectorUser);
         config.setPassword(connectorPassword);
-        */
-        config.setDriverClassName("org.postgresql.ds.PGSimpleDataSource");
-        config.setUsername("pard");
-        config.setPassword("pard500");
-        config.setJdbcUrl("jdbc:postgresql://localhost:5432/parddb");
+//        config.setDriverClassName("org.postgresql.ds.PGSimpleDataSource");
+//        config.setUsername("pard");
+//        config.setPassword("pard500");
+//        config.setJdbcUrl("jdbc:postgresql://localhost:5432/parddb");
         config.setMinimumIdle(10); // minimum pool size
         config.setMaximumPoolSize(50); //maximum pool size
         dataSource = new HikariDataSource(config);

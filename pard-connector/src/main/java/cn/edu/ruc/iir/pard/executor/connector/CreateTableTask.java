@@ -1,6 +1,6 @@
-package cn.edu.ruc.iir.pard.scheduler;
+package cn.edu.ruc.iir.pard.executor.connector;
 
-import cn.edu.ruc.iir.pard.sql.tree.ColumnDefinition;
+import cn.edu.ruc.iir.pard.catalog.Column;
 
 import java.util.List;
 
@@ -15,16 +15,14 @@ public class CreateTableTask
     private final String schemaName;
     private final String tableName;
     private final boolean isNotExists;
-    private final List<ColumnDefinition> columnDefinitions;
+    private final List<Column> columnDefinitions;
 
     public CreateTableTask(
             String schemaName,
             String tableName,
             boolean isNotExists,
-            List<ColumnDefinition> columnDefinitions,
-            int nodeId)
+            List<Column> columnDefinitions)
     {
-        super(nodeId);
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.isNotExists = isNotExists;
@@ -46,7 +44,7 @@ public class CreateTableTask
         return isNotExists;
     }
 
-    public List<ColumnDefinition> getColumnDefinitions()
+    public List<Column> getColumnDefinitions()
     {
         return columnDefinitions;
     }

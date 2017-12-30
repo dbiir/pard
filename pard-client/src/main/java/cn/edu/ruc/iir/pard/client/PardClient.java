@@ -1,6 +1,6 @@
 package cn.edu.ruc.iir.pard.client;
 
-import cn.edu.ruc.iir.pard.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -45,16 +45,11 @@ public class PardClient
                         outWriter.newLine();
                         outWriter.flush();
                         PardResultSet resultSet = (PardResultSet) inputStream.readObject();
-                        switch (resultSet.getStatus()) {
-                            case PARSING_ERR:
-                                System.out.println("Parsing error");
-                                break;
-                            case EXEC_ERR:
-                                System.out.println("Execution error");
-                                break;
-                            case OK:
-                                System.out.println(resultSet.toString());
-                                break;
+                        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+                            System.out.println(resultSet.toString());
+                        }
+                        else {
+                            System.out.println(resultSet.getStatus().toString());
                         }
                     }
                 }

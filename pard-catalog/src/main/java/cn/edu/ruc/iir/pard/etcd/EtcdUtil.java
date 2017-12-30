@@ -12,7 +12,7 @@ import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.catalog.Statics;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.catalog.User;
-import cn.edu.ruc.iir.pard.commons.util.Lib;
+import cn.edu.ruc.iir.pard.commons.utils.Lib;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.data.KeyValue;

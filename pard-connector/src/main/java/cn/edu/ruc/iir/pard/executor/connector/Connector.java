@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.executor.connector;
 
-import cn.edu.ruc.iir.pard.scheduler.Task;
+import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+
 /**
  * pard
  *
@@ -8,7 +9,7 @@ import cn.edu.ruc.iir.pard.scheduler.Task;
  */
 public interface Connector
 {
-    void execute(Task task);
+    PardResultSet execute(Task task);
 
     void close();
 }

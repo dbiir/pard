@@ -4,6 +4,7 @@ import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,6 +25,7 @@ public class Job
     {
         this.jobId = jobId;
         this.jobState = JobScheduler.JobState.BEGIN;
+        this.tasks = new ArrayList<>();
     }
 
     public String getJobId()
@@ -74,5 +76,10 @@ public class Job
     public void setJobState(JobScheduler.JobState jobState)
     {
         this.jobState = jobState;
+    }
+
+    public List<Task> getTasks()
+    {
+        return tasks;
     }
 }

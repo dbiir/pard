@@ -37,10 +37,16 @@ public abstract class Plan
     {
         this.statment = statment;
     }
+
     public abstract ErrorMessage semanticAnalysis();
 
     public Map<String, Object> getDistributionHints()
     {
         return null;
+    }
+
+    public boolean afterExecution(boolean executeSuccess)
+    {
+        return true;
     }
 }

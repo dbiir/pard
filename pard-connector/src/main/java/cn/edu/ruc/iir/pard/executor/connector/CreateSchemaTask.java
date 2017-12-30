@@ -10,7 +10,6 @@ public class CreateSchemaTask
 {
     private final String schemaName;
     private final boolean isNotExists;
-    private String site;
 
     public CreateSchemaTask(
             String schemaName,
@@ -27,11 +26,6 @@ public class CreateSchemaTask
         this.schemaName = schemaName;
         this.isNotExists = isNotExists;
         this.site = site;
-    }
-
-    public String getSite()
-    {
-        return site;
     }
 
     public String getSchemaName()

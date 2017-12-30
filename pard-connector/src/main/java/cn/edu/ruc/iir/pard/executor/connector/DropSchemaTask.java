@@ -10,7 +10,6 @@ public class DropSchemaTask
 {
     private final String schema;
     private final boolean isExists;
-    private String site;
 
     public DropSchemaTask(String schema, boolean isExists)
     {
@@ -32,10 +31,5 @@ public class DropSchemaTask
     public boolean isExists()
     {
         return isExists;
-    }
-
-    public String getSite()
-    {
-        return site;
     }
 }

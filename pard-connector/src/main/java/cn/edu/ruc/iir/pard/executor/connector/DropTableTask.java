@@ -10,7 +10,6 @@ public class DropTableTask
 {
     private final String schemaName;
     private final String tableName;
-    private String site;
 
     public DropTableTask(String schemaName, String tableName)
     {
@@ -32,10 +31,5 @@ public class DropTableTask
     public String getTableName()
     {
         return tableName;
-    }
-
-    public String getSite()
-    {
-        return site;
     }
 }

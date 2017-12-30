@@ -13,8 +13,4 @@ public abstract class GDDPlan
     {
         return true;
     }
-    public boolean afterExecution(boolean executeSuccess)
-    {
-        return true;
-    }
 }

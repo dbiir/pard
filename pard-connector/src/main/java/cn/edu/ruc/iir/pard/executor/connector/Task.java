@@ -8,10 +8,10 @@ package cn.edu.ruc.iir.pard.executor.connector;
 public abstract class Task
 {
     private String taskId;
-    private int nodeId;
+    protected String site;
 
-    public int getNodeId()
+    public String getSite()
     {
-        return nodeId;
+        return this.site;
     }
 }

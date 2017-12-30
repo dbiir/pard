@@ -7,6 +7,7 @@ import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 
 import java.sql.Connection;
@@ -55,6 +56,9 @@ public class PostgresConnector
             }
             if (task instanceof CreateTableTask) {
                 return executeCreateTable(conn, (CreateTableTask) task);
+            }
+            if (task instanceof InsertIntoTask) {
+                return executeInsertInto(conn, (InsertIntoTask) task);
             }
         }
         catch (SQLException e) {
@@ -119,6 +123,11 @@ public class PostgresConnector
             e.printStackTrace();
         }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+    }
+
+    public PardResultSet executeInsertInto(Connection conn, InsertIntoTask task)
+    {
+        return new PardResultSet(PardResultSet.ResultStatus.OK);
     }
 
     private String getTypeString(int type, int length)

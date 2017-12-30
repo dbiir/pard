@@ -34,22 +34,36 @@ public class PardPlanner
             if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
                 return plan;
             }
-            return null;
         }
         if (statement instanceof CreateTable) {
             // create table
-            return new TableCreationPlan(statement);
+            TableCreationPlan plan = new TableCreationPlan(statement);
+            ErrorMessage errorMessage = plan.semanticAnalysis();
+            if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
+                return plan;
+            }
         }
         if (statement instanceof Use) {
-            return new UsePlan(statement);
+            UsePlan plan = new UsePlan(statement);
+            ErrorMessage errorMessage = plan.semanticAnalysis();
+            if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
+                return plan;
+            }
         }
         if (statement instanceof DropSchema) {
-            return new SchemaDropPlan(statement);
+            SchemaDropPlan plan = new SchemaDropPlan(statement);
+            ErrorMessage errorMessage = plan.semanticAnalysis();
+            if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
+                return plan;
+            }
         }
         if (statement instanceof DropTable) {
-            return new TableDropPlan(statement);
+            TableDropPlan plan = new TableDropPlan(statement);
+            ErrorMessage errorMessage = plan.semanticAnalysis();
+            if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
+                return plan;
+            }
         }
-
         return null;
     }
 }

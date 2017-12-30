@@ -252,6 +252,7 @@ public class TaskScheduler
                     return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
                 }
             }
+            plan.afterExecution(true);
         }
         return new PardResultSet(PardResultSet.ResultStatus.OK);
     }

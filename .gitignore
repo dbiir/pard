@@ -36,3 +36,6 @@ target/
 
 #Test ng
 test-output
+
+# local test
+test/

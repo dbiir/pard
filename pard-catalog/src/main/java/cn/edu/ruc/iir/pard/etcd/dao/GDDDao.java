@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.etcd.dao;
 
 import cn.edu.ruc.iir.pard.catalog.GDD;
 import cn.edu.ruc.iir.pard.etcd.EtcdUtil;
+
 /**
  * pard: GDDDao
  * The data access object of GDD.
@@ -13,11 +14,13 @@ public class GDDDao
 {
     private static GDD gdd = null;
     private static boolean watchStart = false;
+
     private static void initWatch()
     {
         EtcdUtil.addWatch();
         watchStart = true;
     }
+
     public GDDDao()
     {
         if (!watchStart) {
@@ -27,6 +30,7 @@ public class GDDDao
                 watchStart = false; }));
         }
     }
+
     public GDD load()
     {
         if (gdd == null) {
@@ -41,10 +45,12 @@ public class GDDDao
 
         return gdd;
     }
+
     public boolean persist()
     {
         return EtcdUtil.transGddToEtcd(gdd);
     }
+
     public boolean persistGDD(GDD gdd)
     {
         return EtcdUtil.transGddToEtcd(gdd);

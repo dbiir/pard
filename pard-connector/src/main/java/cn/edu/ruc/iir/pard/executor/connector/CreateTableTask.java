@@ -16,7 +16,6 @@ public class CreateTableTask
     private final String tableName;
     private final boolean isNotExists;
     private final List<Column> columnDefinitions;
-    private String site;
 
     public CreateTableTask(
             String schemaName,

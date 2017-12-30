@@ -26,6 +26,7 @@ public class SqlParserTest
         System.out.println(statement.toString());
         assertEquals(statement.toString(), expected.toString());
     }
+
     @Test
     public void testDropSchema()
     {
@@ -33,6 +34,7 @@ public class SqlParserTest
         Statement statement = parser.createStatement(sql);
         System.out.println(statement.toString());
     }
+
     @Test
     public void testUse()
     {
@@ -40,6 +42,7 @@ public class SqlParserTest
         Statement statement = parser.createStatement(sql);
         System.out.println(statement.toString());
     }
+
     @Test
     public void testCreateTableVP()
     {

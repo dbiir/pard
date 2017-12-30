@@ -9,6 +9,8 @@ service Pard {
     rpc createSchema(SchemaMsg) returns (ResponseStatus) {}
     rpc createTable(TableMsg) returns (ResponseStatus) {}
     rpc insertInto(InsertMsg) returns (ResponseStatus) {}
+    rpc dropSchema(SchemaMsg) returns (ResponseStatus) {}
+    rpc dropTable(TableMsg) returns (ResponseStatus) {}
 }
 
 message HeartBeatMsg {

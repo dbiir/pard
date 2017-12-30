@@ -7,6 +7,8 @@ import cn.edu.ruc.iir.pard.communication.proto.PardProto;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
+import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
 import io.grpc.stub.StreamObserver;
 
@@ -57,6 +59,21 @@ public class PardRPCService
     }
 
     @Override
+    public void dropSchema(PardProto.SchemaMsg schemaMsg,
+                           StreamObserver<PardProto.ResponseStatus> responseStatusStreamObserver)
+    {
+        PardProto.ResponseStatus.Builder responseStatusBuilder
+                = PardProto.ResponseStatus.newBuilder();
+        DropSchemaTask task = new DropSchemaTask(
+                schemaMsg.getName(),
+                schemaMsg.getIsNotExists());
+        PardResultSet resultSet = connector.execute(task);
+        responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
+        responseStatusStreamObserver.onNext(responseStatusBuilder.build());
+        responseStatusStreamObserver.onCompleted();
+    }
+
+    @Override
     public void createTable(PardProto.TableMsg tableMsg,
                             StreamObserver<PardProto.ResponseStatus> responseStatusStreamObserver)
     {
@@ -76,6 +93,19 @@ public class PardRPCService
                 tableMsg.getName(),
                 tableMsg.getIsNotExists(),
                 columns);
+        PardResultSet resultSet = connector.execute(task);
+        responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
+        responseStatusStreamObserver.onNext(responseStatusBuilder.build());
+        responseStatusStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void dropTable(PardProto.TableMsg tableMsg,
+                          StreamObserver<PardProto.ResponseStatus> responseStatusStreamObserver)
+    {
+        PardProto.ResponseStatus.Builder responseStatusBuilder
+                = PardProto.ResponseStatus.newBuilder();
+        DropTableTask task = new DropTableTask(tableMsg.getSchemaName(), tableMsg.getName());
         PardResultSet resultSet = connector.execute(task);
         responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());

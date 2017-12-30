@@ -34,4 +34,14 @@ public class InsertIntoTask
     {
         return values;
     }
+
+    public String getSchemaName()
+    {
+        return schemaName;
+    }
+
+    public String getTableName()
+    {
+        return tableName;
+    }
 }

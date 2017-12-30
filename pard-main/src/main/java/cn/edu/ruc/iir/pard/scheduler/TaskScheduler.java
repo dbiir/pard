@@ -234,6 +234,17 @@ public class TaskScheduler
                         statusL.add(status);
                     }
                 }
+                // insert task
+                if (task instanceof InsertIntoTask) {
+                    String site = task.getSite();
+                    ServerInfo info = nodeKeeper.getRpcServers().get(site);
+                    if (info != null) {
+                        PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
+                        int status = client.insertInto((InsertIntoTask) task);
+                        client.shutdown();
+                        statusL.add(status);
+                    }
+                }
             }
 
             for (int status : statusL) {

@@ -7,6 +7,7 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -148,6 +149,45 @@ public class PardRPCClient
 
         try {
             receiving = blockingStub.dropTable(tableMsg);
+        }
+        catch (StatusRuntimeException e) {
+            receiving = PardProto.ResponseStatus.newBuilder()
+                    .setStatus(0)
+                    .build();
+        }
+
+        logger.info("RPC call: " + task);
+
+        return receiving.getStatus();
+    }
+
+    public int insertInto(InsertIntoTask task)
+    {
+        PardProto.ResponseStatus receiving;
+        PardProto.InsertMsg.Builder insertMsgBuilder = PardProto.InsertMsg.newBuilder()
+                .setSchemaName(task.getSchemaName())
+                .setTableName(task.getTableName());
+
+        for (Column column : task.getColumns()) {
+            PardProto.ColumnMsg columnMsg = PardProto.ColumnMsg.newBuilder()
+                    .setColumnName(column.getColumnName())
+                    .setColumnType(column.getDataType())
+                    .setColumnLength(column.getLen())
+                    .setIsPrimary(column.getKey() == 1)
+                    .build();
+            insertMsgBuilder.addColumns(columnMsg);
+        }
+
+        for (String[] v : task.getValues()) {
+            PardProto.RowMsg.Builder rowMsgBuilder = PardProto.RowMsg.newBuilder();
+            for (String c : v) {
+                rowMsgBuilder.addColumnValues(c);
+            }
+            insertMsgBuilder.addRows(rowMsgBuilder.build());
+        }
+
+        try {
+            receiving = blockingStub.insertInto(insertMsgBuilder.build());
         }
         catch (StatusRuntimeException e) {
             receiving = PardProto.ResponseStatus.newBuilder()

@@ -16,6 +16,7 @@ public class CreateTableTask
     private final String tableName;
     private final boolean isNotExists;
     private final List<Column> columnDefinitions;
+    private String site;
 
     public CreateTableTask(
             String schemaName,
@@ -23,10 +24,21 @@ public class CreateTableTask
             boolean isNotExists,
             List<Column> columnDefinitions)
     {
+        this(schemaName, tableName, isNotExists, columnDefinitions, null);
+    }
+
+    public CreateTableTask(
+            String schemaName,
+            String tableName,
+            boolean isNotExists,
+            List<Column> columnDefinitions,
+            String site)
+    {
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.isNotExists = isNotExists;
         this.columnDefinitions = columnDefinitions;
+        this.site = site;
     }
 
     public String getSchemaName()

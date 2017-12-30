@@ -112,12 +112,14 @@ public class PardQueryHandler
         jobScheduler.updateJob(job.getJobId());
 
         List<Task> tasks = taskScheduler.generateTasks(plan);
-        if (tasks == null || tasks.isEmpty()) {
+        if (tasks == null) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create tasks for sql: " + sql);
             return new PardResultSet(PardResultSet.ResultStatus.SCHEDULING_ERR);
         }
-        tasks.forEach(job::addTask);
+        if (!tasks.isEmpty()) {
+            tasks.forEach(job::addTask);
+        }
         jobScheduler.updateJob(job.getJobId());
 
         PardResultSet resultSet = taskScheduler.executeJob(job);

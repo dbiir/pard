@@ -12,11 +12,15 @@ import java.util.List;
 public class InsertIntoTask
         extends Task
 {
+    private final String schemaName;
+    private final String tableName;
     private final List<Column> columns;
     private final String[][] values;
 
-    public InsertIntoTask(List<Column> columns, String[][] values)
+    public InsertIntoTask(String schemaName, String tableName, List<Column> columns, String[][] values)
     {
+        this.schemaName = schemaName;
+        this.tableName = tableName;
         this.columns = columns;
         this.values = values;
     }

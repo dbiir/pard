@@ -239,4 +239,19 @@ public class TableCreationPlan
     {
         return alreadyDone;
     }
+
+    public String getTableName()
+    {
+        return tableName;
+    }
+
+    public String getSchemaName()
+    {
+        return schemaName;
+    }
+
+    public boolean isNotExists()
+    {
+        return isNotExists;
+    }
 }

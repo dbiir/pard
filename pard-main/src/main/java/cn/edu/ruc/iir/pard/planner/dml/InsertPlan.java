@@ -46,7 +46,7 @@ public class InsertPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
-        distributionHints = new HashMap<String, Object>();
+        distributionHints = new HashMap<>();
         colList = new ArrayList<Column>();
         Statement statement = this.getStatment();
         Schema schema = null;
@@ -183,5 +183,15 @@ public class InsertPlan
     public Map<String, Object> getDistributionHints()
     {
         return this.distributionHints;
+    }
+
+    public String getSchemaName()
+    {
+        return schemaName;
+    }
+
+    public String getTableName()
+    {
+        return tableName;
     }
 }

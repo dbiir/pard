@@ -1,20 +1,30 @@
 package cn.edu.ruc.iir.pard.scheduler;
 
+import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
+import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
+import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.nodekeeper.Keeper;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.SchemaCreationPlan;
+import cn.edu.ruc.iir.pard.planner.ddl.SchemaDropPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
+import cn.edu.ruc.iir.pard.planner.ddl.TableDropPlan;
+import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.server.PardStartupHook;
+import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.Row;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -57,9 +67,15 @@ public class TaskScheduler
     public List<Task> generateTasks(Plan plan)
     {
         Set<String> sites = siteDao.listNodes();
-        int siteNum = sites.size();
-        List<Task> tasks = new ArrayList<>();
+
+        // use plan
+        if (plan instanceof UsePlan) {
+            return ImmutableList.of();
+        }
+
+        // schema creation plan
         if (plan instanceof SchemaCreationPlan) {
+            List<Task> tasks = new ArrayList<>();
             SchemaCreationPlan schemaCreationPlan = (SchemaCreationPlan) plan;
             for (String site : sites) {
                 CreateSchemaTask task = new CreateSchemaTask(
@@ -68,19 +84,89 @@ public class TaskScheduler
                         site);
                 tasks.add(task);
             }
+            return ImmutableList.copyOf(tasks);
         }
+
+        // schema drop plan
+        if (plan instanceof SchemaDropPlan) {
+            List<Task> tasks = new ArrayList<>();
+            SchemaDropPlan schemaDropPlan = (SchemaDropPlan) plan;
+            for (String site : sites) {
+                DropSchemaTask task = new DropSchemaTask(schemaDropPlan.getSchemaName(),
+                        schemaDropPlan.isExists(),
+                        site);
+                tasks.add(task);
+            }
+            return ImmutableList.copyOf(tasks);
+        }
+
+        // table creation plan
         if (plan instanceof TableCreationPlan) {
+            List<Task> tasks = new ArrayList<>();
             TableCreationPlan tableCreationPlan = (TableCreationPlan) plan;
             if (tableCreationPlan.isAlreadyDone()) {
                 return ImmutableList.of();
             }
+            Map<String, Object> partitionMap = plan.getDistributionHints();
+            String tableName = tableCreationPlan.getTableName();
+            String schemaName = tableCreationPlan.getSchemaName();
+            boolean isNotExists = tableCreationPlan.isNotExists();
+            for (String site : partitionMap.keySet()) {
+                List<Column> columns = (List<Column>) partitionMap.get(site);
+                CreateTableTask task = new CreateTableTask(
+                        schemaName,
+                        tableName,
+                        isNotExists,
+                        columns,
+                        site);
+                tasks.add(task);
+            }
+            return ImmutableList.copyOf(tasks);
+        }
 
+        // table drop plan
+        if (plan instanceof TableDropPlan) {
+            List<Task> tasks = new ArrayList<>();
+            return ImmutableList.copyOf(tasks);
         }
+
+        // insert plan
         if (plan instanceof InsertPlan) {
+            List<Task> tasks = new ArrayList<>();
+            InsertPlan insertPlan = (InsertPlan) plan;
+            Map<String, Object> partitionMap = plan.getDistributionHints();
+            String tableName = insertPlan.getTableName();
+            String schemaName = insertPlan.getSchemaName();
+            List<Column> columns = insertPlan.getColList();
+            int columnSize = columns.size();
+            for (String site : partitionMap.keySet()) {
+                List<Row> rows = (List<Row>) partitionMap.get(site);
+                int rowSize = rows.size();
+                String[][] rowsStr = new String[rowSize][];
+                int rowIndex = 0;
+                for (Row row : rows) {
+                    String[] rowStr = new String[columnSize];
+                    int colIndex = 0;
+                    for (Expression expression : row.getItems()) {
+                        rowStr[colIndex] = expression.toString();
+                        colIndex++;
+                    }
+                    rowsStr[rowIndex] = rowStr;
+                    rowIndex++;
+                }
+                InsertIntoTask task = new InsertIntoTask(schemaName, tableName, columns, rowsStr);
+                tasks.add(task);
+            }
+            return ImmutableList.copyOf(tasks);
         }
+
+        // query plan
         if (plan instanceof QueryPlan) {
+            List<Task> tasks = new ArrayList<>();
+            return ImmutableList.copyOf(tasks);
         }
-        return ImmutableList.copyOf(tasks);
+
+        return null;
     }
 
     public PardResultSet executeJob(Job job)

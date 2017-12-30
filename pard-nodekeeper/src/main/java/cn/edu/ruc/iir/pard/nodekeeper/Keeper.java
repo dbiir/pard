@@ -23,7 +23,8 @@ public class Keeper
         private static final Keeper instance = new Keeper();
     }
 
-    public static final Keeper INSTANCE() {
+    public static final Keeper INSTANCE()
+    {
         return KeeperHolder.instance;
     }
 

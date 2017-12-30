@@ -8,6 +8,7 @@ import cn.edu.ruc.iir.pard.catalog.GddUtil;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.catalog.Table;
+import cn.edu.ruc.iir.pard.etcd.dao.GDDDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
@@ -27,11 +28,14 @@ import cn.edu.ruc.iir.pard.sql.tree.TableHRangePartitioner;
 import cn.edu.ruc.iir.pard.sql.tree.TableVPartitioner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TableCreationPlan
         extends TablePlan
 {
+    private Map<String, Object> distributionHints;
     private CreateTable stmt = null;
     private String tableName = null;
     private String schemaName = null;
@@ -44,6 +48,7 @@ public class TableCreationPlan
         super(stmt);
     }
 
+    private List<Column> colList;
     @Override
     public boolean beforeExecution()
     {
@@ -74,6 +79,8 @@ public class TableCreationPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        colList = new ArrayList<Column>();
+        distributionHints = new HashMap<String, Object>();
         Statement statement = this.getStatment();
         if (!(statement instanceof CreateTable)) {
             return ErrorMessage.throwMessage(ErrCode.ParseError, "Create Table Statement");
@@ -143,6 +150,7 @@ public class TableCreationPlan
             column.setDataType(dt.getType());
             column.setLen(dt.getLength());
             column.setKey(cd.isPrimary() ? 1 : 0);
+            colList.add(column);
             table.getColumns().put(column.getColumnName(), column);
         }
 
@@ -202,6 +210,12 @@ public class TableCreationPlan
             // TODO: 此处应检查condition中左值和右值的类型
             table.getFragment().put(partitionName, frag);
         }
+        Map<String, Site> siteMap = (new GDDDao()).load().getSiteMap();
+
+        for (String key : siteMap.keySet()) {
+            Site site = siteMap.get(key);
+            distributionHints.put(site.getName(), colList);
+        }
         return ErrorMessage.getOKMessage();
     }
 
@@ -253,5 +267,14 @@ public class TableCreationPlan
     public boolean isNotExists()
     {
         return isNotExists;
+    }
+
+    public Table getTable()
+    {
+        return table;
+    }
+    public Map<String, Object> getDistributionHints()
+    {
+        return distributionHints;
     }
 }

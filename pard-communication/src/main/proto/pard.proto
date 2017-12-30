@@ -37,8 +37,10 @@ message ColumnMsg {
 }
 
 message InsertMsg {
-    repeated ColumnMsg columns = 1;
-    repeated RowMsg rows = 2;
+    string schemaName = 1;
+    string tableName = 2;
+    repeated ColumnMsg columns = 3;
+    repeated RowMsg rows = 4;
 }
 
 message RowMsg {

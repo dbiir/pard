@@ -108,7 +108,10 @@ public class PardRPCService
             rows[index] = row;
             index++;
         }
-        InsertIntoTask task = new InsertIntoTask(columns, rows);
+        InsertIntoTask task = new InsertIntoTask(
+                insertMsg.getSchemaName(),
+                insertMsg.getTableName(),
+                columns, rows);
         PardResultSet resultSet = connector.execute(task);
         responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());

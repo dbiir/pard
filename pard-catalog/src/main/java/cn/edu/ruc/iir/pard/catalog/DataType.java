@@ -89,6 +89,7 @@ public class DataType
         }
         return null;
     }
+
     private int type;
     private int length;
     public DataType(int type, int len)

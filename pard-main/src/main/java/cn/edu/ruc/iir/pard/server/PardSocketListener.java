@@ -29,6 +29,7 @@ public class PardSocketListener
     public void run()
     {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
+            logger.info("Pard socket server started at port " + port);
             while (!stopFlag) {
                 Socket socket = serverSocket.accept();
                 executorService.submit(new PardQueryHandler(socket));

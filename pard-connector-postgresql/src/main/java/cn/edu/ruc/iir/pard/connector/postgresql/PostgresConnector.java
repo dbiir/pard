@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.connector.postgresql;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
@@ -74,7 +75,7 @@ public class PostgresConnector
         try {
             Statement statement = conn.createStatement();
             String createSchemaSQL;
-            createSchemaSQL = "create schema if not exists " + task.getSchemaName();
+            createSchemaSQL = "create schema " + task.getSchemaName();
             int status = statement.executeUpdate(createSchemaSQL);
             if (status != 0) {
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
@@ -95,16 +96,17 @@ public class PostgresConnector
             Iterator<Column> it = task.getColumnDefinitions().iterator();
             while (it.hasNext()) {
                 Column cd = it.next();
-                //if (cd.getPrimary() == true) {
-                //    createTableSQL = createTableSQL + cd.getName().getValue() + " " + cd.getType() + " primary key ";
-                //}
-                //else {
-                createTableSQL = createTableSQL + cd.getColumnName() + " " + cd.getDataType();
-                //}
+                if (cd.getKey() == 1) {
+                    createTableSQL = createTableSQL + cd.getColumnName() + " " + getTypeString(cd.getDataType(), cd.getLen()) + " primary key ";
+                }
+                else {
+                    createTableSQL = createTableSQL + cd.getColumnName() + " " + getTypeString(cd.getDataType(), cd.getLen());
+                }
                 createTableSQL = createTableSQL + " ,";
             }
             createTableSQL = createTableSQL.substring(0, createTableSQL.length() - 1);
             createTableSQL = createTableSQL + ")";
+            System.out.println(createTableSQL);
             Statement statement = conn.createStatement();
             int status = statement.executeUpdate(createTableSQL);
             if (status != 0) {
@@ -117,5 +119,20 @@ public class PostgresConnector
             e.printStackTrace();
         }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+    }
+
+    private String getTypeString(int type, int length)
+    {
+        if (type == DataType.INT.getType()) {
+            return "int";
+        }
+        if (type == DataType.FLOAT.getType()) {
+            return "float";
+        }
+        if (type == DataType.CHAR.getType()) {
+            return "char(" + length + ")";
+        }
+        // todo add more types
+        return null;
     }
 }

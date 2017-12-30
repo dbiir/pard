@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.commons.utils;
 
 import cn.edu.ruc.iir.pard.commons.memory.Block;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +12,10 @@ import java.util.List;
  * @author guodong
  */
 public class PardResultSet
+        implements Serializable
 {
+    private static final long serialVersionUID = 8184501795566412803L;
+
     public enum ResultStatus
     {
         OK(""),

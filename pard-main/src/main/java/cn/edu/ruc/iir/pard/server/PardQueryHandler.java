@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.server;
 
+import cn.edu.ruc.iir.pard.commons.exception.ParsingException;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
@@ -32,16 +33,6 @@ public class PardQueryHandler
     private Logger logger = Logger.getLogger("pard server");
     private JobScheduler jobScheduler = JobScheduler.INSTANCE();
     private ObjectOutputStream objectOutputStream;
-
-    {
-        try {
-            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private SqlParser sqlParser = new SqlParser();
     private PardPlanner planner = new PardPlanner();
     private TaskGenerator taskGenerator = new TaskGenerator();
@@ -50,6 +41,12 @@ public class PardQueryHandler
     public PardQueryHandler(Socket socket)
     {
         this.socket = socket;
+        try {
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
         // todo fill map with nodes
     }
 
@@ -87,8 +84,13 @@ public class PardQueryHandler
         }
         job.setSql(sql);
         jobScheduler.updateJob(job.getJobId());
-
-        Statement statement = sqlParser.createStatement(sql);
+        Statement statement;
+        try {
+            statement = sqlParser.createStatement(sql);
+        }
+        catch (ParsingException e) {
+            return new PardResultSet(PardResultSet.ResultStatus.PARSING_ERR);
+        }
         if (statement == null) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create statement for sql: " + sql);

@@ -8,7 +8,7 @@ service Pard {
     rpc heartbeat(HeartBeatMsg) returns (HeartBeatMsg) {}
     rpc createSchema(SchemaMsg) returns (ResponseStatus) {}
     rpc createTable(TableMsg) returns (ResponseStatus) {}
-    rpc insertInto(RowMsg) returns (ResponseStatus) {}
+    rpc insertInto(InsertMsg) returns (ResponseStatus) {}
 }
 
 message HeartBeatMsg {
@@ -36,9 +36,13 @@ message ColumnMsg {
     bool isPrimary = 4;
 }
 
+message InsertMsg {
+    repeated ColumnMsg columns = 1;
+    repeated RowMsg rows = 2;
+}
+
 message RowMsg {
-    repeated string columnName = 1;      // insert columns
-    repeated string columnValue = 2;     // column values
+    repeated string columnValues = 2;     // column values
 }
 
 message ResponseStatus {

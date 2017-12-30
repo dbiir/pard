@@ -29,7 +29,12 @@ public class PardPlanner
         }
         if (statement instanceof CreateSchema) {
             // create schema
-            return new SchemaCreationPlan(statement);
+            SchemaCreationPlan plan = new SchemaCreationPlan(statement);
+            ErrorMessage errorMessage = plan.semanticAnalysis();
+            if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
+                return plan;
+            }
+            return null;
         }
         if (statement instanceof CreateTable) {
             // create table

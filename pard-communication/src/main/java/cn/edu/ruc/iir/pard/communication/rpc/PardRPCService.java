@@ -83,12 +83,32 @@ public class PardRPCService
     }
 
     @Override
-    public void insertInto(PardProto.RowMsg rowMsg,
+    public void insertInto(PardProto.InsertMsg insertMsg,
                            StreamObserver<PardProto.ResponseStatus> responseStatusStreamObserver)
     {
         PardProto.ResponseStatus.Builder responseStatusBuilder
                 = PardProto.ResponseStatus.newBuilder();
-        InsertIntoTask task = new InsertIntoTask();
+        List<Column> columns = new ArrayList<>();
+        for (PardProto.ColumnMsg columnMsg : insertMsg.getColumnsList()) {
+            Column column = new Column();
+            column.setColumnName(columnMsg.getColumnName());
+            column.setDataType(columnMsg.getColumnType());
+            column.setLen(columnMsg.getColumnLength());
+            columns.add(column);
+        }
+        int columnSize = columns.size();
+        int rowSize = insertMsg.getRowsList().size();
+        String[][] rows = new String[rowSize][columnSize];
+        int index = 0;
+        for (PardProto.RowMsg rowMsg : insertMsg.getRowsList()) {
+            String[] row = new String[columnSize];
+            for (int j = 0; j < columnSize; j++) {
+                row[j] = rowMsg.getColumnValues(j);
+            }
+            rows[index] = row;
+            index++;
+        }
+        InsertIntoTask task = new InsertIntoTask(columns, rows);
         PardResultSet resultSet = connector.execute(task);
         responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());

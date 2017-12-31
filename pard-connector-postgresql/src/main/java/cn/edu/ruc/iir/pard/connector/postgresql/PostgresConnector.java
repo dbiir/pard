@@ -4,6 +4,8 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -412,6 +414,21 @@ public class PostgresConnector
             }
             //System.out.println("AFTER\t" + querySQL);
             ResultSet rs = statement.executeQuery(querySQL.toString());
+            if (isProject){
+                List<Column> columns = projectNode.getColumns();
+                List<String> columnNames = new ArrayList<>();
+                List<String> columnTypes = new ArrayList<>();
+                Iterator it = columns.iterator();
+                while(it.hasNext()) {
+                    columns.add(Column)
+                }
+                while (rs.next()) {
+
+                }
+            }
+            else {
+
+            }
         }
         catch (SQLException e) {
             System.out.println("QUERY FAILED");

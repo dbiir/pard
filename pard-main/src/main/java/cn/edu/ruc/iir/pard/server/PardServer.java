@@ -89,6 +89,11 @@ public class PardServer
         new Thread(rpcServer).start();
     }
 
+    private void startExchangeServer()
+    {
+        PardExchangeServer exchangeServer = new PardExchangeServer(configuration.getSocketPort(), connector);
+    }
+
     private void startSocketListener()
     {
         PardSocketListener socketListener = new PardSocketListener(configuration.getSocketPort(),

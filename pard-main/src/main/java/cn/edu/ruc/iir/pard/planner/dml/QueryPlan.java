@@ -1,9 +1,9 @@
 package cn.edu.ruc.iir.pard.planner.dml;
 
+import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.planner.EarlyStopPlan;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
-import cn.edu.ruc.iir.pard.planner.PlanNode;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
 /**

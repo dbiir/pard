@@ -8,6 +8,7 @@ package cn.edu.ruc.iir.pard.executor.connector;
 public class DropTableTask
         extends Task
 {
+    private static final long serialVersionUID = 2879688099244307837L;
     private final String schemaName;
     private final String tableName;
 
@@ -18,9 +19,9 @@ public class DropTableTask
 
     public DropTableTask(String schemaName, String tableName, String site)
     {
+        super(site);
         this.schemaName = schemaName;
         this.tableName = tableName;
-        this.site = site;
     }
 
     public String getSchemaName()

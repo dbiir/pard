@@ -18,12 +18,13 @@ public class PardResultSet
 
     public enum ResultStatus
     {
-        OK(""),
+        OK("OK"),
         BEGIN_ERR("Create job error"),
         PARSING_ERR("Parse error"),
         PLANNING_ERR("Plan error"),
         SCHEDULING_ERR("Schedule error"),
-        EXECUTING_ERR("Execution error");
+        EXECUTING_ERR("Execution error"),
+        EOR("End of result set");
 
         private String msg;
 
@@ -40,12 +41,64 @@ public class PardResultSet
     }
 
     private List<Block> blocks;
-    private final ResultStatus resultStatus;
+    private ResultStatus resultStatus;
+    private String taskId;
+    private int resultSeqId;
+    private boolean resultHasNext;
+    private int resultSetNum = 0;
+
+    public PardResultSet()
+    {
+        this(ResultStatus.OK);
+    }
 
     public PardResultSet(ResultStatus resultStatus)
     {
         blocks = new ArrayList<>();
         this.resultStatus = resultStatus;
+    }
+
+    public void addResultSet(PardResultSet resultSet)
+    {
+        if (resultSet.getStatus() != ResultStatus.OK) {
+            this.resultStatus = resultSet.resultStatus;
+        }
+        else {
+            while (resultSet.hasNext()) {
+                blocks.add(resultSet.getNext());
+            }
+        }
+        this.resultSetNum++;
+    }
+
+    public String getTaskId()
+    {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId)
+    {
+        this.taskId = taskId;
+    }
+
+    public int getResultSeqId()
+    {
+        return resultSeqId;
+    }
+
+    public void setResultSeqId(int resultSeqId)
+    {
+        this.resultSeqId = resultSeqId;
+    }
+
+    public boolean isResultHasNext()
+    {
+        return resultHasNext;
+    }
+
+    public void setResultHasNext(boolean resultHasNext)
+    {
+        this.resultHasNext = resultHasNext;
     }
 
     public void addBlock(Block block)
@@ -66,5 +119,10 @@ public class PardResultSet
     public ResultStatus getStatus()
     {
         return resultStatus;
+    }
+
+    public int getResultSetNum()
+    {
+        return resultSetNum;
     }
 }

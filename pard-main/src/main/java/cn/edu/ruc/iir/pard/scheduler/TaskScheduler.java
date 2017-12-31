@@ -20,15 +20,18 @@ import cn.edu.ruc.iir.pard.planner.ddl.TableDropPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
+import cn.edu.ruc.iir.pard.server.PardExchangeClient;
 import cn.edu.ruc.iir.pard.server.PardStartupHook;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Row;
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * pard task scheduler.
@@ -165,6 +168,7 @@ public class TaskScheduler
 
         // query plan
         if (plan instanceof QueryPlan) {
+            // todo generate task for query plan
             List<Task> tasks = new ArrayList<>();
             return ImmutableList.copyOf(tasks);
         }
@@ -180,7 +184,6 @@ public class TaskScheduler
 
         Plan plan = job.getPlan();
         List<Task> tasks = job.getTasks();
-        List<Integer> statusL = new ArrayList<>();
 
         if (tasks.isEmpty()) {
             if (plan.afterExecution(true)) {
@@ -189,67 +192,100 @@ public class TaskScheduler
         }
 
         else {
-            for (Task task : tasks) {
-                // create schema task
-                if (task instanceof CreateSchemaTask) {
+            // distribute query result and collect
+            // this is a simplest implementation
+            // todo collected result set form exchange client shall be passed on for next query stage
+            if (plan instanceof QueryPlan) {
+                PardResultSet resultSet = new PardResultSet();
+                int executingTasksNum = 0;
+                for (Task task : tasks) {
                     String site = task.getSite();
-                    ServerInfo info = nodeKeeper.getRpcServers().get(site);
+                    ServerInfo info = nodeKeeper.getExchangeServers().get(site);
                     if (info != null) {
-                        PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
-                        int status = client.createSchema((CreateSchemaTask) task);
-                        client.shutdown();
-                        statusL.add(status);
+                        executingTasksNum++;
+                        CompletableFuture<PardResultSet> future = CompletableFuture.supplyAsync(() -> {
+                            try {
+                                PardExchangeClient client = new PardExchangeClient(info.getIp(), info.getPort());
+                                PardResultSet rs = client.call(task);
+                                client.close();
+                                return rs;
+                            }
+                            catch (IOException | ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                            return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+                        });
+                        future.exceptionally(throwable -> new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR));
+                        future.thenAccept(resultSet1 -> resultSet1.addResultSet(resultSet1));
                     }
                 }
-                // drop schema task
-                if (task instanceof DropSchemaTask) {
-                    String site = task.getSite();
-                    ServerInfo info = nodeKeeper.getRpcServers().get(site);
-                    if (info != null) {
-                        PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
-                        int status = client.dropSchema((DropSchemaTask) task);
-                        client.shutdown();
-                        statusL.add(status);
-                    }
-                }
-                // create table task
-                if (task instanceof CreateTableTask) {
-                    String site = task.getSite();
-                    ServerInfo info = nodeKeeper.getRpcServers().get(site);
-                    if (info != null) {
-                        PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
-                        int status = client.createTable((CreateTableTask) task);
-                        client.shutdown();
-                        statusL.add(status);
-                    }
-                }
-                // drop table task
-                if (task instanceof DropTableTask) {
-                    String site = task.getSite();
-                    ServerInfo info = nodeKeeper.getRpcServers().get(site);
-                    if (info != null) {
-                        PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
-                        int status = client.dropTable((DropTableTask) task);
-                        client.shutdown();
-                        statusL.add(status);
-                    }
-                }
-                // insert task
-                if (task instanceof InsertIntoTask) {
-                    String site = task.getSite();
-                    ServerInfo info = nodeKeeper.getRpcServers().get(site);
-                    if (info != null) {
-                        PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
-                        int status = client.insertInto((InsertIntoTask) task);
-                        client.shutdown();
-                        statusL.add(status);
-                    }
+                if (resultSet.getResultSetNum() == executingTasksNum) {
+                    return resultSet;
                 }
             }
-
-            for (int status : statusL) {
-                if (status <= 0) {
-                    return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+            else {
+                List<Integer> statusL = new ArrayList<>();
+                for (Task task : tasks) {
+                    // create schema task
+                    if (task instanceof CreateSchemaTask) {
+                        String site = task.getSite();
+                        ServerInfo info = nodeKeeper.getRpcServers().get(site);
+                        if (info != null) {
+                            PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
+                            int status = client.createSchema((CreateSchemaTask) task);
+                            client.shutdown();
+                            statusL.add(status);
+                        }
+                    }
+                    // drop schema task
+                    if (task instanceof DropSchemaTask) {
+                        String site = task.getSite();
+                        ServerInfo info = nodeKeeper.getRpcServers().get(site);
+                        if (info != null) {
+                            PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
+                            int status = client.dropSchema((DropSchemaTask) task);
+                            client.shutdown();
+                            statusL.add(status);
+                        }
+                    }
+                    // create table task
+                    if (task instanceof CreateTableTask) {
+                        String site = task.getSite();
+                        ServerInfo info = nodeKeeper.getRpcServers().get(site);
+                        if (info != null) {
+                            PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
+                            int status = client.createTable((CreateTableTask) task);
+                            client.shutdown();
+                            statusL.add(status);
+                        }
+                    }
+                    // drop table task
+                    if (task instanceof DropTableTask) {
+                        String site = task.getSite();
+                        ServerInfo info = nodeKeeper.getRpcServers().get(site);
+                        if (info != null) {
+                            PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
+                            int status = client.dropTable((DropTableTask) task);
+                            client.shutdown();
+                            statusL.add(status);
+                        }
+                    }
+                    // insert task
+                    if (task instanceof InsertIntoTask) {
+                        String site = task.getSite();
+                        ServerInfo info = nodeKeeper.getRpcServers().get(site);
+                        if (info != null) {
+                            PardRPCClient client = new PardRPCClient(info.getIp(), info.getPort());
+                            int status = client.insertInto((InsertIntoTask) task);
+                            client.shutdown();
+                            statusL.add(status);
+                        }
+                    }
+                }
+                for (int status : statusL) {
+                    if (status <= 0) {
+                        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+                    }
                 }
             }
             plan.afterExecution(true);

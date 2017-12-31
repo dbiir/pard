@@ -7,6 +7,7 @@ import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.*;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Iterator;
@@ -21,7 +22,17 @@ public class PostgresConnector
         implements Connector
 {
     private final ConnectionPool connectionPool;
+    private int chNum = 0;
 
+    public void setChNum(int num)
+    {
+        chNum = num;
+    }
+
+    public int getChNum()
+    {
+        return chNum;
+    }
     private static final class PostgresConnectorHolder
     {
         private static final PostgresConnector instance = new PostgresConnector();
@@ -60,7 +71,8 @@ public class PostgresConnector
                 return executeDropTable(conn, (DropTableTask) task);
             }
             if (task instanceof InsertIntoTask) {
-                return executeInsertInto(conn, (InsertIntoTask) task);
+                //return executeInsertInto(conn, (InsertIntoTask) task);
+                return executeBatchInsertInto(conn, (InsertIntoTask) task);
             }
         }
         catch (SQLException e) {
@@ -179,6 +191,7 @@ public class PostgresConnector
 
     public PardResultSet executeInsertInto(Connection conn, InsertIntoTask task)
     {
+        this.chNum = 0;
         try{
             Statement statement = conn.createStatement();
             List<Column> columns =  task.getColumns();
@@ -209,10 +222,11 @@ public class PostgresConnector
                 }
                 insertSQL = insertSQL.substring(0, insertSQL.length()-1);
                 insertSQL = insertSQL + ")";
-                System.out.println(insertSQL);
+                //System.out.println(insertSQL);
                 statement.executeUpdate(insertSQL);
                 num ++;
             }
+            this.chNum = num;
             System.out.println("INSERT SUCCESSFULLY");
             close();
             return new PardResultSet(PardResultSet.ResultStatus.OK);
@@ -225,6 +239,53 @@ public class PostgresConnector
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
+    public PardResultSet executeBatchInsertInto(Connection conn, InsertIntoTask task)
+    {
+        this.chNum = 0;
+        try{
+            List<Column> columns =  task.getColumns();
+            String [][] values = task.getValues();
+            int fieldNum = columns.size();
+            int tupleNum = values.length;
+            String insertSQL = " insert into " + task.getSchemaName()  + "." + task.getTableName() + " values(";
+            int num = 0;
+            for(int i=0; i<fieldNum; i++){
+                insertSQL = insertSQL + "?,";
+            }
+            insertSQL = insertSQL.substring(0, insertSQL.length()-1);
+            insertSQL = insertSQL + ")";
+            PreparedStatement pstmt = conn.prepareStatement(insertSQL);
+            for(int i=0; i<tupleNum; i++) {
+                for(int j=0; j<fieldNum; j++) {
+                    int type = columns.get(j).getDataType();
+                    if (type == DataType.INT.getType()) {
+                        pstmt.setInt(j+1,Integer.parseInt(values[i][j]));
+                    }
+                    if (type == DataType.FLOAT.getType()) {
+                        pstmt.setFloat(j+1, Float.parseFloat(values[i][j]));
+                    }
+                    if (type == DataType.CHAR.getType() || type == DataType.VARCHAR.getType()) {
+                        pstmt.setString(j+1,values[i][j]);
+                    }
+                }
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+            //conn.commit();
+            this.chNum = tupleNum;
+            System.out.println("INSERT SUCCESSFULLY");
+            close();
+            return new PardResultSet(PardResultSet.ResultStatus.OK);
+        }
+        catch (SQLException e) {
+            System.out.println("INSERT FAILED");
+            e.printStackTrace();
+        }
+        close();
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+    }
+
+
     private String getTypeString(int type, int length)
     {
         if (type == DataType.INT.getType()) {
@@ -235,6 +296,9 @@ public class PostgresConnector
         }
         if (type == DataType.CHAR.getType()) {
             return "char(" + length + ")";
+        }
+        if (type == DataType.VARCHAR.getType()) {
+            return "varchar(" + length + ")";
         }
         // todo add more types
         return null;

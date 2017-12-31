@@ -117,6 +117,7 @@ public class TestConnector
         InsertIntoTask task = new InsertIntoTask("pardschema", "table1", columns, values);
         PardResultSet resultSet = pConn.execute(task);
         System.out.println(resultSet.getStatus().toString());
+        System.out.println("Added Number: " + pConn.getChNum());
     }
 
     @Test

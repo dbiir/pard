@@ -41,15 +41,34 @@ public class PardResultSet
     }
 
     private List<Block> blocks;
-    private final ResultStatus resultStatus;
+    private ResultStatus resultStatus;
     private String taskId;
     private int resultSeqId;
     private boolean resultHasNext;
+    private int resultSetNum = 0;
+
+    public PardResultSet()
+    {
+        this(ResultStatus.OK);
+    }
 
     public PardResultSet(ResultStatus resultStatus)
     {
         blocks = new ArrayList<>();
         this.resultStatus = resultStatus;
+    }
+
+    public void addResultSet(PardResultSet resultSet)
+    {
+        if (resultSet.getStatus() != ResultStatus.OK) {
+            this.resultStatus = resultSet.resultStatus;
+        }
+        else {
+            while (resultSet.hasNext()) {
+                blocks.add(resultSet.getNext());
+            }
+        }
+        this.resultSetNum++;
     }
 
     public String getTaskId()
@@ -100,5 +119,10 @@ public class PardResultSet
     public ResultStatus getStatus()
     {
         return resultStatus;
+    }
+
+    public int getResultSetNum()
+    {
+        return resultSetNum;
     }
 }

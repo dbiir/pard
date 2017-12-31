@@ -15,16 +15,13 @@ import java.net.Socket;
  */
 public class PardExchangeClient
 {
-    private final String host;
-    private final int port;
     private final ObjectInputStream inputStream;
     private final ObjectOutputStream outputStream;
+    private final Socket socket;
 
     public PardExchangeClient(String host, int port) throws IOException
     {
-        this.host = host;
-        this.port = port;
-        Socket socket = new Socket(host, port);
+        this.socket = new Socket(host, port);
         this.inputStream = new ObjectInputStream(socket.getInputStream());
         this.outputStream = new ObjectOutputStream(socket.getOutputStream());
     }
@@ -34,5 +31,12 @@ public class PardExchangeClient
         outputStream.writeObject(task);
         outputStream.flush();
         return (PardResultSet) inputStream.readObject();
+    }
+
+    public void close() throws IOException
+    {
+        if (socket != null) {
+            this.socket.close();
+        }
     }
 }

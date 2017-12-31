@@ -12,6 +12,7 @@ import java.util.List;
 public class CreateTableTask
         extends Task
 {
+    private static final long serialVersionUID = 5102186316038224483L;
     private final String schemaName;
     private final String tableName;
     private final boolean isNotExists;
@@ -33,11 +34,11 @@ public class CreateTableTask
             List<Column> columnDefinitions,
             String site)
     {
+        super(site);
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.isNotExists = isNotExists;
         this.columnDefinitions = columnDefinitions;
-        this.site = site;
     }
 
     public String getSchemaName()

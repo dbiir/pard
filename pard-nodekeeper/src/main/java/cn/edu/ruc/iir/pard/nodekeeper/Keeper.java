@@ -15,7 +15,7 @@ public class Keeper
     private final PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
 
     private Map<String, ServerInfo> etcdServers = null;
-    private Map<String, ServerInfo> nettyServers = null;
+    private Map<String, ServerInfo> exchangeServers = null;
     private Map<String, ServerInfo> rpcServers = null;
 
     private static final class KeeperHolder
@@ -31,7 +31,7 @@ public class Keeper
     private Keeper()
     {
         etcdServers = new HashMap<String, ServerInfo>();
-        nettyServers = new HashMap<String, ServerInfo>();
+        exchangeServers = new HashMap<String, ServerInfo>();
         rpcServers = new HashMap<String, ServerInfo>();
         load();
     }
@@ -40,10 +40,10 @@ public class Keeper
     {
         // todo should load from catalog and sync
         String etcdServerStr = configuration.getEtcdServers();
-        String nettyServerStr = configuration.getNettyServers();
+        String exchangeServerStr = configuration.getExchangeServers();
         String rpcServerStr = configuration.getRPCServers();
         String[] etcdServerStrA = etcdServerStr.split(",");
-        String[] nettyServerStrA = nettyServerStr.split(",");
+        String[] nettyServerStrA = exchangeServerStr.split(",");
         String[] rpcServerStrA = rpcServerStr.split(",");
         for (String server : etcdServerStrA) {
             ServerInfo serverInfo = new ServerInfo();
@@ -59,7 +59,7 @@ public class Keeper
             serverInfo.setName(server.split(":")[0]);
             serverInfo.setIp(server.split(":")[1]);
             serverInfo.setPort(Integer.parseInt(server.split(":")[2]));
-            nettyServers.put(serverInfo.getName(), serverInfo);
+            exchangeServers.put(serverInfo.getName(), serverInfo);
         }
         for (String server : rpcServerStrA) {
             ServerInfo serverInfo = new ServerInfo();
@@ -76,9 +76,9 @@ public class Keeper
         return etcdServers;
     }
 
-    public Map<String, ServerInfo> getNettyServers()
+    public Map<String, ServerInfo> getExchangeServers()
     {
-        return nettyServers;
+        return exchangeServers;
     }
 
     public Map<String, ServerInfo> getRpcServers()

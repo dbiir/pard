@@ -54,7 +54,12 @@ public final class PardUserConfiguration
 
     public int getSocketPort()
     {
-        return Integer.parseInt(getProperty("pard.socket.port"));
+        return Integer.parseInt(getProperty("pard.server.port"));
+    }
+
+    public int getExchangePort()
+    {
+        return Integer.parseInt(getProperty("pard.exchange.port"));
     }
 
     public String getConnectorHost()
@@ -85,9 +90,9 @@ public final class PardUserConfiguration
         return getProperty("pard.etcd.servers");
     }
 
-    public String getNettyServers()
+    public String getExchangeServers()
     {
-        return getProperty("pard.netty.servers");
+        return getProperty("pard.exchange.servers");
     }
 
     public String getRPCServers()

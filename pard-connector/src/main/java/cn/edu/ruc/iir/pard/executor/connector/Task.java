@@ -1,14 +1,24 @@
 package cn.edu.ruc.iir.pard.executor.connector;
 
+import java.io.Serializable;
+
 /**
  * pard
  *
  * @author guodong
  */
 public abstract class Task
+        implements Serializable
 {
+    private static final long serialVersionUID = 2852783693682417924L;
+
     protected String taskId;
-    protected String site;
+    protected final String site;
+
+    public Task(String site)
+    {
+        this.site = site;
+    }
 
     public void setTaskId(String taskId)
     {

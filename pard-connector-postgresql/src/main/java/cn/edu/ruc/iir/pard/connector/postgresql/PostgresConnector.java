@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * pard
@@ -84,6 +85,7 @@ public class PostgresConnector
             int status = statement.executeUpdate(createSchemaSQL);
             if (status == 0) {
                 System.out.println("CREATE SCHEMA SUCCESSFULLY");
+                close();
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
@@ -91,6 +93,7 @@ public class PostgresConnector
             System.out.println("CREATE SCHEMA FAILED");
             e.printStackTrace();
         }
+        close();
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -111,11 +114,12 @@ public class PostgresConnector
             }
             createTableSQL = createTableSQL.substring(0, createTableSQL.length() - 1);
             createTableSQL = createTableSQL + ")";
-            System.out.println(createTableSQL);
+            //System.out.println(createTableSQL);
             Statement statement = conn.createStatement();
             int status = statement.executeUpdate(createTableSQL);
             if (status == 0) {
                 System.out.println("CREATE TABLE SUCCESSFULLY");
+                close();
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
@@ -123,6 +127,7 @@ public class PostgresConnector
             System.out.println("CREATE TABLE FAILED");
             e.printStackTrace();
         }
+        close();
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -135,6 +140,7 @@ public class PostgresConnector
             int status = statement.executeUpdate(dropSchemaSQL);
             if (status == 0) {
                 System.out.println("DROP SCHEMA SUCCESSFULLY");
+                close();
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
@@ -142,6 +148,7 @@ public class PostgresConnector
             System.out.println("DROP SCHEMA FAILED");
             e.printStackTrace();
         }
+        close();
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -158,6 +165,7 @@ public class PostgresConnector
             int status = statement.executeUpdate(dropTableSQL);
             if (status == 0) {
                 System.out.println("DROP TABLE SUCCESSFULLY");
+                close();
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
@@ -165,12 +173,56 @@ public class PostgresConnector
             System.out.println("DROP TABLE FAILED");
             e.printStackTrace();
         }
+        close();
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
     public PardResultSet executeInsertInto(Connection conn, InsertIntoTask task)
     {
-        return new PardResultSet(PardResultSet.ResultStatus.OK);
+        try{
+            Statement statement = conn.createStatement();
+            List<Column> columns =  task.getColumns();
+            String [][] values = task.getValues();
+            int fieldNum = columns.size();
+            int tupleNum = values.length;
+            String insertSQL = null;
+            int num = 0;
+            for(int i=0; i<tupleNum; i++) {
+                insertSQL = " insert into " + task.getSchemaName()  + "." + task.getTableName() + " values(";
+                for(int j=0; j<fieldNum; j++) {
+                    int type = columns.get(j).getDataType();
+                    /*
+                    if (type == DataType.INT.getType()) {
+
+                    }
+                    if (type == DataType.FLOAT.getType()) {
+
+                    }
+                    */
+                    if (type == DataType.CHAR.getType() || type == DataType.VARCHAR.getType()) {
+                        insertSQL = insertSQL + "'" + values[i][j] + "'";
+                    }
+                    else {
+                        insertSQL = insertSQL + values[i][j];
+                    }
+                    insertSQL = insertSQL + ",";
+                }
+                insertSQL = insertSQL.substring(0, insertSQL.length()-1);
+                insertSQL = insertSQL + ")";
+                System.out.println(insertSQL);
+                statement.executeUpdate(insertSQL);
+                num ++;
+            }
+            System.out.println("INSERT SUCCESSFULLY");
+            close();
+            return new PardResultSet(PardResultSet.ResultStatus.OK);
+        }
+        catch (SQLException e) {
+            System.out.println("INSERT FAILED");
+            e.printStackTrace();
+        }
+        close();
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
     private String getTypeString(int type, int length)

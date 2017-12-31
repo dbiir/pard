@@ -4,10 +4,7 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
-import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
-import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
-import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
-import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.*;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -80,6 +77,46 @@ public class TestConnector
     public void testInsert()
     {
         final PostgresConnector pConn = PostgresConnector.INSTANCE();
+        List<Column> columns = new ArrayList<>();
+        Column col0 = new Column();
+        col0.setDataType(DataType.CHAR.getType());
+        col0.setLen(20);
+        col0.setColumnName("name");
+        Column col1 = new Column();
+        col1.setDataType(DataType.INT.getType());
+        col1.setColumnName("id");
+        col1.setKey(1);
+        columns.add(col0);
+        columns.add(col1);
+        String [] tuple1 = new String[2];
+        String [] tuple2 = new String[2];
+        String [] tuple3 = new String[2];
+        String [] tuple4 = new String[2];
+        String [][] values = new String[4][2];
+        tuple1[0] = "tomcat";
+        tuple1[1] = "001";
+        tuple2[0] = "jerrymouse";
+        tuple2[1] = "002";
+        tuple3[0] = "spikebulldog";
+        tuple3[1] = "003";
+        tuple4[0] = "tykebulldog";
+        tuple4[1] = "004";
+        values[0] = tuple1;
+        values[1] = tuple2;
+        values[2] = tuple3;
+        values[3] = tuple4;
+        /*
+        for(String [] str : values) {
+            for(String s : str) {
+                System.out.print(s);
+                System.out.print("\t");
+            }
+            System.out.println();
+        }
+        */
+        InsertIntoTask task = new InsertIntoTask("pardschema", "table1", columns, values);
+        PardResultSet resultSet = pConn.execute(task);
+        System.out.println(resultSet.getStatus().toString());
     }
 
     @Test

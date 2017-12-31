@@ -4,11 +4,7 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
-import cn.edu.ruc.iir.pard.executor.connector.Connector;
-import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
-import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
-import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
-import cn.edu.ruc.iir.pard.executor.connector.Task;
+import cn.edu.ruc.iir.pard.executor.connector.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -38,7 +34,6 @@ public class PostgresConnector
     private PostgresConnector()
     {
         PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
-
         connectionPool = new ConnectionPool(
                 configuration.getConnectorDriver(),
                 configuration.getConnectorHost(),
@@ -56,6 +51,12 @@ public class PostgresConnector
             }
             if (task instanceof CreateTableTask) {
                 return executeCreateTable(conn, (CreateTableTask) task);
+            }
+            if (task instanceof DropSchemaTask) {
+                return executeDropSchema(conn, (DropSchemaTask) task);
+            }
+            if (task instanceof DropTableTask) {
+                return executeDropTable(conn, (DropTableTask) task);
             }
             if (task instanceof InsertIntoTask) {
                 return executeInsertInto(conn, (InsertIntoTask) task);
@@ -81,10 +82,10 @@ public class PostgresConnector
             String createSchemaSQL;
             createSchemaSQL = "create schema " + task.getSchemaName();
             int status = statement.executeUpdate(createSchemaSQL);
-            if (status != 0) {
+            if (status == 0) {
+                System.out.println("CREATE SCHEMA SUCCESSFULLY");
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
-            System.out.println("CREATE SCHEMA SUCCESSFULLY");
         }
         catch (SQLException e) {
             System.out.println("CREATE SCHEMA FAILED");
@@ -113,13 +114,55 @@ public class PostgresConnector
             System.out.println(createTableSQL);
             Statement statement = conn.createStatement();
             int status = statement.executeUpdate(createTableSQL);
-            if (status != 0) {
+            if (status == 0) {
+                System.out.println("CREATE TABLE SUCCESSFULLY");
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
-            System.out.println("CREATE TABLE SUCCESSFULLY");
         }
         catch (SQLException e) {
             System.out.println("CREATE TABLE FAILED");
+            e.printStackTrace();
+        }
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+    }
+
+    public PardResultSet executeDropSchema(Connection conn, DropSchemaTask task)
+    {
+        try{
+            Statement statement = conn.createStatement();
+            String dropSchemaSQL;
+            dropSchemaSQL = "drop schema " + task.getSchema() + " CASCADE";
+            int status = statement.executeUpdate(dropSchemaSQL);
+            if (status == 0) {
+                System.out.println("DROP SCHEMA SUCCESSFULLY");
+                return new PardResultSet(PardResultSet.ResultStatus.OK);
+            }
+        }
+        catch (SQLException e) {
+            System.out.println("DROP SCHEMA FAILED");
+            e.printStackTrace();
+        }
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+    }
+
+    public PardResultSet executeDropTable (Connection conn, DropTableTask task)
+    {
+        try{
+            Statement statement = conn.createStatement();
+            String dropTableSQL;
+            if(task.getSchemaName() == null) {
+                dropTableSQL = "drop table " + task.getTableName();
+            } else {
+                dropTableSQL = "drop table " + task.getSchemaName() + "." + task.getTableName();
+            }
+            int status = statement.executeUpdate(dropTableSQL);
+            if (status == 0) {
+                System.out.println("DROP TABLE SUCCESSFULLY");
+                return new PardResultSet(PardResultSet.ResultStatus.OK);
+            }
+        }
+        catch (SQLException e) {
+            System.out.println("DROP TABLE FAILED");
             e.printStackTrace();
         }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);

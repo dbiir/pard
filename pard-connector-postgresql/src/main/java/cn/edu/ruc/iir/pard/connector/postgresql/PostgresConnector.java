@@ -10,6 +10,7 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 
 import java.sql.Connection;
@@ -64,6 +65,9 @@ public class PostgresConnector
     {
         try {
             Connection conn = connectionPool.getConnection();
+            if (task instanceof QueryTask) {
+                return executeQuery(conn, (QueryTask) task);
+            }
             if (task instanceof CreateSchemaTask) {
                 return executeCreateSchema(conn, (CreateSchemaTask) task);
             }
@@ -92,6 +96,12 @@ public class PostgresConnector
     public void close()
     {
         connectionPool.close();
+    }
+
+    private PardResultSet executeQuery(Connection conn, QueryTask task)
+    {
+        // todo execute query task
+        return new PardResultSet(PardResultSet.ResultStatus.EOR);
     }
 
     private PardResultSet executeCreateSchema(Connection conn, CreateSchemaTask task)

@@ -9,6 +9,20 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
+import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpressionType;
+import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.Identifier;
+import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
+import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -125,8 +139,55 @@ public class TestConnector
     }
 
     @Test
-    public void testSelect()
+    public void testQuery()
     {
         final PostgresConnector pConn = PostgresConnector.INSTANCE();
+
+        List<Column> columns = new ArrayList<>();
+        Column col0 = new Column();
+        col0.setDataType(DataType.CHAR.getType());
+        col0.setLen(20);
+        col0.setColumnName("name");
+        Column col1 = new Column();
+        col1.setDataType(DataType.INT.getType());
+        col1.setColumnName("id");
+        col1.setKey(1);
+        columns.add(col0);
+        columns.add(col1);
+
+        Identifier name = new Identifier("name");
+        Identifier id = new Identifier("id");
+        ComparisonExpression nameEqTomcatExpr = new ComparisonExpression(
+                ComparisonExpressionType.EQUAL,
+                name,
+                new StringLiteral("tomcat"));
+        ComparisonExpression idLT5Expr = new ComparisonExpression(
+                ComparisonExpressionType.LESS_THAN,
+                id,
+                new LongLiteral("5"));
+        Expression expression = new LogicalBinaryExpression(
+                LogicalBinaryExpression.Type.AND,
+                nameEqTomcatExpr,
+                idLT5Expr);
+
+        // SELECT name, id FROM pardschema.table1 WHERE name='tomcat' AND id<5 ORDER BY id LIMIT 3;
+        OutputNode outputNode = new OutputNode();
+        LimitNode limitNode = new LimitNode(3);
+        SortNode sortNode = new SortNode();
+        sortNode.addSort(col1, true);
+        ProjectNode projectNode = new ProjectNode(columns);
+        FilterNode filterNode = new FilterNode(expression);
+        TableScanNode tableScanNode = new TableScanNode("pardschema", "table1");
+
+        // LIMIT -> SORT -> PROJECT -> FILTER -> SCAN
+        outputNode.setChildren(limitNode, true);
+        limitNode.setChildren(sortNode, true);
+        sortNode.setChildren(projectNode, true);
+        projectNode.setChildren(filterNode, true);
+        filterNode.setChildren(tableScanNode, true);
+
+        QueryTask task = new QueryTask(outputNode);
+        PardResultSet resultSet = pConn.execute(task);
+        // todo print out resultSet and it satisfies the actual result
     }
 }

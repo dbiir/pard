@@ -1,6 +1,4 @@
-package cn.edu.ruc.iir.pard.planner.dml.node;
-
-import cn.edu.ruc.iir.pard.planner.PlanNode;
+package cn.edu.ruc.iir.pard.executor.connector.node;
 
 import java.util.ArrayList;
 import java.util.List;

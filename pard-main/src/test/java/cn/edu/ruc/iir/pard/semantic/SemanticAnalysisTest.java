@@ -1,6 +1,6 @@
 package cn.edu.ruc.iir.pard.semantic;
 
-import cn.edu.ruc.iir.pard.planner.PlanNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Node;
 import cn.edu.ruc.iir.pard.sql.tree.OrderBy;

@@ -215,6 +215,7 @@ public class TaskScheduler
                             }
                             return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
                         });
+                        future.exceptionally(throwable -> new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR));
                         future.thenAccept(resultSet1 -> resultSet1.addResultSet(resultSet1));
                     }
                 }

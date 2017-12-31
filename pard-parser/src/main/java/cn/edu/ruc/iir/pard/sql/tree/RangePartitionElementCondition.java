@@ -87,4 +87,29 @@ public class RangePartitionElementCondition
                 .add("maxValue", maxValue)
                 .toString();
     }
+
+    public Identifier getPartitionColumn()
+    {
+        return partitionColumn;
+    }
+
+    public Predicate getPartitionPredicate()
+    {
+        return partitionPredicate;
+    }
+
+    public Expression getPartitionExpr()
+    {
+        return partitionExpr;
+    }
+
+    public boolean isMinValue()
+    {
+        return minValue;
+    }
+
+    public boolean isMaxValue()
+    {
+        return maxValue;
+    }
 }

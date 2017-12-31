@@ -30,6 +30,11 @@
         </dependency>
 
         <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-connector</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <scope>test</scope>

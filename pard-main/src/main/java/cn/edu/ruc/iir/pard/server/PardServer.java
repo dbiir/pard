@@ -1,12 +1,13 @@
 package cn.edu.ruc.iir.pard.server;
 
+import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
-import cn.edu.ruc.iir.pard.communication.rpc.PardRPCService;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
-import io.grpc.netty.NettyServerBuilder;
-
-import java.io.IOException;
+import cn.edu.ruc.iir.pard.connector.postgresql.PostgresConnector;
+import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
+import cn.edu.ruc.iir.pard.executor.connector.Connector;
+import cn.edu.ruc.iir.pard.nodekeeper.Keeper;
+import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
+import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
 
 /**
  * pard
@@ -16,8 +17,12 @@ import java.io.IOException;
 public class PardServer
 {
     private final PardUserConfiguration configuration;
-
-    private Server server;
+    private PardRPCServer rpcServer;
+    private PardSocketListener socketListener;
+    private Connector connector;
+    private Keeper keeper;
+    private JobScheduler jobScheduler;
+    private TaskScheduler taskScheduler;
 
     PardServer(String configurationPath)
     {
@@ -29,58 +34,89 @@ public class PardServer
     {
         PardStartupPipeline pipeline = new PardStartupPipeline();
 
-        pipeline.addStartupHook(
-                () -> {
-                    int port = configuration.getServerPort();
-                    ServerBuilder<NettyServerBuilder> serverBuilder =
-                            NettyServerBuilder.forPort(port);
-                    serverBuilder.addService(new PardRPCService());
-                    try {
-                        server = serverBuilder.build();
-                        server.start();
-                        System.out.println("RPC Server Started");
-                    }
-                    catch (IOException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-                    }
-                });
+        // todo validate configuration first
+
+        // register node
+        pipeline.addStartupHook(this::registerNode);
+
+        // load connector
+        pipeline.addStartupHook(this::loadConnector);
+
+        // load node keeper
+        pipeline.addStartupHook(this::loadNodeKeeper);
+
+        // load job scheduler
+        pipeline.addStartupHook(this::loadJobScheduler);
+
+        // load task scheduler
+        pipeline.addStartupHook(this::loadTaskScheduler);
+
+        // start rpc server
+        pipeline.addStartupHook(this::startRPCServer);
 
         pipeline.addStartupHook(
                 () -> Runtime.getRuntime().addShutdownHook(
                         new Thread(PardServer.this::stop)));
 
-        // add server running in loop hook
-        pipeline.addStartupHook(
-                this::blockUntilTermination);
+        // start socket listener
+        pipeline.addStartupHook(this::startSocketListener);
 
         try {
             pipeline.startup();
+            System.out.println("Pard started successfully.");
         }
         catch (Exception e) {
             System.out.println("Pard started failed.");
         }
     }
 
-    private void blockUntilTermination()
+    private void registerNode()
     {
-        if (server != null) {
-            try {
-                server.awaitTermination();
-            }
-            catch (InterruptedException e) {
-                stop();
-            }
-        }
+        SiteDao siteDao = new SiteDao();
+        Site currentSite = new Site();
+        currentSite.setName(configuration.getNodeName());
+        siteDao.add(currentSite, true);
+    }
+
+    private void loadConnector()
+    {
+        this.connector = PostgresConnector.INSTANCE();
+    }
+
+    private void startRPCServer()
+    {
+        PardRPCServer rpcServer = new PardRPCServer(configuration.getRPCPort(), connector);
+        new Thread(rpcServer).start();
+    }
+
+    private void startSocketListener()
+    {
+        PardSocketListener socketListener = new PardSocketListener(configuration.getSocketPort(),
+                jobScheduler, taskScheduler);
+        new Thread(socketListener).start();
+    }
+
+    private void loadNodeKeeper()
+    {
+        this.keeper = Keeper.INSTANCE();
+    }
+
+    private void loadJobScheduler()
+    {
+        this.jobScheduler = JobScheduler.INSTANCE();
+    }
+
+    private void loadTaskScheduler()
+    {
+        this.taskScheduler = TaskScheduler.INSTANCE();
     }
 
     private void stop()
     {
-        if (server != null) {
-            System.out.println("****** Pard shutting down...");
-            server.shutdown();
-            System.out.println("****** Pard is down");
-        }
+        System.out.println("****** Pard shutting down...");
+        socketListener.stop();
+        rpcServer.stop();
+        System.out.println("****** Pard is down");
     }
 
     public static void main(String[] args)

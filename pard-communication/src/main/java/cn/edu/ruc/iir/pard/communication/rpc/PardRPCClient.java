@@ -1,10 +1,18 @@
 package cn.edu.ruc.iir.pard.communication.rpc;
 
+import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.communication.proto.PardGrpc;
 import cn.edu.ruc.iir.pard.communication.proto.PardProto;
+import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
+import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
+import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+
+import java.util.logging.Logger;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 
@@ -17,6 +25,7 @@ public class PardRPCClient
 {
     private final ManagedChannel channel;
     private final PardGrpc.PardBlockingStub blockingStub;
+    private final Logger logger = Logger.getLogger(PardRPCClient.class.getName());
 
     public PardRPCClient(String host, int port)
     {
@@ -46,12 +55,157 @@ public class PardRPCClient
             receiving = PardProto.HeartBeatMsg.newBuilder().build();
         }
 
-        System.out.println(
+        logger.info(
                 toStringHelper(this)
                         .add("type", receiving.getBeatType())
                         .add("node", receiving.getNodeId())
-                        .add("msg", receiving.getMessage()));
+                        .add("msg", receiving.getMessage())
+                        .toString());
 
         return receiving.getBeatType();
+    }
+
+    public int createSchema(CreateSchemaTask task)
+    {
+        PardProto.ResponseStatus receiving;
+        PardProto.SchemaMsg schemaMsg = PardProto.SchemaMsg.newBuilder()
+                .setName(task.getSchemaName())
+                .setIsNotExists(task.isNotExists())
+                .build();
+        try {
+            receiving = blockingStub.createSchema(schemaMsg);
+        }
+        catch (StatusRuntimeException e) {
+            receiving = PardProto.ResponseStatus.newBuilder()
+                    .setStatus(0)
+                    .build();
+        }
+
+        logger.info("RPC call: " + task);
+
+        return receiving.getStatus();
+    }
+
+    public int dropSchema(DropSchemaTask task)
+    {
+        PardProto.ResponseStatus receiving;
+        PardProto.SchemaMsg schemaMsg = PardProto.SchemaMsg.newBuilder()
+                .setName(task.getSchema())
+                .build();
+
+        try {
+            receiving = blockingStub.dropSchema(schemaMsg);
+        }
+        catch (StatusRuntimeException e) {
+            receiving = PardProto.ResponseStatus.newBuilder()
+                    .setStatus(0)
+                    .build();
+        }
+
+        logger.info("RPC call: " + task);
+
+        return receiving.getStatus();
+    }
+
+    public int createTable(CreateTableTask task)
+    {
+        PardProto.ResponseStatus receiving;
+        PardProto.TableMsg.Builder tableMsgBuilder = PardProto.TableMsg.newBuilder()
+                .setSchemaName(task.getSchemaName())
+                .setName(task.getTableName());
+
+        for (Column column : task.getColumnDefinitions()) {
+            PardProto.ColumnMsg columnMsg = PardProto.ColumnMsg.newBuilder()
+                    .setColumnName(column.getColumnName())
+                    .setColumnType(column.getDataType())
+                    .setColumnLength(column.getLen())
+                    .setIsPrimary(column.getKey() == 1)
+                    .build();
+            tableMsgBuilder.addColumns(columnMsg);
+        }
+
+        try {
+            receiving = blockingStub.createTable(tableMsgBuilder.build());
+        }
+        catch (StatusRuntimeException e) {
+            receiving = PardProto.ResponseStatus.newBuilder()
+                    .setStatus(0)
+                    .build();
+        }
+
+        logger.info("RPC call: " + task);
+
+        return receiving.getStatus();
+    }
+
+    public int dropTable(DropTableTask task)
+    {
+        PardProto.ResponseStatus receiving;
+        PardProto.TableMsg tableMsg = PardProto.TableMsg.newBuilder()
+                .setSchemaName(task.getSchemaName())
+                .setName(task.getTableName())
+                .build();
+
+        try {
+            receiving = blockingStub.dropTable(tableMsg);
+        }
+        catch (StatusRuntimeException e) {
+            receiving = PardProto.ResponseStatus.newBuilder()
+                    .setStatus(0)
+                    .build();
+        }
+
+        logger.info("RPC call: " + task);
+
+        return receiving.getStatus();
+    }
+
+    public int insertInto(InsertIntoTask task)
+    {
+        PardProto.ResponseStatus receiving;
+        PardProto.InsertMsg.Builder insertMsgBuilder = PardProto.InsertMsg.newBuilder()
+                .setSchemaName(task.getSchemaName())
+                .setTableName(task.getTableName());
+
+        for (Column column : task.getColumns()) {
+            PardProto.ColumnMsg columnMsg = PardProto.ColumnMsg.newBuilder()
+                    .setColumnName(column.getColumnName())
+                    .setColumnType(column.getDataType())
+                    .setColumnLength(column.getLen())
+                    .setIsPrimary(column.getKey() == 1)
+                    .build();
+            insertMsgBuilder.addColumns(columnMsg);
+        }
+
+        for (String[] v : task.getValues()) {
+            PardProto.RowMsg.Builder rowMsgBuilder = PardProto.RowMsg.newBuilder();
+            for (String c : v) {
+                rowMsgBuilder.addColumnValues(c);
+            }
+            insertMsgBuilder.addRows(rowMsgBuilder.build());
+        }
+
+        try {
+            receiving = blockingStub.insertInto(insertMsgBuilder.build());
+        }
+        catch (StatusRuntimeException e) {
+            receiving = PardProto.ResponseStatus.newBuilder()
+                    .setStatus(0)
+                    .build();
+        }
+
+        logger.info("RPC call: " + task);
+
+        return receiving.getStatus();
+    }
+
+    public void shutdown()
+    {
+        this.channel.shutdown();
+    }
+
+    public void shutdownNow()
+    {
+        this.channel.shutdownNow();
     }
 }

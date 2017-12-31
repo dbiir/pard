@@ -1,6 +1,6 @@
 package cn.edu.ruc.iir.pard.executor.connector;
 
-import cn.edu.ruc.iir.pard.sql.tree.Node;
+import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 
 /**
  * pard
@@ -9,9 +9,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Node;
  */
 public interface Connector
 {
-    void init();
-
-    void execute(Node node);
+    PardResultSet execute(Task task);
 
     void close();
 }

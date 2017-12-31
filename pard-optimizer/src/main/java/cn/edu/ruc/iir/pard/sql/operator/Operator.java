@@ -1,4 +1,4 @@
-package cn.edu.ruc.iir.pard.sql.operators;
+package cn.edu.ruc.iir.pard.sql.operator;
 
 /**
  * pard

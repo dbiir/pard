@@ -2,7 +2,6 @@ package cn.edu.ruc.iir.pard.commons.config;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Properties;
 
 /**
  * pard
@@ -43,8 +42,56 @@ public final class PardUserConfiguration
         }
     }
 
-    public int getServerPort()
+    public String getNodeName()
     {
-        return Integer.parseInt(getProperty("pard.server.port"));
+        return getProperty("pard.name");
+    }
+
+    public int getRPCPort()
+    {
+        return Integer.parseInt(getProperty("pard.rpc.port"));
+    }
+
+    public int getSocketPort()
+    {
+        return Integer.parseInt(getProperty("pard.socket.port"));
+    }
+
+    public String getConnectorHost()
+    {
+        return getProperty("pard.connector.host");
+    }
+
+    public String getConnectorUser()
+    {
+        return getProperty("pard.connector.user");
+    }
+
+    public String getConnectorPassword()
+    {
+        return getProperty("pard.connector.password");
+    }
+
+    public String getConnectorDriver()
+    {
+        return getProperty("pard.connector.driver");
+    }
+
+    /**
+     * name:host:ip, name:host:ip, ...
+     * */
+    public String getEtcdServers()
+    {
+        return getProperty("pard.etcd.servers");
+    }
+
+    public String getNettyServers()
+    {
+        return getProperty("pard.netty.servers");
+    }
+
+    public String getRPCServers()
+    {
+        return getProperty("pard.rpc.servers");
     }
 }

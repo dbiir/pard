@@ -4,7 +4,13 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
-import cn.edu.ruc.iir.pard.executor.connector.*;
+import cn.edu.ruc.iir.pard.executor.connector.Connector;
+import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
+import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
+import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.Task;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -88,7 +94,7 @@ public class PostgresConnector
         connectionPool.close();
     }
 
-    public PardResultSet executeCreateSchema(Connection conn, CreateSchemaTask task)
+    private PardResultSet executeCreateSchema(Connection conn, CreateSchemaTask task)
     {
         try {
             Statement statement = conn.createStatement();
@@ -109,26 +115,26 @@ public class PostgresConnector
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
-    public PardResultSet executeCreateTable(Connection conn, CreateTableTask task)
+    private PardResultSet executeCreateTable(Connection conn, CreateTableTask task)
     {
         try {
-            String createTableSQL = "create table if not exists " + task.getSchemaName() + "." + task.getTableName() + "(";
+            StringBuilder createTableSQL = new StringBuilder("create table if not exists " + task.getSchemaName() + "." + task.getTableName() + "(");
             Iterator<Column> it = task.getColumnDefinitions().iterator();
             while (it.hasNext()) {
                 Column cd = it.next();
                 if (cd.getKey() == 1) {
-                    createTableSQL = createTableSQL + cd.getColumnName() + " " + getTypeString(cd.getDataType(), cd.getLen()) + " primary key ";
+                    createTableSQL.append(cd.getColumnName()).append(" ").append(getTypeString(cd.getDataType(), cd.getLen())).append(" primary key ");
                 }
                 else {
-                    createTableSQL = createTableSQL + cd.getColumnName() + " " + getTypeString(cd.getDataType(), cd.getLen());
+                    createTableSQL.append(cd.getColumnName()).append(" ").append(getTypeString(cd.getDataType(), cd.getLen()));
                 }
-                createTableSQL = createTableSQL + " ,";
+                createTableSQL.append(" ,");
             }
-            createTableSQL = createTableSQL.substring(0, createTableSQL.length() - 1);
-            createTableSQL = createTableSQL + ")";
+            createTableSQL = new StringBuilder(createTableSQL.substring(0, createTableSQL.length() - 1));
+            createTableSQL.append(")");
             //System.out.println(createTableSQL);
             Statement statement = conn.createStatement();
-            int status = statement.executeUpdate(createTableSQL);
+            int status = statement.executeUpdate(createTableSQL.toString());
             if (status == 0) {
                 System.out.println("CREATE TABLE SUCCESSFULLY");
                 close();
@@ -143,9 +149,9 @@ public class PostgresConnector
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
-    public PardResultSet executeDropSchema(Connection conn, DropSchemaTask task)
+    private PardResultSet executeDropSchema(Connection conn, DropSchemaTask task)
     {
-        try{
+        try {
             Statement statement = conn.createStatement();
             String dropSchemaSQL;
             dropSchemaSQL = "drop schema " + task.getSchema() + " CASCADE";
@@ -164,14 +170,15 @@ public class PostgresConnector
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
-    public PardResultSet executeDropTable (Connection conn, DropTableTask task)
+    public PardResultSet executeDropTable(Connection conn, DropTableTask task)
     {
-        try{
+        try {
             Statement statement = conn.createStatement();
             String dropTableSQL;
-            if(task.getSchemaName() == null) {
+            if (task.getSchemaName() == null) {
                 dropTableSQL = "drop table " + task.getTableName();
-            } else {
+            }
+            else {
                 dropTableSQL = "drop table " + task.getSchemaName() + "." + task.getTableName();
             }
             int status = statement.executeUpdate(dropTableSQL);
@@ -192,39 +199,29 @@ public class PostgresConnector
     public PardResultSet executeInsertInto(Connection conn, InsertIntoTask task)
     {
         this.chNum = 0;
-        try{
+        try {
             Statement statement = conn.createStatement();
-            List<Column> columns =  task.getColumns();
-            String [][] values = task.getValues();
+            List<Column> columns = task.getColumns();
+            String[][] values = task.getValues();
             int fieldNum = columns.size();
-            int tupleNum = values.length;
-            String insertSQL = null;
+            StringBuilder insertSQL;
             int num = 0;
-            for(int i=0; i<tupleNum; i++) {
-                insertSQL = " insert into " + task.getSchemaName()  + "." + task.getTableName() + " values(";
-                for(int j=0; j<fieldNum; j++) {
+            for (String[] value : values) {
+                insertSQL = new StringBuilder(" insert into " + task.getSchemaName() + "." + task.getTableName() + " values(");
+                for (int j = 0; j < fieldNum; j++) {
                     int type = columns.get(j).getDataType();
-                    /*
-                    if (type == DataType.INT.getType()) {
-
-                    }
-                    if (type == DataType.FLOAT.getType()) {
-
-                    }
-                    */
                     if (type == DataType.CHAR.getType() || type == DataType.VARCHAR.getType()) {
-                        insertSQL = insertSQL + "'" + values[i][j] + "'";
+                        insertSQL.append("'").append(value[j]).append("'");
                     }
                     else {
-                        insertSQL = insertSQL + values[i][j];
+                        insertSQL.append(value[j]);
                     }
-                    insertSQL = insertSQL + ",";
+                    insertSQL.append(",");
                 }
-                insertSQL = insertSQL.substring(0, insertSQL.length()-1);
-                insertSQL = insertSQL + ")";
-                //System.out.println(insertSQL);
-                statement.executeUpdate(insertSQL);
-                num ++;
+                insertSQL = new StringBuilder(insertSQL.substring(0, insertSQL.length() - 1));
+                insertSQL.append(")");
+                statement.executeUpdate(insertSQL.toString());
+                num++;
             }
             this.chNum = num;
             System.out.println("INSERT SUCCESSFULLY");
@@ -239,33 +236,32 @@ public class PostgresConnector
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
-    public PardResultSet executeBatchInsertInto(Connection conn, InsertIntoTask task)
+    private PardResultSet executeBatchInsertInto(Connection conn, InsertIntoTask task)
     {
         this.chNum = 0;
-        try{
-            List<Column> columns =  task.getColumns();
-            String [][] values = task.getValues();
+        try {
+            List<Column> columns = task.getColumns();
+            String[][] values = task.getValues();
             int fieldNum = columns.size();
             int tupleNum = values.length;
-            String insertSQL = " insert into " + task.getSchemaName()  + "." + task.getTableName() + " values(";
-            int num = 0;
-            for(int i=0; i<fieldNum; i++){
-                insertSQL = insertSQL + "?,";
+            StringBuilder insertSQL = new StringBuilder(" insert into " + task.getSchemaName() + "." + task.getTableName() + " values(");
+            for (int i = 0; i < fieldNum; i++) {
+                insertSQL.append("?,");
             }
-            insertSQL = insertSQL.substring(0, insertSQL.length()-1);
-            insertSQL = insertSQL + ")";
-            PreparedStatement pstmt = conn.prepareStatement(insertSQL);
-            for(int i=0; i<tupleNum; i++) {
-                for(int j=0; j<fieldNum; j++) {
+            insertSQL = new StringBuilder(insertSQL.substring(0, insertSQL.length() - 1));
+            insertSQL.append(")");
+            PreparedStatement pstmt = conn.prepareStatement(insertSQL.toString());
+            for (String[] value : values) {
+                for (int j = 0; j < fieldNum; j++) {
                     int type = columns.get(j).getDataType();
                     if (type == DataType.INT.getType()) {
-                        pstmt.setInt(j+1,Integer.parseInt(values[i][j]));
+                        pstmt.setInt(j + 1, Integer.parseInt(value[j]));
                     }
                     if (type == DataType.FLOAT.getType()) {
-                        pstmt.setFloat(j+1, Float.parseFloat(values[i][j]));
+                        pstmt.setFloat(j + 1, Float.parseFloat(value[j]));
                     }
                     if (type == DataType.CHAR.getType() || type == DataType.VARCHAR.getType()) {
-                        pstmt.setString(j+1,values[i][j]);
+                        pstmt.setString(j + 1, value[j]);
                     }
                 }
                 pstmt.addBatch();
@@ -284,7 +280,6 @@ public class PostgresConnector
         close();
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
-
 
     private String getTypeString(int type, int length)
     {

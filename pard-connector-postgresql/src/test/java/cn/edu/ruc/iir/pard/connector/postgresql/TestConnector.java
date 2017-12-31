@@ -142,7 +142,6 @@ public class TestConnector
     public void testQuery()
     {
         final PostgresConnector pConn = PostgresConnector.INSTANCE();
-
         List<Column> columns = new ArrayList<>();
         Column col0 = new Column();
         col0.setDataType(DataType.CHAR.getType());

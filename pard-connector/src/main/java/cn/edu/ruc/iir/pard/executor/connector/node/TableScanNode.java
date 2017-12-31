@@ -22,12 +22,10 @@ public class TableScanNode
     {
         return schema;
     }
-
     public String getTable()
     {
         return table;
     }
-
     public String getSite()
     {
         return site;

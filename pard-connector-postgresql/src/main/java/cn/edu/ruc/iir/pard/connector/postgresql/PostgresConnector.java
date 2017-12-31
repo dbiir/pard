@@ -12,11 +12,27 @@ import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
+import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
+import cn.edu.ruc.iir.pard.sql.tree.DoubleLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.Identifier;
+import cn.edu.ruc.iir.pard.sql.tree.Literal;
+import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
+import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -84,6 +100,9 @@ public class PostgresConnector
                 //return executeInsertInto(conn, (InsertIntoTask) task);
                 return executeBatchInsertInto(conn, (InsertIntoTask) task);
             }
+            if (task instanceof QueryTask) {
+                return executeQuery(conn, (QueryTask) task);
+            }
         }
         catch (SQLException e) {
             System.out.println("GET CONNECTION FAILED");
@@ -96,12 +115,6 @@ public class PostgresConnector
     public void close()
     {
         connectionPool.close();
-    }
-
-    private PardResultSet executeQuery(Connection conn, QueryTask task)
-    {
-        // todo execute query task
-        return new PardResultSet(PardResultSet.ResultStatus.EOR);
     }
 
     private PardResultSet executeCreateSchema(Connection conn, CreateSchemaTask task)
@@ -289,6 +302,164 @@ public class PostgresConnector
         }
         close();
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+    }
+
+    private PardResultSet executeQuery(Connection conn, QueryTask task)
+    {
+        try {
+            Statement statement = conn.createStatement();
+            StringBuilder querySQL = new StringBuilder("select ");
+            PlanNode rootnode = task.getPlanNode();
+            List<PlanNode> nodeList = new ArrayList<>();
+            int nodeListCursor = 0;
+            String schemaName = null;
+            String tableName = null;
+            FilterNode filterNode = null;
+            ProjectNode projectNode = null;
+            SortNode sortNode = null;
+            LimitNode limitNode = null;
+            boolean isFilter = false;
+            boolean isProject = false;
+            boolean isSort = false;
+            boolean isLimit = false;
+            nodeList.add(rootnode);
+            nodeListCursor++;
+            while (nodeList.get(nodeListCursor - 1).hasChildren()) {
+                nodeList.add(nodeList.get(nodeListCursor - 1).getLeftChild());
+                nodeListCursor++;
+            }
+
+            for (int i = nodeListCursor - 1; i >= 0; i--) {
+                if (nodeList.get(i) instanceof TableScanNode) {
+                    tableName = ((TableScanNode) nodeList.get(i)).getTable();
+                    schemaName = ((TableScanNode) nodeList.get(i)).getSchema();
+                    continue;
+                }
+                if (nodeList.get(i) instanceof FilterNode) {
+                    filterNode = (FilterNode) nodeList.get(i);
+                    isFilter = true;
+                    continue;
+                }
+                if (nodeList.get(i) instanceof ProjectNode) {
+                    projectNode = (ProjectNode) nodeList.get(i);
+                    isProject = true;
+                    continue;
+                }
+                if (nodeList.get(i) instanceof SortNode) {
+                    sortNode = (SortNode) nodeList.get(i);
+                    isSort = true;
+                    continue;
+                }
+                if (nodeList.get(i) instanceof LimitNode) {
+                    limitNode = (LimitNode) nodeList.get(i);
+                    isLimit = true;
+                    continue;
+                }
+            }
+
+            if (isProject) {
+                List<Column> columns = projectNode.getColumns();
+                Iterator it = columns.iterator();
+                while (it.hasNext()) {
+                    querySQL.append(((Column) it.next()).getColumnName());
+                    querySQL.append(",");
+                }
+                querySQL = new StringBuilder(querySQL.substring(0, querySQL.length() - 1));
+            }
+            else {
+                querySQL.append(" *");
+            }
+            querySQL.append(" from ");
+            querySQL.append(schemaName);
+            querySQL.append(".");
+            querySQL.append(tableName);
+            if (isFilter) {
+                querySQL.append(" where ");
+                if (filterNode.getExpression() instanceof ComparisonExpression) {
+                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) filterNode.getExpression()));
+                }
+                if (filterNode.getExpression() instanceof LogicalBinaryExpression) {
+                    Expression leftExpression = ((LogicalBinaryExpression) filterNode.getExpression()).getLeft();
+                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) leftExpression));
+                    switch (((LogicalBinaryExpression) filterNode.getExpression()).getType()) {
+                        case AND:
+                            querySQL.append("and ");
+                            break;
+                        case OR:
+                            querySQL.append("or ");
+                            break;
+                        default:
+                            break;
+                    }
+                    Expression rightExpression = ((LogicalBinaryExpression) filterNode.getExpression()).getRight();
+                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) rightExpression));
+                }
+            }
+            if (isSort) {
+                querySQL.append("order by");
+                List<Column> columns = sortNode.getColumns();
+                Iterator it = columns.iterator();
+                while (it.hasNext()) {
+                    querySQL.append(" ");
+                    querySQL.append(((Column) it.next()).getColumnName());
+                    querySQL.append(",");
+                }
+                querySQL = new StringBuilder(querySQL.substring(0, querySQL.length() - 1));
+            }
+            if (isLimit) {
+                querySQL.append(" limit ");
+                querySQL.append(limitNode.getLimitNum());
+            }
+            //System.out.println("AFTER\t" + querySQL);
+            ResultSet rs = statement.executeQuery(querySQL.toString());
+        }
+        catch (SQLException e) {
+            System.out.println("QUERY FAILED");
+            e.printStackTrace();
+        }
+        close();
+        return new PardResultSet(PardResultSet.ResultStatus.EOR);
+    }
+
+    private String getFilterComparisonExpression(ComparisonExpression expression)
+    {
+        String sql = "";
+        Identifier col = (Identifier) expression.getLeft();
+        sql = sql + col.getValue();
+        switch (expression.getType()) {
+            case EQUAL:
+                sql += " = ";
+                break;
+            case LESS_THAN:
+                sql += " < ";
+                break;
+            case GREATER_THAN:
+                sql += " > ";
+                break;
+            case LESS_THAN_OR_EQUAL:
+                sql += " <= ";
+                break;
+            case GREATER_THAN_OR_EQUAL:
+                sql += " >= ";
+                break;
+            case NOT_EQUAL:
+                sql += "!= ";
+                break;
+            default:
+                break;
+        }
+        Literal lit = (Literal) expression.getRight();
+        if (lit instanceof LongLiteral) {
+            sql += ((LongLiteral) lit).getValue();
+        }
+        if (lit instanceof DoubleLiteral) {
+            sql += ((DoubleLiteral) lit).getValue();
+        }
+        if (lit instanceof StringLiteral) {
+            sql += "'" + ((StringLiteral) lit).getValue() + "'";
+        }
+        sql += " ";
+        return sql;
     }
 
     private String getTypeString(int type, int length)

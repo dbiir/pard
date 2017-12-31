@@ -8,6 +8,7 @@ package cn.edu.ruc.iir.pard.executor.connector;
 public class DropSchemaTask
         extends Task
 {
+    private static final long serialVersionUID = 9196504080983998135L;
     private final String schema;
     private final boolean isExists;
 
@@ -18,9 +19,9 @@ public class DropSchemaTask
 
     public DropSchemaTask(String schema, boolean isExists, String site)
     {
+        super(site);
         this.schema = schema;
         this.isExists = isExists;
-        this.site = site;
     }
 
     public String getSchema()

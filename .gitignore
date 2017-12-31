@@ -38,4 +38,4 @@ target/
 test-output
 
 # local test
-test/
+pard-server-test/

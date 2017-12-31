@@ -12,6 +12,7 @@ import java.util.List;
 public class InsertIntoTask
         extends Task
 {
+    private static final long serialVersionUID = -8375107897022530062L;
     private final String schemaName;
     private final String tableName;
     private final List<Column> columns;
@@ -19,6 +20,12 @@ public class InsertIntoTask
 
     public InsertIntoTask(String schemaName, String tableName, List<Column> columns, String[][] values)
     {
+        this(schemaName, tableName, columns, values, null);
+    }
+
+    public InsertIntoTask(String schemaName, String tableName, List<Column> columns, String[][] values, String site)
+    {
+        super(site);
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.columns = columns;

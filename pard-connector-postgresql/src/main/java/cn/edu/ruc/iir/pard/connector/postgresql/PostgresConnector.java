@@ -378,29 +378,6 @@ public class PostgresConnector
             querySQL.append(".");
             querySQL.append(tableName);
             if (isFilter) {
-                //System.out.println("HEERERER" + filterNode.getExpression());
-                /*
-                querySQL.append(" where ");
-                if (filterNode.getExpression() instanceof ComparisonExpression) {
-                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) filterNode.getExpression()));
-                }
-                if (filterNode.getExpression() instanceof LogicalBinaryExpression) {
-                    Expression leftExpression = ((LogicalBinaryExpression) filterNode.getExpression()).getLeft();
-                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) leftExpression));
-                    switch (((LogicalBinaryExpression) filterNode.getExpression()).getType()) {
-                        case AND:
-                            querySQL.append("and ");
-                            break;
-                        case OR:
-                            querySQL.append("or ");
-                            break;
-                        default:
-                            break;
-                    }
-                    Expression rightExpression = ((LogicalBinaryExpression) filterNode.getExpression()).getRight();
-                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) rightExpression));
-                }
-                */
                 querySQL.append(" where " + filterNode.getExpression() + " ");
             }
             if (isSort) {
@@ -438,71 +415,6 @@ public class PostgresConnector
                 block = new Block(columnNames, columnTypes, 1024 * 1024);
                 //getResult(block, rs, rsmd, colNum);
                 getResultByRowConstructor(block, rs, rsmd, colNum);
-                /*
-                while (rs.next()) {
-                    List<byte[]> contents0 = new ArrayList<byte[]>();
-                    List<Integer> offsets0 = new ArrayList<Integer>();
-                    for (int i = 0; i < colNum; i++) {
-                        switch (rsmd.getColumnType(i + 1)) {
-                            case Types.CHAR: {
-                                byte[] tmp = rs.getString(i + 1).getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.VARCHAR: {
-                                byte[] tmp = rs.getString(i + 1).getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.DATE: {
-                                byte[] tmp = rs.getDate(i + 1).toString().getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.INTEGER: {
-                                byte[] tmp = new Integer(rs.getInt(i + 1)).toString().getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.FLOAT: {
-                                byte[] tmp = new Float(rs.getFloat(i + 1)).toString().getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.DOUBLE: {
-                                byte[] tmp = new Double(rs.getDouble(i + 1)).toString().getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            default:
-                                break;
-                        }
-                    }
-                    int[]offsets = new int[offsets0.size()];
-                    int contentsLen = 0;
-                    for (int i = 0; i < offsets0.size(); i++) {
-                        offsets[i] = offsets0.get(i);
-                        contentsLen += offsets[i];
-                    }
-                    byte[]contents = new byte[contentsLen];
-                    int contentsCursor = 0;
-                    for (int i = 0; i < contents0.size(); i++) {
-                        for (int j = 0; j < offsets[i]; j++) {
-                            contents[contentsCursor] = contents0.get(i)[j];
-                            contentsCursor++;
-                        }
-                    }
-                    //assert contentsCursor == contentsLen;
-                    Row row = new Row(contents, offsets);
-                    block.addRow(row);
-                }
-                */
                 prs.addBlock(block);
             }
             else {
@@ -538,71 +450,6 @@ public class PostgresConnector
                 block = new Block(columnNames, columnTypes, 1024 * 1024);
                 //getResult(block, rs, rsmd, colNum);
                 getResultByRowConstructor(block, rs, rsmd, colNum);
-                /*
-                while (rs.next()) {
-                    List<byte[]> contents0 = new ArrayList<byte[]>();
-                    List<Integer> offsets0 = new ArrayList<Integer>();
-                    for (int i = 0; i < colNum; i++) {
-                        switch (rsmd.getColumnType(i + 1)) {
-                            case Types.CHAR: {
-                                byte[] tmp = rs.getString(i + 1).getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.VARCHAR: {
-                                byte[] tmp = rs.getString(i +1).getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.DATE: {
-                                byte[] tmp = rs.getDate(i +1).toString().getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.INTEGER: {
-                                byte[] tmp = new Integer(rs.getInt(i +1)).toString().getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.FLOAT: {
-                                byte[] tmp = new Float(rs.getFloat(i +1)).toString().getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            case Types.DOUBLE: {
-                                byte[] tmp = new Double(rs.getDouble(i +1)).toString().getBytes();
-                                contents0.add(tmp);
-                                offsets0.add(tmp.length);
-                            }
-                            break;
-                            default:
-                                break;
-                        }
-                    }
-                    int[]offsets = new int[offsets0.size()];
-                    int contentsLen = 0;
-                    for (int i = 0; i < offsets0.size(); i++) {
-                        offsets[i] = offsets0.get(i);
-                        contentsLen += offsets[i];
-                    }
-                    byte[]contents = new byte[contentsLen];
-                    int contentsCursor = 0;
-                    for (int i = 0; i < contents0.size(); i++) {
-                        for (int j = 0; j < offsets[i]; j++) {
-                            contents[contentsCursor] = contents0.get(i)[j];
-                            contentsCursor++;
-                        }
-                    }
-                    //assert contentsCursor == contentsLen;
-                    Row row = new Row(contents, offsets);
-                    block.addRow(row);
-                }
-                */
                 prs.addBlock(block);
             }
             System.out.println("QUERY SUCCESSFULLY");

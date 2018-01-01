@@ -177,7 +177,16 @@ public class TestConnector
         ProjectNode projectNode = new ProjectNode(columns);
         FilterNode filterNode = new FilterNode(expression);
         TableScanNode tableScanNode = new TableScanNode("pardschema", "table1");
-
+        /*
+        System.out.println("IN TEST");
+        System.out.println(outputNode);
+        System.out.println(limitNode);
+        System.out.println(sortNode);
+        System.out.println(projectNode);
+        System.out.println(filterNode);
+        System.out.println(tableScanNode);
+        System.out.println("IN TEST");
+        */
         // LIMIT -> SORT -> PROJECT -> FILTER -> SCAN
         outputNode.setChildren(limitNode, true);
         limitNode.setChildren(sortNode, true);

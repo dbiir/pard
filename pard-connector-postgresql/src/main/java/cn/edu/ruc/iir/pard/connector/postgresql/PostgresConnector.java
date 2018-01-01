@@ -3,9 +3,9 @@ package cn.edu.ruc.iir.pard.connector.postgresql;
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
+//import cn.edu.ruc.iir.pard.commons.memory.Block;
+//import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
-import cn.edu.ruc.iir.pard.commons.memory.Block;
-import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -376,6 +376,8 @@ public class PostgresConnector
             querySQL.append(".");
             querySQL.append(tableName);
             if (isFilter) {
+                //System.out.println("HEERERER" + filterNode.getExpression());
+                /*
                 querySQL.append(" where ");
                 if (filterNode.getExpression() instanceof ComparisonExpression) {
                     querySQL.append(getFilterComparisonExpression((ComparisonExpression) filterNode.getExpression()));
@@ -396,6 +398,8 @@ public class PostgresConnector
                     Expression rightExpression = ((LogicalBinaryExpression) filterNode.getExpression()).getRight();
                     querySQL.append(getFilterComparisonExpression((ComparisonExpression) rightExpression));
                 }
+                */
+                querySQL.append(" where " + filterNode.getExpression() + " ");
             }
             if (isSort) {
                 querySQL.append("order by");
@@ -412,23 +416,17 @@ public class PostgresConnector
                 querySQL.append(" limit ");
                 querySQL.append(limitNode.getLimitNum());
             }
-            //System.out.println("AFTER\t" + querySQL);
+            System.out.println("AFTER\t" + querySQL);
             ResultSet rs = statement.executeQuery(querySQL.toString());
-            if (isProject){
+            if (isProject) {
                 List<Column> columns = projectNode.getColumns();
                 List<String> columnNames = new ArrayList<>();
                 List<String> columnTypes = new ArrayList<>();
                 Iterator it = columns.iterator();
-                while(it.hasNext()) {
-                    columns.add(Column)
-                }
-                while (rs.next()) {
-
-                }
+                //while (it.hasNext()) { }
+                //while (rs.next()) { }
             }
-            else {
-
-            }
+            //else { }
         }
         catch (SQLException e) {
             System.out.println("QUERY FAILED");

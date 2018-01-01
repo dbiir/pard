@@ -3,8 +3,8 @@ package cn.edu.ruc.iir.pard.connector.postgresql;
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
-//import cn.edu.ruc.iir.pard.commons.memory.Block;
-//import cn.edu.ruc.iir.pard.commons.memory.Row;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
@@ -22,18 +22,18 @@ import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.DoubleLiteral;
-import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 import cn.edu.ruc.iir.pard.sql.tree.Literal;
-import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
 import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -308,6 +308,7 @@ public class PostgresConnector
 
     private PardResultSet executeQuery(Connection conn, QueryTask task)
     {
+        this.chNum = 0;
         try {
             Statement statement = conn.createStatement();
             StringBuilder querySQL = new StringBuilder("select ");
@@ -416,24 +417,171 @@ public class PostgresConnector
                 querySQL.append(" limit ");
                 querySQL.append(limitNode.getLimitNum());
             }
-            System.out.println("AFTER\t" + querySQL);
+            //System.out.println("AFTER\t" + querySQL);
             ResultSet rs = statement.executeQuery(querySQL.toString());
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int colNum = rsmd.getColumnCount();
+            PardResultSet prs = new PardResultSet(PardResultSet.ResultStatus.EOR);
+            Block block;
+            List<Column> columns;
+            List<String> columnNames = new ArrayList<>();
+            List<String> columnTypes = new ArrayList<>();
+
             if (isProject) {
-                List<Column> columns = projectNode.getColumns();
-                List<String> columnNames = new ArrayList<>();
-                List<String> columnTypes = new ArrayList<>();
+                columns = projectNode.getColumns();
                 Iterator it = columns.iterator();
-                //while (it.hasNext()) { }
-                //while (rs.next()) { }
+                while (it.hasNext()) {
+                    columnNames.add(((Column) it.next()).getColumnName());
+                    columnTypes.add(getTypeInString(((Column) it.next()).getDataType()));
+                }
+                block = new Block(columnNames, columnTypes, 1000);
+                while (rs.next()) {
+                    List<byte[]> contents0 = new ArrayList<byte[]>();
+                    List<Integer> offsets0 = new ArrayList<Integer>();
+                    for (int i = 0; i < colNum; i++) {
+                        switch (rsmd.getColumnType(i + 1)) {
+                            case Types.CHAR: {
+                                byte[] tmp = rs.getString(i + 1).getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.VARCHAR: {
+                                byte[] tmp = rs.getString(i + 1).getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.DATE: {
+                                byte[] tmp = rs.getDate(i + 1).toString().getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.INTEGER: {
+                                byte[] tmp = new Integer(rs.getInt(i + 1)).toString().getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.FLOAT: {
+                                byte[] tmp = new Float(rs.getFloat(i + 1)).toString().getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.DOUBLE: {
+                                byte[] tmp = new Double(rs.getDouble(i + 1)).toString().getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            default:
+                                break;
+                        }
+                    }
+                    int[]offsets = new int[offsets0.size()];
+                    int contentsLen = 0;
+                    for (int i = 0; i < offsets0.size(); i++) {
+                        offsets[i] = offsets0.get(i);
+                        contentsLen += offsets[i];
+                    }
+                    byte[]contents = new byte[contentsLen];
+                    int contentsCursor = 0;
+                    for (int i = 0; i < contents0.size(); i++) {
+                        for (int j = 0; j < offsets[i]; j++) {
+                            contents[contentsCursor] = contents0.get(i)[j];
+                            contentsCursor++;
+                        }
+                    }
+                    //assert contentsCursor == contentsLen;
+                    Row row = new Row(contents, offsets);
+                    block.addRow(row);
+                }
+                prs.addBlock(block);
             }
-            //else { }
+            else {
+                for (int i = 0; i < rsmd.getColumnCount(); i++) {
+                    columnNames.add(rsmd.getColumnName(i));
+                    columnTypes.add(getTypeInString(rsmd.getColumnType(i)));
+                }
+                block = new Block(columnNames, columnTypes, 1000);
+                while (rs.next()) {
+                    List<byte[]> contents0 = new ArrayList<byte[]>();
+                    List<Integer> offsets0 = new ArrayList<Integer>();
+                    for (int i = 0; i < colNum; i++) {
+                        switch (rsmd.getColumnType(i + 1)) {
+                            case Types.CHAR: {
+                                byte[] tmp = rs.getString(i + 1).getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.VARCHAR: {
+                                byte[] tmp = rs.getString(i +1).getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.DATE: {
+                                byte[] tmp = rs.getDate(i +1).toString().getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.INTEGER: {
+                                byte[] tmp = new Integer(rs.getInt(i +1)).toString().getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.FLOAT: {
+                                byte[] tmp = new Float(rs.getFloat(i +1)).toString().getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            case Types.DOUBLE: {
+                                byte[] tmp = new Double(rs.getDouble(i +1)).toString().getBytes();
+                                contents0.add(tmp);
+                                offsets0.add(tmp.length);
+                            }
+                            break;
+                            default:
+                                break;
+                        }
+                    }
+                    int[]offsets = new int[offsets0.size()];
+                    int contentsLen = 0;
+                    for (int i = 0; i < offsets0.size(); i++) {
+                        offsets[i] = offsets0.get(i);
+                        contentsLen += offsets[i];
+                    }
+                    byte[]contents = new byte[contentsLen];
+                    int contentsCursor = 0;
+                    for (int i = 0; i < contents0.size(); i++) {
+                        for (int j = 0; j < offsets[i]; j++) {
+                            contents[contentsCursor] = contents0.get(i)[j];
+                            contentsCursor++;
+                        }
+                    }
+                    //assert contentsCursor == contentsLen;
+                    Row row = new Row(contents, offsets);
+                    block.addRow(row);
+                }
+                prs.addBlock(block);
+            }
+            System.out.println("QUERY SUCCESSFULLY");
+            this.chNum = block.getRowSize();
+            close();
+            return prs;
         }
         catch (SQLException e) {
             System.out.println("QUERY FAILED");
             e.printStackTrace();
         }
         close();
-        return new PardResultSet(PardResultSet.ResultStatus.EOR);
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
     private String getFilterComparisonExpression(ComparisonExpression expression)
@@ -485,11 +633,41 @@ public class PostgresConnector
         if (type == DataType.FLOAT.getType()) {
             return "float";
         }
+        if (type == DataType.DOUBLE.getType()) {
+            return "double";
+        }
+        if (type == DataType.DATE.getType()) {
+            return "date";
+        }
         if (type == DataType.CHAR.getType()) {
             return "char(" + length + ")";
         }
         if (type == DataType.VARCHAR.getType()) {
             return "varchar(" + length + ")";
+        }
+        // todo add more types
+        return null;
+    }
+
+    private String getTypeInString(int type)
+    {
+        if (type == DataType.INT.getType()) {
+            return "int";
+        }
+        if (type == DataType.FLOAT.getType()) {
+            return "float";
+        }
+        if (type == DataType.DOUBLE.getType()) {
+            return "double";
+        }
+        if (type == DataType.DATE.getType()) {
+            return "date";
+        }
+        if (type == DataType.CHAR.getType()) {
+            return "char";
+        }
+        if (type == DataType.VARCHAR.getType()) {
+            return "varchar";
         }
         // todo add more types
         return null;

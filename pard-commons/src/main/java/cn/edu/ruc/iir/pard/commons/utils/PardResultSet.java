@@ -113,7 +113,7 @@ public class PardResultSet
 
     public Block getNext()
     {
-        return blocks.remove(blocks.size());
+        return blocks.remove(blocks.size() - 1);
     }
 
     public ResultStatus getStatus()

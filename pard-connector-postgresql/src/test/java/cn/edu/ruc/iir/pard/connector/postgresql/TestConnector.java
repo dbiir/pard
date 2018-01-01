@@ -176,6 +176,7 @@ public class TestConnector
         sortNode.addSort(col1, true);
         ProjectNode projectNode = new ProjectNode(columns);
         FilterNode filterNode = new FilterNode(expression);
+        //FilterNode filterNode = new FilterNode(idLT5Expr);
         TableScanNode tableScanNode = new TableScanNode("pardschema", "table1");
         /*
         System.out.println("IN TEST");
@@ -196,6 +197,7 @@ public class TestConnector
 
         QueryTask task = new QueryTask(outputNode);
         PardResultSet resultSet = pConn.execute(task);
+        System.out.println(resultSet.getNext().getRowSize());
         // todo print out resultSet and it satisfies the actual result
     }
 }

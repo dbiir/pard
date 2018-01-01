@@ -169,7 +169,7 @@ public class TestConnector
                 nameEqTomcatExpr,
                 idLT5Expr);
 
-        // SELECT name, id FROM pardschema.table1 WHERE name='tomcat' AND id<5 ORDER BY id LIMIT 3;
+        // SELECT name, id FROM pardschema.table1 WHERE name='tomcat' AND id<5 ORDER BY id LIMIT 8;
         OutputNode outputNode = new OutputNode();
         LimitNode limitNode = new LimitNode(3);
         SortNode sortNode = new SortNode();
@@ -193,6 +193,7 @@ public class TestConnector
         limitNode.setChildren(sortNode, true);
         sortNode.setChildren(projectNode, true);
         projectNode.setChildren(filterNode, true);
+        //sortNode.setChildren(filterNode,true);
         filterNode.setChildren(tableScanNode, true);
 
         QueryTask task = new QueryTask(outputNode);

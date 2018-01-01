@@ -6,6 +6,7 @@ import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -417,7 +418,7 @@ public class PostgresConnector
                 querySQL.append(" limit ");
                 querySQL.append(limitNode.getLimitNum());
             }
-            //System.out.println("AFTER\t" + querySQL);
+            System.out.println("QUERY:\t" + querySQL);
             ResultSet rs = statement.executeQuery(querySQL.toString());
             ResultSetMetaData rsmd = rs.getMetaData();
             int colNum = rsmd.getColumnCount();
@@ -434,7 +435,10 @@ public class PostgresConnector
                     columnNames.add(((Column) it.next()).getColumnName());
                     columnTypes.add(getTypeInString(((Column) it.next()).getDataType()));
                 }
-                block = new Block(columnNames, columnTypes, 1000);
+                block = new Block(columnNames, columnTypes, 1024 * 1024);
+                //getResult(block, rs, rsmd, colNum);
+                getResultByRowConstructor(block, rs, rsmd, colNum);
+                /*
                 while (rs.next()) {
                     List<byte[]> contents0 = new ArrayList<byte[]>();
                     List<Integer> offsets0 = new ArrayList<Integer>();
@@ -498,14 +502,43 @@ public class PostgresConnector
                     Row row = new Row(contents, offsets);
                     block.addRow(row);
                 }
+                */
                 prs.addBlock(block);
             }
             else {
                 for (int i = 0; i < rsmd.getColumnCount(); i++) {
-                    columnNames.add(rsmd.getColumnName(i));
-                    columnTypes.add(getTypeInString(rsmd.getColumnType(i)));
+                    columnNames.add(rsmd.getColumnName(i + 1));
+                    switch (rsmd.getColumnType(i + 1)) {
+                        case Types.CHAR:
+                            columnTypes.add("char");
+                            break;
+                        case Types.VARCHAR:
+                            columnTypes.add("varchar");
+                            break;
+                        case Types.DATE:
+                            columnTypes.add("date");
+                            break;
+                        case Types.INTEGER:
+                            columnTypes.add("int");
+                            break;
+                        case Types.FLOAT:
+                            columnTypes.add("float");
+                            break;
+                        case Types.DOUBLE:
+                            columnTypes.add("double");
+                            break;
+                        default:
+                            columnTypes.add("other");
+                            break;
+                    }
+                    //columnTypes.add(getTypeInString(rsmd.getColumnType(i + 1)));
                 }
-                block = new Block(columnNames, columnTypes, 1000);
+                //System.out.println(columnTypes.get(0));
+                //System.out.println(columnTypes.get(1));
+                block = new Block(columnNames, columnTypes, 1024 * 1024);
+                //getResult(block, rs, rsmd, colNum);
+                getResultByRowConstructor(block, rs, rsmd, colNum);
+                /*
                 while (rs.next()) {
                     List<byte[]> contents0 = new ArrayList<byte[]>();
                     List<Integer> offsets0 = new ArrayList<Integer>();
@@ -569,6 +602,7 @@ public class PostgresConnector
                     Row row = new Row(contents, offsets);
                     block.addRow(row);
                 }
+                */
                 prs.addBlock(block);
             }
             System.out.println("QUERY SUCCESSFULLY");
@@ -582,6 +616,105 @@ public class PostgresConnector
         }
         close();
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+    }
+
+    private void getResult(Block block, ResultSet rs, ResultSetMetaData rsmd, int colNum) throws SQLException
+    {
+        while (rs.next()) {
+            List<byte[]> contents0 = new ArrayList<byte[]>();
+            List<Integer> offsets0 = new ArrayList<Integer>();
+            for (int i = 0; i < colNum; i++) {
+                switch (rsmd.getColumnType(i + 1)) {
+                    case Types.CHAR: {
+                        byte[] tmp = rs.getString(i + 1).getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.VARCHAR: {
+                        byte[] tmp = rs.getString(i + 1).getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.DATE: {
+                        byte[] tmp = rs.getDate(i + 1).toString().getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.INTEGER: {
+                        byte[] tmp = new Integer(rs.getInt(i + 1)).toString().getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.FLOAT: {
+                        byte[] tmp = new Float(rs.getFloat(i + 1)).toString().getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.DOUBLE: {
+                        byte[] tmp = new Double(rs.getDouble(i + 1)).toString().getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            int[]offsets = new int[offsets0.size()];
+            int contentsLen = 0;
+            for (int i = 0; i < offsets0.size(); i++) {
+                offsets[i] = offsets0.get(i);
+                contentsLen += offsets[i];
+            }
+            byte[]contents = new byte[contentsLen];
+            int contentsCursor = 0;
+            for (int i = 0; i < contents0.size(); i++) {
+                for (int j = 0; j < offsets[i]; j++) {
+                    contents[contentsCursor] = contents0.get(i)[j];
+                    contentsCursor++;
+                }
+            }
+            //assert contentsCursor == contentsLen;
+            Row row = new Row(contents, offsets);
+            block.addRow(row);
+        }
+    }
+
+    private void getResultByRowConstructor(Block block, ResultSet rs, ResultSetMetaData rsmd, int colNum) throws SQLException
+    {
+        while (rs.next()) {
+            RowConstructor rowConstructor = new RowConstructor();
+            for (int i = 0; i < colNum; i++) {
+                switch (rsmd.getColumnType(i + 1)) {
+                    case Types.CHAR:
+                        rowConstructor.appendString(rs.getString(i + 1));
+                        break;
+                    case Types.VARCHAR:
+                        rowConstructor.appendString(rs.getString(i + 1));
+                        break;
+                    case Types.DATE:
+                        rowConstructor.appendString(rs.getString(i + 1).toString());
+                        break;
+                    case Types.INTEGER:
+                        rowConstructor.appendInt(rs.getInt(i + 1));
+                        break;
+                    case Types.FLOAT:
+                        rowConstructor.appendFloat(rs.getFloat(i + 1));
+                        break;
+                    case Types.DOUBLE:
+                        rowConstructor.appendDouble(rs.getDouble(i + 1));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            block.addRow(rowConstructor.build());
+        }
     }
 
     private String getFilterComparisonExpression(ComparisonExpression expression)

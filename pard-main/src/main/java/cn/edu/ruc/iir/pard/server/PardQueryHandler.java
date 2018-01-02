@@ -79,7 +79,7 @@ public class PardQueryHandler
     private PardResultSet executeQuery(String sql)
     {
         // todo this logic should be abstracted as a automated state machine
-        logger.info("Executing query: " + sql);
+        logger.info("Accepted query: " + sql);
         Job job = jobScheduler.newJob();
         if (job == null) {
             logger.log(Level.WARNING, "Cannot create job for sql: " + sql);
@@ -87,6 +87,8 @@ public class PardQueryHandler
         }
         job.setSql(sql);
         jobScheduler.updateJob(job.getJobId());
+        logger.info("Created job for query, job id: " + job.getJobId());
+
         Statement statement;
         try {
             statement = sqlParser.createStatement(sql);
@@ -101,6 +103,7 @@ public class PardQueryHandler
         }
         job.setStatement(statement);
         jobScheduler.updateJob(job.getJobId());
+        logger.info("Created statement for job[" + job.getJobId() + "], job state: " + job.getJobState());
 
         Plan plan = planner.plan(statement);
         if (plan == null) {
@@ -110,6 +113,7 @@ public class PardQueryHandler
         }
         job.setPlan(plan);
         jobScheduler.updateJob(job.getJobId());
+        logger.info("Created plan for job[" + job.getJobId() + "], job state: " + job.getJobState());
 
         List<Task> tasks = taskScheduler.generateTasks(plan);
         if (tasks == null) {
@@ -121,6 +125,7 @@ public class PardQueryHandler
             tasks.forEach(job::addTask);
         }
         jobScheduler.updateJob(job.getJobId());
+        logger.info("Generated tasks for job[" + job.getJobId() + "], job state: " + job.getJobState());
 
         PardResultSet resultSet = taskScheduler.executeJob(job);
         if (resultSet.getStatus() != PardResultSet.ResultStatus.OK) {
@@ -128,6 +133,7 @@ public class PardQueryHandler
             logger.log(Level.WARNING, "Failed to execute job for sql: " + sql);
         }
         jobScheduler.updateJob(job.getJobId());
+        logger.info("Done executing job[" + job.getJobId() + "], job state: " + job.getJobState());
 
         return resultSet;
     }

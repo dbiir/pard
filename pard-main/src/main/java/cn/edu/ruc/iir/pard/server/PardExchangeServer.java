@@ -5,6 +5,7 @@ import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.logging.Logger;
 
 /**
  * pard
@@ -14,6 +15,7 @@ import java.net.Socket;
 public class PardExchangeServer
         implements Runnable
 {
+    private final Logger logger = Logger.getLogger(PardExchangeServer.class.getName());
     private final int port;
     private final Connector connector;
     private boolean stopFlag = false;
@@ -27,6 +29,7 @@ public class PardExchangeServer
     @Override
     public void run()
     {
+        logger.info("Exchange server started at port: " + port);
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (!stopFlag) {
                 Socket socket = serverSocket.accept();
@@ -37,5 +40,11 @@ public class PardExchangeServer
         catch (IOException e) {
             e.printStackTrace();
         }
+        logger.info("Exchange server shut down");
+    }
+
+    public void stop()
+    {
+        this.stopFlag = true;
     }
 }

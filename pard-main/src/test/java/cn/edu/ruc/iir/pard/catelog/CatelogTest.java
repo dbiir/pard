@@ -96,7 +96,7 @@ public class CatelogTest
         Statement stmt = parser.createStatement(sql);
         System.out.println(stmt);
         InsertPlan iplan = new InsertPlan(stmt);
-        Map<String, Object> map = iplan.getDistributionHints();
+        Map<String, List<Row>> map = iplan.getDistributionHints();
         System.out.print("node\t");
         List<Column> clist = iplan.getColList();
         for (Column col : clist) {
@@ -104,7 +104,7 @@ public class CatelogTest
         }
         System.out.println();
         for (String key : map.keySet()) {
-            List<Row> row = (List<Row>) map.get(key);
+            List<Row> row = map.get(key);
             for (Row r : row) {
                 System.out.print(key + "\t");
                 for (Expression e : r.getItems()) {

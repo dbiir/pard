@@ -16,11 +16,13 @@ public class SchemaDao
         extends GDDDao
 {
     private WatchThread watchThread;
+
     public SchemaDao()
     {
         //watchThread = new WatchThread("schema");
         //watchThread.start();
     }
+
     public Schema loadByName(String name)
     {
         Schema schema = null;
@@ -28,6 +30,7 @@ public class SchemaDao
         schema = gdd.getSchemaMap().get(name);
         return schema;
     }
+
     public boolean update(Schema schema)
     {
         GDD gdd = load();
@@ -35,6 +38,7 @@ public class SchemaDao
         schemaMap.put(schema.getName(), schema);
         return persistGDD(gdd);
     }
+
     public boolean add(Schema schema, boolean check)
     {
         GDD gdd = load();
@@ -48,6 +52,7 @@ public class SchemaDao
         schemaMap.put(schema.getName(), schema);
         return persistGDD(gdd);
     }
+
     public boolean drop(String name)
     {
         GDD gdd = load();
@@ -55,6 +60,7 @@ public class SchemaDao
         schemaMap.put(name, null);
         return persistGDD(gdd);
     }
+
     public boolean dropAll()
     {
         GDD gdd = load();

@@ -9,8 +9,8 @@ import cn.edu.ruc.iir.pard.catalog.Site;
  *
  * @author hagen
  * */
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class SiteDao
         extends GDDDao
@@ -27,10 +27,10 @@ public class SiteDao
         return gdd.getSiteMap().get(name);
     }
 
-    public Set<String> listNodes()
+    public HashMap<String, Site> listNodes()
     {
         GDD gdd = load();
-        return gdd.getSiteMap().keySet();
+        return gdd.getSiteMap();
     }
 
     public boolean update(Site site)

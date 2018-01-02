@@ -106,7 +106,7 @@ public class EtcdTest
         Site site = new Site();
         site.setId(1);
         site.setIp("10.77.40.31");
-        site.setPort(2379);
+        site.setServerPort(2379);
         site.setName(name);
         site.setLeader(1);
         return site;

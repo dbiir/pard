@@ -14,9 +14,9 @@ public class Keeper
 {
     private final PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
 
-    private Map<String, ServerInfo> etcdServers = null;
-    private Map<String, ServerInfo> exchangeServers = null;
-    private Map<String, ServerInfo> rpcServers = null;
+    private Map<String, ServerInfo> etcdServers;
+    private Map<String, ServerInfo> exchangeServers;
+    private Map<String, ServerInfo> rpcServers;
 
     private static final class KeeperHolder
     {
@@ -30,45 +30,15 @@ public class Keeper
 
     private Keeper()
     {
-        etcdServers = new HashMap<String, ServerInfo>();
-        exchangeServers = new HashMap<String, ServerInfo>();
-        rpcServers = new HashMap<String, ServerInfo>();
+        etcdServers = new HashMap<>();
+        exchangeServers = new HashMap<>();
+        rpcServers = new HashMap<>();
         load();
     }
 
     private void load()
     {
         // todo should load from catalog and sync
-        String etcdServerStr = configuration.getEtcdServers();
-        String exchangeServerStr = configuration.getExchangeServers();
-        String rpcServerStr = configuration.getRPCServers();
-        String[] etcdServerStrA = etcdServerStr.split(",");
-        String[] nettyServerStrA = exchangeServerStr.split(",");
-        String[] rpcServerStrA = rpcServerStr.split(",");
-        for (String server : etcdServerStrA) {
-            ServerInfo serverInfo = new ServerInfo();
-            server = server.trim();
-            serverInfo.setName(server.split(":")[0]);
-            serverInfo.setIp(server.split(":")[1]);
-            serverInfo.setPort(Integer.parseInt(server.split(":")[2]));
-            etcdServers.put(serverInfo.getName(), serverInfo);
-        }
-        for (String server : nettyServerStrA) {
-            ServerInfo serverInfo = new ServerInfo();
-            server = server.trim();
-            serverInfo.setName(server.split(":")[0]);
-            serverInfo.setIp(server.split(":")[1]);
-            serverInfo.setPort(Integer.parseInt(server.split(":")[2]));
-            exchangeServers.put(serverInfo.getName(), serverInfo);
-        }
-        for (String server : rpcServerStrA) {
-            ServerInfo serverInfo = new ServerInfo();
-            server = server.trim();
-            serverInfo.setName(server.split(":")[0]);
-            serverInfo.setIp(server.split(":")[1]);
-            serverInfo.setPort(Integer.parseInt(server.split(":")[2]));
-            rpcServers.put(serverInfo.getName(), serverInfo);
-        }
     }
 
     public Map<String, ServerInfo> getEtcdServers()

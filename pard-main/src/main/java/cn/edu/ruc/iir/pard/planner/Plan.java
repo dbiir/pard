@@ -3,8 +3,6 @@ package cn.edu.ruc.iir.pard.planner;
 import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
-import java.util.Map;
-
 /**
  * pard
  *
@@ -40,10 +38,10 @@ public abstract class Plan
 
     public abstract ErrorMessage semanticAnalysis();
 
-    public Map<String, Object> getDistributionHints()
-    {
-        return null;
-    }
+//    public Map<String, Object> getDistributionHints()
+//    {
+//        return null;
+//    }
 
     public boolean afterExecution(boolean executeSuccess)
     {

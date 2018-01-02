@@ -31,7 +31,7 @@ public class PardClient
     public void run()
     {
         System.out.println("Welcome to Pard.");
-        System.out.println("pard>");
+        System.out.print("pard>");
         while (true) {
             String line = scanner.nextLine();
             if (line.equalsIgnoreCase("QUIT") || line.equalsIgnoreCase("EXIT")) {
@@ -44,12 +44,18 @@ public class PardClient
                         outWriter.write(q);
                         outWriter.newLine();
                         outWriter.flush();
-                        PardResultSet resultSet = (PardResultSet) inputStream.readObject();
-                        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
-                            System.out.println(resultSet.toString());
+                        Object obj = inputStream.readObject();
+                        if (obj instanceof PardResultSet) {
+                            PardResultSet resultSet = (PardResultSet) obj;
+                            if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+                                System.out.println(resultSet.toString());
+                            }
+                            else {
+                                System.out.println(resultSet.getStatus().toString());
+                            }
                         }
                         else {
-                            System.out.println(resultSet.getStatus().toString());
+                            System.out.println("Client receive unknown object");
                         }
                     }
                 }

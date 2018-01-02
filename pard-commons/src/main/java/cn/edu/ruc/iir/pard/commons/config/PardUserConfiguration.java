@@ -47,12 +47,17 @@ public final class PardUserConfiguration
         return getProperty("pard.name");
     }
 
+    public String getHost()
+    {
+        return getProperty("pard.host");
+    }
+
     public int getRPCPort()
     {
         return Integer.parseInt(getProperty("pard.rpc.port"));
     }
 
-    public int getSocketPort()
+    public int getServerPort()
     {
         return Integer.parseInt(getProperty("pard.server.port"));
     }

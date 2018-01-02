@@ -107,7 +107,7 @@ public class PostgresConnector
             }
         }
         catch (SQLException e) {
-            System.out.println("GET CONNECTION FAILED");
+            logger.info("GET CONNECTION FAILED");
             e.printStackTrace();
         }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
@@ -116,6 +116,7 @@ public class PostgresConnector
     @Override
     public void close()
     {
+        logger.info("Connector close");
         connectionPool.close();
     }
 
@@ -126,17 +127,25 @@ public class PostgresConnector
             String createSchemaSQL;
             createSchemaSQL = "create schema " + task.getSchemaName();
             int status = statement.executeUpdate(createSchemaSQL);
+            logger.info("Connector: " + createSchemaSQL);
             if (status == 0) {
-                System.out.println("CREATE SCHEMA SUCCESSFULLY");
-                close();
+                logger.info("CREATE SCHEMA SUCCESSFULLY");
+                conn.close();
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
         catch (SQLException e) {
-            System.out.println("CREATE SCHEMA FAILED");
+            logger.info("CREATE SCHEMA FAILED");
             e.printStackTrace();
         }
-        close();
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -155,21 +164,27 @@ public class PostgresConnector
             }
             createTableSQL = new StringBuilder(createTableSQL.substring(0, createTableSQL.length() - 1));
             createTableSQL.append(")");
-            //System.out.println(createTableSQL);
-            logger.info("Postgres connector: " + createTableSQL.toString());
+            logger.info("Connector: " + createTableSQL.toString());
             Statement statement = conn.createStatement();
             int status = statement.executeUpdate(createTableSQL.toString());
             if (status == 0) {
-                System.out.println("CREATE TABLE SUCCESSFULLY");
-                close();
+                logger.info("CREATE TABLE SUCCESSFULLY");
+                conn.close();
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
         catch (SQLException e) {
-            System.out.println("CREATE TABLE FAILED");
+            logger.info("CREATE TABLE FAILED");
             e.printStackTrace();
         }
-        close();
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -180,18 +195,25 @@ public class PostgresConnector
             String dropSchemaSQL;
             dropSchemaSQL = "drop schema " + task.getSchema() + " CASCADE";
             int status = statement.executeUpdate(dropSchemaSQL);
-            logger.info("Postgres connector: " + dropSchemaSQL);
+            logger.info("Connector: " + dropSchemaSQL);
             if (status == 0) {
-                System.out.println("DROP SCHEMA SUCCESSFULLY");
-                close();
+                logger.info("DROP SCHEMA SUCCESSFULLY");
+                conn.close();
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
         catch (SQLException e) {
-            System.out.println("DROP SCHEMA FAILED");
+            logger.info("DROP SCHEMA FAILED");
             e.printStackTrace();
         }
-        close();
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -209,16 +231,23 @@ public class PostgresConnector
             logger.info("Postgres connector: " + dropTableSQL);
             int status = statement.executeUpdate(dropTableSQL);
             if (status == 0) {
-                System.out.println("DROP TABLE SUCCESSFULLY");
-                close();
+                logger.info("DROP TABLE SUCCESSFULLY");
+                conn.close();
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
         catch (SQLException e) {
-            System.out.println("DROP TABLE FAILED");
+            logger.info("DROP TABLE FAILED");
             e.printStackTrace();
         }
-        close();
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -246,19 +275,27 @@ public class PostgresConnector
                 }
                 insertSQL = new StringBuilder(insertSQL.substring(0, insertSQL.length() - 1));
                 insertSQL.append(")");
+                logger.info("Connector: " + insertSQL.toString());
                 statement.executeUpdate(insertSQL.toString());
                 num++;
             }
             this.chNum = num;
-            System.out.println("INSERT SUCCESSFULLY");
-            close();
+            logger.info("INSERT SUCCESSFULLY");
+            conn.close();
             return new PardResultSet(PardResultSet.ResultStatus.OK);
         }
         catch (SQLException e) {
-            System.out.println("INSERT FAILED");
+            logger.info("INSERT FAILED");
             e.printStackTrace();
         }
-        close();
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -287,7 +324,10 @@ public class PostgresConnector
                         pstmt.setFloat(j + 1, Float.parseFloat(value[j]));
                     }
                     if (type == DataType.CHAR.getType() || type == DataType.VARCHAR.getType()) {
-                        pstmt.setString(j + 1, value[j]);
+                        String v = value[j];
+                        // todo this is too implicit to replace all ' in string
+                        v = v.replaceAll("'", "");
+                        pstmt.setString(j + 1, v);
                     }
                 }
                 pstmt.addBatch();
@@ -295,15 +335,22 @@ public class PostgresConnector
             pstmt.executeBatch();
             //conn.commit();
             this.chNum = tupleNum;
-            System.out.println("INSERT SUCCESSFULLY");
-            close();
+            logger.info("INSERT SUCCESSFULLY");
+            conn.close();
             return new PardResultSet(PardResultSet.ResultStatus.OK);
         }
         catch (SQLException e) {
-            System.out.println("INSERT FAILED");
+            logger.info("INSERT FAILED");
             e.printStackTrace();
         }
-        close();
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 
@@ -442,23 +489,30 @@ public class PostgresConnector
                     }
                     //columnTypes.add(getTypeInString(rsmd.getColumnType(i + 1)));
                 }
-                //System.out.println(columnTypes.get(0));
-                //System.out.println(columnTypes.get(1));
+                //logger.info(columnTypes.get(0));
+                //logger.info(columnTypes.get(1));
                 block = new Block(columnNames, columnTypes, 1024 * 1024);
                 //getResult(block, rs, rsmd, colNum);
                 getResultByRowConstructor(block, rs, rsmd, colNum);
                 prs.addBlock(block);
             }
-            System.out.println("QUERY SUCCESSFULLY");
+            logger.info("QUERY SUCCESSFULLY");
             this.chNum = block.getRowSize();
-            close();
+            conn.close();
             return prs;
         }
         catch (SQLException e) {
-            System.out.println("QUERY FAILED");
+            logger.info("QUERY FAILED");
             e.printStackTrace();
         }
-        close();
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
     }
 

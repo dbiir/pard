@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -124,5 +126,14 @@ public class PardResultSet
     public int getResultSetNum()
     {
         return resultSetNum;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("task", taskId)
+                .add("status", resultStatus)
+                .toString();
     }
 }

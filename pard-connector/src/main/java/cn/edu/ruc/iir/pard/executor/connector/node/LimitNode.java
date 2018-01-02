@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.executor.connector.node;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -18,5 +20,15 @@ public class LimitNode
     public int getLimitNum()
     {
         return limitNum;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("name", "LIMIT")
+                .add("number", limitNum)
+                .add("child", getLeftChild())
+                .toString();
     }
 }

@@ -4,6 +4,8 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 
 import java.util.List;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -22,5 +24,15 @@ public class DistinctNode
     public List<Column> getColumns()
     {
         return columns;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("name", "DISTINCT")
+                .add("columns", columns)
+                .add("child", getLeftChild())
+                .toString();
     }
 }

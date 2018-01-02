@@ -9,7 +9,6 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
-import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
@@ -141,7 +140,7 @@ public class TestConnector
     @Test
     public void testQuery()
     {
-        final PostgresConnector pConn = PostgresConnector.INSTANCE();
+//        final PostgresConnector pConn = PostgresConnector.INSTANCE();
         List<Column> columns = new ArrayList<>();
         Column col0 = new Column();
         col0.setDataType(DataType.CHAR.getType());
@@ -195,10 +194,11 @@ public class TestConnector
         projectNode.setChildren(filterNode, true);
         //sortNode.setChildren(filterNode,true);
         filterNode.setChildren(tableScanNode, true);
+        System.out.println(outputNode);
 
-        QueryTask task = new QueryTask(outputNode);
-        PardResultSet resultSet = pConn.execute(task);
-        System.out.println(resultSet.getNext().getRowSize());
+//        QueryTask task = new QueryTask(outputNode);
+//        PardResultSet resultSet = pConn.execute(task);
+//        System.out.println(resultSet.getNext().getRowSize());
         // todo print out resultSet and it satisfies the actual result
     }
 }

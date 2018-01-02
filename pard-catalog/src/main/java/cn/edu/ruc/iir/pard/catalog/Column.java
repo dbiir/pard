@@ -8,6 +8,7 @@ public class Column
     private int len;
     private int index; //0:none; 1:hashindex; 2:btreeindex; 3:others
     private int key;
+
     public Column()
     {
     }

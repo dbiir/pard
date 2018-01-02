@@ -44,6 +44,8 @@ public class ErrorMessage
         public static final int ValuesTypeNotMatch = -10018;
         public static final int MissingPartitionColumnsWhenInsert = -10019;
         public static final int UnkownCompareTypeWhenPartition = -10020;
+        public static final int LimitIsNotANumber = -10021;
+        public static final int UnSupportedQuery = -10022;
     }
     public static void init()
     {
@@ -69,6 +71,8 @@ public class ErrorMessage
         template.put(ErrCode.ValuesTypeNotMatch, "values %s type  not match!");
         template.put(ErrCode.MissingPartitionColumnsWhenInsert, "Column '%s' is necessary when determine which site receive this insert statement, but missing.");
         template.put(ErrCode.UnkownCompareTypeWhenPartition, "Unkown compare type when partition");
+        template.put(ErrCode.LimitIsNotANumber, "Specified limit value is not a number");
+        template.put(ErrCode.UnSupportedQuery, "Unsupported query");
         template.put(ErrCode.OK, "success");
     }
     static

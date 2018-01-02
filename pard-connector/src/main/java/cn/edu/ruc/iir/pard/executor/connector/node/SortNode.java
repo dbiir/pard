@@ -5,6 +5,8 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -38,5 +40,16 @@ public class SortNode
             this.columns.add(column);
             this.orderings.add(order ? 1 : 0);
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("name", "SORT")
+                .add("columns", columns)
+                .add("orderings", orderings)
+                .add("child", getLeftChild())
+                .toString();
     }
 }

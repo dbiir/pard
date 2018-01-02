@@ -39,15 +39,17 @@ public class InsertPlan
     private Table table = null;
     private List<Column> colList;
     private Map<String, List<Row>> distributionHints;
+
     public InsertPlan(Statement stmt)
     {
         super(stmt);
     }
+
     @Override
     public ErrorMessage semanticAnalysis()
     {
         distributionHints = new HashMap<>();
-        colList = new ArrayList<Column>();
+        colList = new ArrayList<>();
         Statement statement = this.getStatment();
         Schema schema = null;
         if (!(statement instanceof Insert)) {
@@ -147,6 +149,7 @@ public class InsertPlan
         }
         return ErrorMessage.getOKMessage();
     }
+
     //TODO: type check.
     public boolean typeMatch(Column col, Literal literal)
     {
@@ -175,10 +178,12 @@ public class InsertPlan
                             }
         return true;
     }
+
     public List<Column> getColList()
     {
         return colList;
     }
+
     public Map<String, List<Row>> getDistributionHints()
     {
         return this.distributionHints;

@@ -2,6 +2,8 @@ package cn.edu.ruc.iir.pard.executor.connector.node;
 
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -20,5 +22,15 @@ public class FilterNode
     public Expression getExpression()
     {
         return expression;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("name", "FILTER")
+                .add("expression", expression)
+                .add("child", getLeftChild())
+                .toString();
     }
 }

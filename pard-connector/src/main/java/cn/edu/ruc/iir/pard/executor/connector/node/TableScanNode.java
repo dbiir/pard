@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.executor.connector.node;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -22,16 +24,31 @@ public class TableScanNode
     {
         return schema;
     }
+
     public String getTable()
     {
         return table;
     }
+
     public String getSite()
     {
         return site;
     }
+
     public void setSite(String site)
     {
         this.site = site;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("name", "TABLESCAN")
+                .add("schema", schema)
+                .add("table", table)
+                .add("site", site)
+                .add("child", getLeftChild())
+                .toString();
     }
 }

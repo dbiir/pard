@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.executor.connector.node;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -34,5 +36,14 @@ public abstract class PlanNode
             children[1] = planNode;
         }
         childrenNum++;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("left", children[0])
+                .add("right", children[1])
+                .toString();
     }
 }

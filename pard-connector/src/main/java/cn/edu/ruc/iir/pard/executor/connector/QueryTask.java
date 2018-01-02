@@ -10,6 +10,7 @@ import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 public class QueryTask
         extends Task
 {
+    private static final long serialVersionUID = -422729841644838360L;
     private final PlanNode planNode;
 
     public QueryTask(PlanNode planNode)

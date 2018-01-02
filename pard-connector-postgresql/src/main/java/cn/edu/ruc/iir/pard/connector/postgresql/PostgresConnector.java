@@ -4,8 +4,6 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
-import cn.edu.ruc.iir.pard.commons.memory.Block;
-import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -101,9 +99,6 @@ public class PostgresConnector
             if (task instanceof InsertIntoTask) {
                 //return executeInsertInto(conn, (InsertIntoTask) task);
                 return executeBatchInsertInto(conn, (InsertIntoTask) task);
-            }
-            if (task instanceof QueryTask) {
-                return executeQuery(conn, (QueryTask) task);
             }
         }
         catch (SQLException e) {
@@ -414,20 +409,20 @@ public class PostgresConnector
             }
             //System.out.println("AFTER\t" + querySQL);
             ResultSet rs = statement.executeQuery(querySQL.toString());
-            if (isProject){
+            if (isProject) {
                 List<Column> columns = projectNode.getColumns();
                 List<String> columnNames = new ArrayList<>();
                 List<String> columnTypes = new ArrayList<>();
-                Iterator it = columns.iterator();
-                while(it.hasNext()) {
-                    columns.add(Column)
+                Iterator<Column> it = columns.iterator();
+                while (it.hasNext()) {
+                    columns.add(it.next());
                 }
                 while (rs.next()) {
-
+                    // todo
                 }
             }
             else {
-
+                // todo
             }
         }
         catch (SQLException e) {

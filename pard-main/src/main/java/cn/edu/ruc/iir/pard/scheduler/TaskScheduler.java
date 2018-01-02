@@ -10,7 +10,10 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
+import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
 import cn.edu.ruc.iir.pard.nodekeeper.Keeper;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.SchemaCreationPlan;
@@ -180,8 +183,27 @@ public class TaskScheduler
         // query plan
         if (plan instanceof QueryPlan) {
             logger.info("Task generation for query plan");
-            // todo generate task for query plan
+            QueryPlan queryPlan = (QueryPlan) plan;
+            PlanNode planNode = queryPlan.getPlan();
+            UnionNode internalUnionNode = null;
+            while (planNode.hasChildren()) {
+                PlanNode internalNode = planNode.getLeftChild();
+                if (internalNode instanceof UnionNode) {
+                    internalUnionNode = (UnionNode) internalNode;
+                    break;
+                }
+            }
+            if (internalUnionNode == null) {
+                return ImmutableList.of(new QueryTask(planNode));
+            }
             List<Task> tasks = new ArrayList<>();
+            List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
+            for (PlanNode childNode : unionChildren) {
+                internalUnionNode.setChildren(childNode, true, false);
+                QueryTask task = new QueryTask(planNode);
+                tasks.add(task);
+            }
+
             return ImmutableList.copyOf(tasks);
         }
         return null;

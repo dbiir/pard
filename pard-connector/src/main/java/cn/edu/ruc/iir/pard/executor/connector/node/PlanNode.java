@@ -27,15 +27,20 @@ public abstract class PlanNode
         return children[1];
     }
 
-    public void setChildren(PlanNode planNode, boolean left)
+    public void setChildren(PlanNode planNode, boolean left, boolean exists)
     {
+        if (exists) {
+            if (childrenNum >= 2) {
+                return;
+            }
+            childrenNum++;
+        }
         if (left) {
             children[0] = planNode;
         }
         else {
             children[1] = planNode;
         }
-        childrenNum++;
     }
 
     @Override

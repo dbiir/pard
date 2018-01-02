@@ -1,4 +1,4 @@
-package cn.edu.ruc.iir.pard.catalog;
+package cn.edu.ruc.iir.pard.commons.utils;
 
 public class DataType
 {

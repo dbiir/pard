@@ -51,4 +51,31 @@ public class RowConstructor
     {
         return new Row(byteBuffer.array(), offsets.stream().mapToInt(i->i).toArray());
     }
+
+    public static String printRow(Row row, List<DataType> dataTypes)
+    {
+        StringBuilder sb = new StringBuilder();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(row.getContent());
+        int[] offsets = row.getOffsets();
+        for (int i = 0; i < offsets.length; i++) {
+            DataType dataType = dataTypes.get(i);
+            if (dataType == DataType.INT) {
+                sb.append(byteBuffer.getInt()).append(", ");
+            }
+            if (dataType == DataType.CHAR || dataType == DataType.VARCHAR) {
+                int len = dataType.getLength();
+                byte[] temp = new byte[len];
+                byteBuffer.get(temp);
+                sb.append(new String(temp)).append(", ");
+            }
+            if (dataType == DataType.BIGINT) {
+                sb.append(byteBuffer.getLong()).append(", ");
+            }
+            if (dataType == DataType.FLOAT) {
+                sb.append(byteBuffer.getFloat()).append(", ");
+            }
+            // todo add more types
+        }
+        return sb.toString();
+    }
 }

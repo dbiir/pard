@@ -3,6 +3,7 @@ package cn.edu.ruc.iir.pard.planner.dml;
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
+import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
@@ -12,6 +13,7 @@ import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
 import cn.edu.ruc.iir.pard.planner.EarlyStopPlan;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
@@ -31,6 +33,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import cn.edu.ruc.iir.pard.sql.tree.Table;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -126,7 +129,7 @@ public class QueryPlan
                 return ErrorMessage.throwMessage(ErrorMessage.ErrCode.LimitIsNotANumber);
             }
             LimitNode limitNode = new LimitNode(limitVal);
-            currentNode.setChildren(limitNode, true);
+            currentNode.setChildren(limitNode, true, true);
             currentNode = limitNode;
         }
         // order by
@@ -142,7 +145,7 @@ public class QueryPlan
                     return ErrorMessage.throwMessage(ErrorMessage.ErrCode.ColumnInTableNotFound);
                 }
             }
-            currentNode.setChildren(sortNode, true);
+            currentNode.setChildren(sortNode, true, true);
             currentNode = sortNode;
         }
         // distinct and project
@@ -167,25 +170,30 @@ public class QueryPlan
         }
         if (select.isDistinct()) {
             DistinctNode distinctNode = new DistinctNode(columns);
-            currentNode.setChildren(distinctNode, true);
+            currentNode.setChildren(distinctNode, true, true);
             currentNode = distinctNode;
         }
         ProjectNode projectNode = new ProjectNode(columns);
-        currentNode.setChildren(projectNode, true);
+        currentNode.setChildren(projectNode, true, true);
         currentNode = projectNode;
 
         // filter
         if (querySpecification.getWhere().isPresent()) {
             Expression filterExpr = querySpecification.getWhere().get();
             FilterNode filterNode = new FilterNode(filterExpr);
-            currentNode.setChildren(filterNode, true);
+            currentNode.setChildren(filterNode, true, true);
             currentNode = filterNode;
         }
 
         // scan
-        TableScanNode scanNode = new TableScanNode(schemaName, fromTableName);
-        currentNode.setChildren(scanNode, true);
-        currentNode = scanNode;
+        UnionNode unionNode = new UnionNode();
+        currentNode.setChildren(unionNode, true, true);
+        // todo check for sites that really need query execution.
+        SiteDao siteDao = new SiteDao();
+        for (String site : siteDao.listNodes().keySet()) {
+            TableScanNode scanNode = new TableScanNode(schemaName, fromTableName, site);
+            unionNode.addUnionChild(scanNode);
+        }
 
         return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
     }
@@ -199,5 +207,10 @@ public class QueryPlan
     public boolean isAlreadyDone()
     {
         return alreadyDone;
+    }
+
+    public HashMap<String, PlanNode> getDistributionHints()
+    {
+        return new HashMap<>();
     }
 }

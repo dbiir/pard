@@ -1,8 +1,8 @@
 package cn.edu.ruc.iir.pard.connector.postgresql;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
-import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
+import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -188,12 +188,12 @@ public class TestConnector
         System.out.println("IN TEST");
         */
         // LIMIT -> SORT -> PROJECT -> FILTER -> SCAN
-        outputNode.setChildren(limitNode, true);
-        limitNode.setChildren(sortNode, true);
-        sortNode.setChildren(projectNode, true);
-        projectNode.setChildren(filterNode, true);
+        outputNode.setChildren(limitNode, true, true);
+        limitNode.setChildren(sortNode, true, true);
+        sortNode.setChildren(projectNode, true, true);
+        projectNode.setChildren(filterNode, true, true);
         //sortNode.setChildren(filterNode,true);
-        filterNode.setChildren(tableScanNode, true);
+        filterNode.setChildren(tableScanNode, true, true);
         System.out.println(outputNode);
 
 //        QueryTask task = new QueryTask(outputNode);

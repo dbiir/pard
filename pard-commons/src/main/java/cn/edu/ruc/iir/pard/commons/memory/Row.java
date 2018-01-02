@@ -19,4 +19,14 @@ public class Row
         this.content = content;
         this.offsets = offsets;
     }
+
+    public byte[] getContent()
+    {
+        return content;
+    }
+
+    public int[] getOffsets()
+    {
+        return offsets;
+    }
 }

@@ -20,6 +20,13 @@ public class TableScanNode
         this.table = table;
     }
 
+    public TableScanNode(String schema, String table, String site)
+    {
+        this.schema = schema;
+        this.table = table;
+        this.site = site;
+    }
+
     public String getSchema()
     {
         return schema;

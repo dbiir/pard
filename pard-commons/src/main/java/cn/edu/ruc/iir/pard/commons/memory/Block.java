@@ -51,4 +51,9 @@ public class Block
     {
         return rows.remove(rows.size());
     }
+
+    public int getRowSize()
+    {
+        return this.rows.size();
+    }
 }

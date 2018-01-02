@@ -3,7 +3,10 @@ package cn.edu.ruc.iir.pard.connector.postgresql;
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -20,21 +23,22 @@ import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.DoubleLiteral;
-import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 import cn.edu.ruc.iir.pard.sql.tree.Literal;
-import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
 import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * pard
@@ -44,6 +48,7 @@ import java.util.List;
 public class PostgresConnector
         implements Connector
 {
+    private final Logger logger = Logger.getLogger(PostgresConnector.class.getName());
     private final ConnectionPool connectionPool;
     private int chNum = 0;
 
@@ -139,9 +144,7 @@ public class PostgresConnector
     {
         try {
             StringBuilder createTableSQL = new StringBuilder("create table if not exists " + task.getSchemaName() + "." + task.getTableName() + "(");
-            Iterator<Column> it = task.getColumnDefinitions().iterator();
-            while (it.hasNext()) {
-                Column cd = it.next();
+            for (Column cd : task.getColumnDefinitions()) {
                 if (cd.getKey() == 1) {
                     createTableSQL.append(cd.getColumnName()).append(" ").append(getTypeString(cd.getDataType(), cd.getLen())).append(" primary key ");
                 }
@@ -153,6 +156,7 @@ public class PostgresConnector
             createTableSQL = new StringBuilder(createTableSQL.substring(0, createTableSQL.length() - 1));
             createTableSQL.append(")");
             //System.out.println(createTableSQL);
+            logger.info("Postgres connector: " + createTableSQL.toString());
             Statement statement = conn.createStatement();
             int status = statement.executeUpdate(createTableSQL.toString());
             if (status == 0) {
@@ -176,6 +180,7 @@ public class PostgresConnector
             String dropSchemaSQL;
             dropSchemaSQL = "drop schema " + task.getSchema() + " CASCADE";
             int status = statement.executeUpdate(dropSchemaSQL);
+            logger.info("Postgres connector: " + dropSchemaSQL);
             if (status == 0) {
                 System.out.println("DROP SCHEMA SUCCESSFULLY");
                 close();
@@ -201,6 +206,7 @@ public class PostgresConnector
             else {
                 dropTableSQL = "drop table " + task.getSchemaName() + "." + task.getTableName();
             }
+            logger.info("Postgres connector: " + dropTableSQL);
             int status = statement.executeUpdate(dropTableSQL);
             if (status == 0) {
                 System.out.println("DROP TABLE SUCCESSFULLY");
@@ -303,6 +309,7 @@ public class PostgresConnector
 
     private PardResultSet executeQuery(Connection conn, QueryTask task)
     {
+        this.chNum = 0;
         try {
             Statement statement = conn.createStatement();
             StringBuilder querySQL = new StringBuilder("select ");
@@ -350,15 +357,13 @@ public class PostgresConnector
                 if (nodeList.get(i) instanceof LimitNode) {
                     limitNode = (LimitNode) nodeList.get(i);
                     isLimit = true;
-                    continue;
                 }
             }
 
             if (isProject) {
                 List<Column> columns = projectNode.getColumns();
-                Iterator it = columns.iterator();
-                while (it.hasNext()) {
-                    querySQL.append(((Column) it.next()).getColumnName());
+                for (Column column : columns) {
+                    querySQL.append(column.getColumnName());
                     querySQL.append(",");
                 }
                 querySQL = new StringBuilder(querySQL.substring(0, querySQL.length() - 1));
@@ -371,34 +376,14 @@ public class PostgresConnector
             querySQL.append(".");
             querySQL.append(tableName);
             if (isFilter) {
-                querySQL.append(" where ");
-                if (filterNode.getExpression() instanceof ComparisonExpression) {
-                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) filterNode.getExpression()));
-                }
-                if (filterNode.getExpression() instanceof LogicalBinaryExpression) {
-                    Expression leftExpression = ((LogicalBinaryExpression) filterNode.getExpression()).getLeft();
-                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) leftExpression));
-                    switch (((LogicalBinaryExpression) filterNode.getExpression()).getType()) {
-                        case AND:
-                            querySQL.append("and ");
-                            break;
-                        case OR:
-                            querySQL.append("or ");
-                            break;
-                        default:
-                            break;
-                    }
-                    Expression rightExpression = ((LogicalBinaryExpression) filterNode.getExpression()).getRight();
-                    querySQL.append(getFilterComparisonExpression((ComparisonExpression) rightExpression));
-                }
+                querySQL.append(" where ").append(filterNode.getExpression()).append(" ");
             }
             if (isSort) {
                 querySQL.append("order by");
                 List<Column> columns = sortNode.getColumns();
-                Iterator it = columns.iterator();
-                while (it.hasNext()) {
+                for (Column column : columns) {
                     querySQL.append(" ");
-                    querySQL.append(((Column) it.next()).getColumnName());
+                    querySQL.append(column.getColumnName());
                     querySQL.append(",");
                 }
                 querySQL = new StringBuilder(querySQL.substring(0, querySQL.length() - 1));
@@ -407,30 +392,173 @@ public class PostgresConnector
                 querySQL.append(" limit ");
                 querySQL.append(limitNode.getLimitNum());
             }
-            //System.out.println("AFTER\t" + querySQL);
+            logger.info("Postgres connector: " + querySQL);
             ResultSet rs = statement.executeQuery(querySQL.toString());
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int colNum = rsmd.getColumnCount();
+            PardResultSet prs = new PardResultSet(PardResultSet.ResultStatus.EOR);
+            Block block;
+            List<Column> columns;
+            List<String> columnNames = new ArrayList<>();
+            List<String> columnTypes = new ArrayList<>();
+
             if (isProject) {
-                List<Column> columns = projectNode.getColumns();
-                List<String> columnNames = new ArrayList<>();
-                List<String> columnTypes = new ArrayList<>();
-                Iterator<Column> it = columns.iterator();
+                columns = projectNode.getColumns();
+                Iterator it = columns.iterator();
                 while (it.hasNext()) {
-                    columns.add(it.next());
+                    columnNames.add(((Column) it.next()).getColumnName());
+                    columnTypes.add(getTypeInString(((Column) it.next()).getDataType()));
                 }
-                while (rs.next()) {
-                    // todo
-                }
+                block = new Block(columnNames, columnTypes, 1024 * 1024);
+                //getResult(block, rs, rsmd, colNum);
+                getResultByRowConstructor(block, rs, rsmd, colNum);
+                prs.addBlock(block);
             }
             else {
-                // todo
+                for (int i = 0; i < rsmd.getColumnCount(); i++) {
+                    columnNames.add(rsmd.getColumnName(i + 1));
+                    switch (rsmd.getColumnType(i + 1)) {
+                        case Types.CHAR:
+                            columnTypes.add("char");
+                            break;
+                        case Types.VARCHAR:
+                            columnTypes.add("varchar");
+                            break;
+                        case Types.DATE:
+                            columnTypes.add("date");
+                            break;
+                        case Types.INTEGER:
+                            columnTypes.add("int");
+                            break;
+                        case Types.FLOAT:
+                            columnTypes.add("float");
+                            break;
+                        case Types.DOUBLE:
+                            columnTypes.add("double");
+                            break;
+                        default:
+                            columnTypes.add("other");
+                            break;
+                    }
+                    //columnTypes.add(getTypeInString(rsmd.getColumnType(i + 1)));
+                }
+                //System.out.println(columnTypes.get(0));
+                //System.out.println(columnTypes.get(1));
+                block = new Block(columnNames, columnTypes, 1024 * 1024);
+                //getResult(block, rs, rsmd, colNum);
+                getResultByRowConstructor(block, rs, rsmd, colNum);
+                prs.addBlock(block);
             }
+            System.out.println("QUERY SUCCESSFULLY");
+            this.chNum = block.getRowSize();
+            close();
+            return prs;
         }
         catch (SQLException e) {
             System.out.println("QUERY FAILED");
             e.printStackTrace();
         }
         close();
-        return new PardResultSet(PardResultSet.ResultStatus.EOR);
+        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+    }
+
+    private void getResult(Block block, ResultSet rs, ResultSetMetaData rsmd, int colNum) throws SQLException
+    {
+        while (rs.next()) {
+            List<byte[]> contents0 = new ArrayList<>();
+            List<Integer> offsets0 = new ArrayList<>();
+            for (int i = 0; i < colNum; i++) {
+                switch (rsmd.getColumnType(i + 1)) {
+                    case Types.CHAR: {
+                        byte[] tmp = rs.getString(i + 1).getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.VARCHAR: {
+                        byte[] tmp = rs.getString(i + 1).getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.DATE: {
+                        byte[] tmp = rs.getDate(i + 1).toString().getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.INTEGER: {
+                        byte[] tmp = Integer.toString(rs.getInt(i + 1)).getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.FLOAT: {
+                        byte[] tmp = Float.toString(rs.getFloat(i + 1)).getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    case Types.DOUBLE: {
+                        byte[] tmp = Double.toString(rs.getDouble(i + 1)).getBytes();
+                        contents0.add(tmp);
+                        offsets0.add(tmp.length);
+                    }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            int[]offsets = new int[offsets0.size()];
+            int contentsLen = 0;
+            for (int i = 0; i < offsets0.size(); i++) {
+                offsets[i] = offsets0.get(i);
+                contentsLen += offsets[i];
+            }
+            byte[]contents = new byte[contentsLen];
+            int contentsCursor = 0;
+            for (int i = 0; i < contents0.size(); i++) {
+                for (int j = 0; j < offsets[i]; j++) {
+                    contents[contentsCursor] = contents0.get(i)[j];
+                    contentsCursor++;
+                }
+            }
+            //assert contentsCursor == contentsLen;
+            Row row = new Row(contents, offsets);
+            block.addRow(row);
+        }
+    }
+
+    private void getResultByRowConstructor(Block block, ResultSet rs, ResultSetMetaData rsmd, int colNum) throws SQLException
+    {
+        while (rs.next()) {
+            RowConstructor rowConstructor = new RowConstructor();
+            for (int i = 0; i < colNum; i++) {
+                switch (rsmd.getColumnType(i + 1)) {
+                    case Types.CHAR:
+                        rowConstructor.appendString(rs.getString(i + 1));
+                        break;
+                    case Types.VARCHAR:
+                        rowConstructor.appendString(rs.getString(i + 1));
+                        break;
+                    case Types.DATE:
+                        rowConstructor.appendString(rs.getString(i + 1));
+                        break;
+                    case Types.INTEGER:
+                        rowConstructor.appendInt(rs.getInt(i + 1));
+                        break;
+                    case Types.FLOAT:
+                        rowConstructor.appendFloat(rs.getFloat(i + 1));
+                        break;
+                    case Types.DOUBLE:
+                        rowConstructor.appendDouble(rs.getDouble(i + 1));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            block.addRow(rowConstructor.build());
+        }
     }
 
     private String getFilterComparisonExpression(ComparisonExpression expression)
@@ -482,11 +610,41 @@ public class PostgresConnector
         if (type == DataType.FLOAT.getType()) {
             return "float";
         }
+        if (type == DataType.DOUBLE.getType()) {
+            return "double";
+        }
+        if (type == DataType.DATE.getType()) {
+            return "date";
+        }
         if (type == DataType.CHAR.getType()) {
             return "char(" + length + ")";
         }
         if (type == DataType.VARCHAR.getType()) {
             return "varchar(" + length + ")";
+        }
+        // todo add more types
+        return null;
+    }
+
+    private String getTypeInString(int type)
+    {
+        if (type == DataType.INT.getType()) {
+            return "int";
+        }
+        if (type == DataType.FLOAT.getType()) {
+            return "float";
+        }
+        if (type == DataType.DOUBLE.getType()) {
+            return "double";
+        }
+        if (type == DataType.DATE.getType()) {
+            return "date";
+        }
+        if (type == DataType.CHAR.getType()) {
+            return "char";
+        }
+        if (type == DataType.VARCHAR.getType()) {
+            return "varchar";
         }
         // todo add more types
         return null;

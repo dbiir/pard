@@ -169,24 +169,36 @@ public class TestConnector
                 nameEqTomcatExpr,
                 idLT5Expr);
 
-        // SELECT name, id FROM pardschema.table1 WHERE name='tomcat' AND id<5 ORDER BY id LIMIT 3;
+        // SELECT name, id FROM pardschema.table1 WHERE name='tomcat' AND id<5 ORDER BY id LIMIT 8;
         OutputNode outputNode = new OutputNode();
         LimitNode limitNode = new LimitNode(3);
         SortNode sortNode = new SortNode();
         sortNode.addSort(col1, true);
         ProjectNode projectNode = new ProjectNode(columns);
         FilterNode filterNode = new FilterNode(expression);
+        //FilterNode filterNode = new FilterNode(idLT5Expr);
         TableScanNode tableScanNode = new TableScanNode("pardschema", "table1");
-
+        /*
+        System.out.println("IN TEST");
+        System.out.println(outputNode);
+        System.out.println(limitNode);
+        System.out.println(sortNode);
+        System.out.println(projectNode);
+        System.out.println(filterNode);
+        System.out.println(tableScanNode);
+        System.out.println("IN TEST");
+        */
         // LIMIT -> SORT -> PROJECT -> FILTER -> SCAN
         outputNode.setChildren(limitNode, true);
         limitNode.setChildren(sortNode, true);
         sortNode.setChildren(projectNode, true);
         projectNode.setChildren(filterNode, true);
+        //sortNode.setChildren(filterNode,true);
         filterNode.setChildren(tableScanNode, true);
 
         QueryTask task = new QueryTask(outputNode);
         PardResultSet resultSet = pConn.execute(task);
+        System.out.println(resultSet.getNext().getRowSize());
         // todo print out resultSet and it satisfies the actual result
     }
 }

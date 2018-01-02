@@ -16,6 +16,16 @@ public class SortNode
     private final List<Column> columns;
     private final List<Integer> orderings;
 
+    public List<Column> getColumns()
+    {
+        return columns;
+    }
+
+    public List<Integer> getOrderings()
+    {
+        return orderings;
+    }
+
     public SortNode()
     {
         this.columns = new ArrayList<>();

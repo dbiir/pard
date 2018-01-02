@@ -40,12 +40,12 @@ public class PardSocketListener
             while (!stopFlag) {
                 Socket socket = serverSocket.accept();
                 executorService.submit(new PardQueryHandler(socket, jobScheduler, taskScheduler));
-//                new PardQueryHandler(socket).start();
             }
         }
         catch (IOException e) {
             e.printStackTrace();
         }
+        logger.info("Pard socket server shut down");
     }
 
     public void stop()

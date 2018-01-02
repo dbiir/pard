@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.scheduler;
 
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
-import cn.edu.ruc.iir.pard.server.PardStartupHook;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author guodong
  */
 public class JobScheduler
-        implements PardStartupHook
 {
     private final Map<String, Job> currentJobs;
     private final List<Job> doneJobs;
@@ -83,12 +81,6 @@ public class JobScheduler
     public static final JobScheduler INSTANCE()
     {
         return JobSchedulerHolder.instance;
-    }
-
-    @Override
-    public void startup() throws RuntimeException
-    {
-        this.INSTANCE();
     }
 
     private String generateJobId()

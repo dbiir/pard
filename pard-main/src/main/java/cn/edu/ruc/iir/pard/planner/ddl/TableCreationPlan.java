@@ -32,10 +32,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// todo remove unnecessary table creations in distributionHints
+// todo add support for vertical partitions
 public class TableCreationPlan
         extends TablePlan
 {
-    private Map<String, Object> distributionHints;
+    private Map<String, List<Column>> distributionHints;
     private CreateTable stmt = null;
     private String tableName = null;
     private String schemaName = null;
@@ -79,8 +81,8 @@ public class TableCreationPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
-        colList = new ArrayList<Column>();
-        distributionHints = new HashMap<String, Object>();
+        colList = new ArrayList<>();
+        distributionHints = new HashMap<>();
         Statement statement = this.getStatment();
         if (!(statement instanceof CreateTable)) {
             return ErrorMessage.throwMessage(ErrCode.ParseError, "Create Table Statement");
@@ -273,7 +275,7 @@ public class TableCreationPlan
     {
         return table;
     }
-    public Map<String, Object> getDistributionHints()
+    public Map<String, List<Column>> getDistributionHints()
     {
         return distributionHints;
     }

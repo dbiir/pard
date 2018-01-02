@@ -53,7 +53,12 @@ public class PardRPCService
                 schemaMsg.getName(),
                 schemaMsg.getIsNotExists());
         PardResultSet resultSet = connector.execute(task);
-        responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
+        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+            responseStatusBuilder.setStatus(1);
+        }
+        else {
+            responseStatusBuilder.setStatus(-1);
+        }
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());
         responseStatusStreamObserver.onCompleted();
     }
@@ -68,7 +73,12 @@ public class PardRPCService
                 schemaMsg.getName(),
                 schemaMsg.getIsNotExists());
         PardResultSet resultSet = connector.execute(task);
-        responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
+        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+            responseStatusBuilder.setStatus(1);
+        }
+        else {
+            responseStatusBuilder.setStatus(0);
+        }
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());
         responseStatusStreamObserver.onCompleted();
     }
@@ -94,7 +104,12 @@ public class PardRPCService
                 tableMsg.getIsNotExists(),
                 columns);
         PardResultSet resultSet = connector.execute(task);
-        responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
+        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+            responseStatusBuilder.setStatus(1);
+        }
+        else {
+            responseStatusBuilder.setStatus(0);
+        }
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());
         responseStatusStreamObserver.onCompleted();
     }
@@ -107,7 +122,12 @@ public class PardRPCService
                 = PardProto.ResponseStatus.newBuilder();
         DropTableTask task = new DropTableTask(tableMsg.getSchemaName(), tableMsg.getName());
         PardResultSet resultSet = connector.execute(task);
-        responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
+        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+            responseStatusBuilder.setStatus(1);
+        }
+        else {
+            responseStatusBuilder.setStatus(0);
+        }
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());
         responseStatusStreamObserver.onCompleted();
     }
@@ -143,7 +163,12 @@ public class PardRPCService
                 insertMsg.getTableName(),
                 columns, rows);
         PardResultSet resultSet = connector.execute(task);
-        responseStatusBuilder.setStatus(resultSet.getStatus().ordinal());
+        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+            responseStatusBuilder.setStatus(1);
+        }
+        else {
+            responseStatusBuilder.setStatus(0);
+        }
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());
         responseStatusStreamObserver.onCompleted();
     }

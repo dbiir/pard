@@ -10,19 +10,21 @@ public class Site
     private int id;
     private String name;
     private String ip;
-    private int port;
+    private int serverPort;
+    private int rpcPort;
+    private int exchangePort;
     private int leader;
     private int status;
     public Site()
     {
     }
 
-    public Site(int id, String name, String ip, int port, int leader)
+    public Site(int id, String name, String ip, int serverPort, int leader)
     {
         this.id = id;
         this.name = name;
         this.ip = ip;
-        this.port = port;
+        this.serverPort = serverPort;
         this.leader = leader;
     }
 
@@ -41,9 +43,29 @@ public class Site
         this.ip = ip;
     }
 
-    public void setPort(int port)
+    public void setServerPort(int serverPort)
     {
-        this.port = port;
+        this.serverPort = serverPort;
+    }
+
+    public int getRpcPort()
+    {
+        return rpcPort;
+    }
+
+    public void setRpcPort(int rpcPort)
+    {
+        this.rpcPort = rpcPort;
+    }
+
+    public int getExchangePort()
+    {
+        return exchangePort;
+    }
+
+    public void setExchangePort(int exchangePort)
+    {
+        this.exchangePort = exchangePort;
     }
 
     public void setLeader(int leader)
@@ -66,9 +88,9 @@ public class Site
         return ip;
     }
 
-    public int getPort()
+    public int getServerPort()
     {
-        return port;
+        return serverPort;
     }
 
     public int getLeader()

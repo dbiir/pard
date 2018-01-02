@@ -77,7 +77,7 @@ public class PardRPCClient
         }
         catch (StatusRuntimeException e) {
             receiving = PardProto.ResponseStatus.newBuilder()
-                    .setStatus(0)
+                    .setStatus(-1)
                     .build();
         }
 
@@ -98,7 +98,7 @@ public class PardRPCClient
         }
         catch (StatusRuntimeException e) {
             receiving = PardProto.ResponseStatus.newBuilder()
-                    .setStatus(0)
+                    .setStatus(-1)
                     .build();
         }
 
@@ -129,7 +129,7 @@ public class PardRPCClient
         }
         catch (StatusRuntimeException e) {
             receiving = PardProto.ResponseStatus.newBuilder()
-                    .setStatus(0)
+                    .setStatus(-1)
                     .build();
         }
 
@@ -151,7 +151,7 @@ public class PardRPCClient
         }
         catch (StatusRuntimeException e) {
             receiving = PardProto.ResponseStatus.newBuilder()
-                    .setStatus(0)
+                    .setStatus(-1)
                     .build();
         }
 
@@ -190,7 +190,7 @@ public class PardRPCClient
         }
         catch (StatusRuntimeException e) {
             receiving = PardProto.ResponseStatus.newBuilder()
-                    .setStatus(0)
+                    .setStatus(-1)
                     .build();
         }
 

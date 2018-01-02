@@ -43,6 +43,7 @@ public class PardRPCServer
         catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+        logger.info("RPC server shut down");
     }
 
     public void stop()

@@ -5,12 +5,11 @@ import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.connector.postgresql.PostgresConnector;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
-import cn.edu.ruc.iir.pard.nodekeeper.Keeper;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
 import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
 
 /**
- * pard
+ * pard main server
  *
  * @author guodong
  */
@@ -19,8 +18,8 @@ public class PardServer
     private final PardUserConfiguration configuration;
     private PardRPCServer rpcServer;
     private PardSocketListener socketListener;
+    private PardExchangeServer exchangeServer;
     private Connector connector;
-    private Keeper keeper;
     private JobScheduler jobScheduler;
     private TaskScheduler taskScheduler;
 
@@ -42,8 +41,11 @@ public class PardServer
         // load connector
         pipeline.addStartupHook(this::loadConnector);
 
-        // load node keeper
-        pipeline.addStartupHook(this::loadNodeKeeper);
+//         load node keeper
+//        pipeline.addStartupHook(this::loadNodeKeeper);
+
+        // start exchange server
+        pipeline.addStartupHook(this::startExchangeServer);
 
         // load job scheduler
         pipeline.addStartupHook(this::loadJobScheduler);
@@ -75,7 +77,12 @@ public class PardServer
         SiteDao siteDao = new SiteDao();
         Site currentSite = new Site();
         currentSite.setName(configuration.getNodeName());
-        siteDao.add(currentSite, true);
+        currentSite.setServerPort(configuration.getServerPort());
+        currentSite.setIp(configuration.getHost());
+        currentSite.setRpcPort(configuration.getRPCPort());
+        currentSite.setExchangePort(configuration.getExchangePort());
+        currentSite.setServerPort(configuration.getServerPort());
+        siteDao.add(currentSite, false);
     }
 
     private void loadConnector()
@@ -85,25 +92,21 @@ public class PardServer
 
     private void startRPCServer()
     {
-        PardRPCServer rpcServer = new PardRPCServer(configuration.getRPCPort(), connector);
+        this.rpcServer = new PardRPCServer(configuration.getRPCPort(), connector);
         new Thread(rpcServer).start();
     }
 
     private void startExchangeServer()
     {
-        PardExchangeServer exchangeServer = new PardExchangeServer(configuration.getSocketPort(), connector);
+        this.exchangeServer = new PardExchangeServer(configuration.getExchangePort(), connector);
+        new Thread(exchangeServer).start();
     }
 
     private void startSocketListener()
     {
-        PardSocketListener socketListener = new PardSocketListener(configuration.getSocketPort(),
+        this.socketListener = new PardSocketListener(configuration.getServerPort(),
                 jobScheduler, taskScheduler);
         new Thread(socketListener).start();
-    }
-
-    private void loadNodeKeeper()
-    {
-        this.keeper = Keeper.INSTANCE();
     }
 
     private void loadJobScheduler()
@@ -121,6 +124,8 @@ public class PardServer
         System.out.println("****** Pard shutting down...");
         socketListener.stop();
         rpcServer.stop();
+        exchangeServer.stop();
+        connector.close();
         System.out.println("****** Pard is down");
     }
 

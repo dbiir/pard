@@ -38,7 +38,7 @@ public class InsertPlan
     private String tableName = null;
     private Table table = null;
     private List<Column> colList;
-    private Map<String, Object> distributionHints;
+    private Map<String, List<Row>> distributionHints;
     public InsertPlan(Statement stmt)
     {
         super(stmt);
@@ -132,14 +132,14 @@ public class InsertPlan
                 boolean belongTo = ConditionComparator.match(f.getCondition(), literalMap);
                 //System.out.println(belongTo + " " + key);
                 if (belongTo) {
-                    Object o = distributionHints.get(f.getSiteName());
+                    List<Row> o = distributionHints.get(f.getSiteName());
                     List<Row> rlist = null;
                     if (o == null) {
                         rlist = new ArrayList<Row>();
                         distributionHints.put(f.getSiteName(), rlist);
                     }
                     else {
-                        rlist = (List<Row>) o;
+                        rlist = o;
                     }
                     rlist.add(row);
                 }
@@ -179,8 +179,7 @@ public class InsertPlan
     {
         return colList;
     }
-    @Override
-    public Map<String, Object> getDistributionHints()
+    public Map<String, List<Row>> getDistributionHints()
     {
         return this.distributionHints;
     }

@@ -8,6 +8,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Statement;
  *
  * @author guodong
  */
+// todo drop table plan
 public class TableDropPlan
         extends TablePlan
 {

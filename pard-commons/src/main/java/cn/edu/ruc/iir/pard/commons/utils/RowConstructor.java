@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.commons.utils;
 
 import cn.edu.ruc.iir.pard.commons.memory.Row;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,31 +21,31 @@ public class RowConstructor
     public void appendShort(short value)
     {
         byteBuffer.putShort(value);
-        offsets.add(byteBuffer.arrayOffset());
+        offsets.add(byteBuffer.position());
     }
 
     public void appendInt(int value)
     {
         byteBuffer.putInt(value);
-        offsets.add(byteBuffer.arrayOffset());
+        offsets.add(byteBuffer.position());
     }
 
     public void appendFloat(float value)
     {
         byteBuffer.putFloat(value);
-        offsets.add(byteBuffer.arrayOffset());
+        offsets.add(byteBuffer.position());
     }
 
     public void appendDouble(double value)
     {
         byteBuffer.putDouble(value);
-        offsets.add(byteBuffer.arrayOffset());
+        offsets.add(byteBuffer.position());
     }
 
     public void appendString(String value)
     {
         byteBuffer.put(value.getBytes());
-        offsets.add(byteBuffer.arrayOffset());
+        offsets.add(byteBuffer.position());
     }
 
     public Row build()
@@ -59,19 +60,30 @@ public class RowConstructor
         int[] offsets = row.getOffsets();
         for (int i = 0; i < offsets.length; i++) {
             DataType dataType = dataTypes.get(i);
-            if (dataType == DataType.INT) {
+            if (dataType.getType() == DataType.INT.getType()) {
                 sb.append(byteBuffer.getInt()).append(", ");
             }
-            if (dataType == DataType.CHAR || dataType == DataType.VARCHAR) {
-                int len = dataType.getLength();
+            if (dataType.getType() == DataType.CHAR.getType() || dataType.getType() == DataType.VARCHAR.getType()) {
+                int len = 0;
+                if (i == 0) {
+                    len = offsets[i];
+                }
+                else {
+                    len = offsets[i] - offsets[i - 1];
+                }
                 byte[] temp = new byte[len];
                 byteBuffer.get(temp);
-                sb.append(new String(temp)).append(", ");
+                try {
+                    sb.append(new String(temp, "UTF-8")).append(", ");
+                }
+                catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
             }
-            if (dataType == DataType.BIGINT) {
+            if (dataType.getType() == DataType.BIGINT.getType()) {
                 sb.append(byteBuffer.getLong()).append(", ");
             }
-            if (dataType == DataType.FLOAT) {
+            if (dataType.getType() == DataType.FLOAT.getType()) {
                 sb.append(byteBuffer.getFloat()).append(", ");
             }
             // todo add more types

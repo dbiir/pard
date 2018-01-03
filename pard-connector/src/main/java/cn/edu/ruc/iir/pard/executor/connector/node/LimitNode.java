@@ -10,6 +10,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public class LimitNode
         extends PlanNode
 {
+    private static final long serialVersionUID = -8191276433605066712L;
     private final int limitNum;
 
     public LimitNode(int limitNum)

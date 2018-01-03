@@ -12,6 +12,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public class FilterNode
         extends PlanNode
 {
+    private static final long serialVersionUID = 8695368351559462220L;
     private final Expression expression;
 
     public FilterNode(Expression expression)

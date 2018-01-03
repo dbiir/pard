@@ -14,6 +14,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public class DistinctNode
         extends PlanNode
 {
+    private static final long serialVersionUID = -1910741908996171116L;
     private final List<Column> columns;
 
     public DistinctNode(List<Column> columns)

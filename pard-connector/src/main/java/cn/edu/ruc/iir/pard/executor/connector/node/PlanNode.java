@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.executor.connector.node;
 
+import java.io.Serializable;
+
 import static com.google.common.base.MoreObjects.toStringHelper;
 
 /**
@@ -8,7 +10,9 @@ import static com.google.common.base.MoreObjects.toStringHelper;
  * @author guodong
  */
 public abstract class PlanNode
+        implements Serializable
 {
+    private static final long serialVersionUID = -2786495926657736341L;
     private int childrenNum = 0;
     private PlanNode[] children = new PlanNode[2];
 

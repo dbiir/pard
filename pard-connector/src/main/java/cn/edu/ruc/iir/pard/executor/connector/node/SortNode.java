@@ -15,6 +15,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public class SortNode
         extends PlanNode
 {
+    private static final long serialVersionUID = -4043747552892823485L;
     private final List<Column> columns;
     private final List<Integer> orderings;
 

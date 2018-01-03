@@ -61,6 +61,7 @@ public class PardClient
                                     Block block = resultSet.getNext();
                                     colNames = block.getColumnNames();
                                     String header = Arrays.toString(colNames.toArray());
+                                    System.out.println(header);
                                     for (int i = 0; i < header.length(); i++) {
                                         System.out.print("-");
                                     }

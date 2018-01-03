@@ -83,6 +83,7 @@
                                     <mainClass>cn.edu.ruc.iir.pard.server.PardServer</mainClass>
                                 </transformer>
                             </transformers>
+                            <outputDirectory>${main.basedir}/pard-server-test/</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

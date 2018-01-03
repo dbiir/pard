@@ -32,10 +32,10 @@ import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,11 +55,13 @@ public class TaskScheduler
     private final Logger logger = Logger.getLogger(TaskScheduler.class.getName());
     private final Keeper nodeKeeper;
     private final SiteDao siteDao;
+    private final Map<String, PardExchangeClient> exchangeClients;
 
     private TaskScheduler()
     {
         this.nodeKeeper = Keeper.INSTANCE();
         this.siteDao = new SiteDao();
+        this.exchangeClients = new HashMap<>();
     }
 
     @Override
@@ -248,33 +250,45 @@ public class TaskScheduler
 //                    ServerInfo info = nodeKeeper.getExchangeServers().get(site);
                     if (nodeSite != null) {
                         executingTasksNum++;
-                        CompletableFuture<PardResultSet> future = CompletableFuture.supplyAsync(() -> {
-                            try {
-                                PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
-                                PardResultSet rs = client.call(task);
-                                client.close();
-                                return rs;
+                        try {
+                            PardExchangeClient client = exchangeClients.get(site);
+                            if (client == null) {
+                                client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
                             }
-                            catch (IOException | ClassNotFoundException e) {
-                                e.printStackTrace();
-                            }
-                            return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
-                        });
-                        future.exceptionally(throwable -> new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR));
-                        future.thenAccept(resultSet::addResultSet);
-                        futures.add(future);
+                            PardResultSet rs = client.call(task);
+                            resultSet.addResultSet(rs);
+//                            client.close();
+                        }
+                        catch (IOException | ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+//                        CompletableFuture<PardResultSet> future = CompletableFuture.supplyAsync(() -> {
+//                            try {
+//                                PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+//                                PardResultSet rs = client.call(task);
+//                                client.close();
+//                                return rs;
+//                            }
+//                            catch (IOException | ClassNotFoundException e) {
+//                                e.printStackTrace();
+//                            }
+//                            return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+//                        });
+//                        future.exceptionally(throwable -> new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR));
+//                        future.thenAccept(resultSet::addResultSet);
+//                        futures.add(future);
                     }
                 }
                 while (true) {
-                    if (resultSet.getStatus() != PardResultSet.ResultStatus.OK && resultSet.getStatus() != PardResultSet.ResultStatus.EOR) {
-                        logger.info("Some task went wrong. Cancel the job execution.");
-                        for (Future future : futures) {
-                            if (!future.isDone()) {
-                                future.cancel(true);
-                            }
-                        }
-                        return resultSet;
-                    }
+//                    if (resultSet.getStatus() != PardResultSet.ResultStatus.OK && resultSet.getStatus() != PardResultSet.ResultStatus.EOR) {
+//                        logger.info("Some task went wrong. Cancel the job execution.");
+//                        for (Future future : futures) {
+//                            if (!future.isDone()) {
+//                                future.cancel(true);
+//                            }
+//                        }
+//                        return resultSet;
+//                    }
                     if (resultSet.getResultSetNum() == executingTasksNum) {
                         logger.info("Query execution done. Collected results for job[" + job.getJobId() + "]");
                         return resultSet;

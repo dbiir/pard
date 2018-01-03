@@ -1,9 +1,16 @@
 package cn.edu.ruc.iir.pard.commons.utils;
 
+import java.io.Serializable;
+
 public class DataType
+        implements Serializable
 {
+    private static final long serialVersionUID = 1673501329658076878L;
+
     public static class DataTypeInt
+            implements Serializable
     {
+        private static final long serialVersionUID = 3963008609942896618L;
         public static final int SMALLINT = 0x81;
         public static final int INT = 0x82;
         public static final int BIGINT = 0x83;

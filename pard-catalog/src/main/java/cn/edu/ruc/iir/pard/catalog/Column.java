@@ -1,7 +1,11 @@
 package cn.edu.ruc.iir.pard.catalog;
 
+import java.io.Serializable;
+
 public class Column
+        implements Serializable
 {
+    private static final long serialVersionUID = -5890820616555548532L;
     private int id;
     private int dataType;
     private String columnName;

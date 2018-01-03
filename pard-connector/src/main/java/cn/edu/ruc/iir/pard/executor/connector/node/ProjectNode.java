@@ -14,6 +14,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public class ProjectNode
         extends PlanNode
 {
+    private static final long serialVersionUID = -6614201377588559291L;
     private final List<Column> columns;
 
     public ProjectNode(List<Column> columns)

@@ -51,7 +51,7 @@ public class Block
 
     public Row getNext()
     {
-        return rows.remove(rows.size());
+        return rows.remove(rows.size() - 1);
     }
 
     public int getRowSize()

@@ -13,6 +13,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public class UnionNode
         extends PlanNode
 {
+    private static final long serialVersionUID = -7395583971872559217L;
     private final List<PlanNode> unionChildren;
 
     public UnionNode()

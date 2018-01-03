@@ -10,6 +10,8 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 public class OutputNode
         extends PlanNode
 {
+    private static final long serialVersionUID = 1547246938332568325L;
+
     @Override
     public String toString()
     {

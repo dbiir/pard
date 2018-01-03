@@ -34,7 +34,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
+                            <finalName>pard-client</finalName>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>allinone</shadedClassifierName>
                             <filters>
@@ -52,6 +52,7 @@
                                     <mainClass>cn.edu.ruc.iir.pard.client.PardClient</mainClass>
                                 </transformer>
                             </transformers>
+                            <outputDirectory>${main.basedir}/pard-server-test/</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

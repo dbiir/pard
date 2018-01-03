@@ -62,7 +62,7 @@ public class PardResultSet
 
     public void addResultSet(PardResultSet resultSet)
     {
-        if (resultSet.getStatus() != ResultStatus.OK) {
+        if (resultSet.getStatus() != ResultStatus.OK && resultSet.getStatus() != ResultStatus.EOR) {
             this.resultStatus = resultSet.resultStatus;
         }
         else {

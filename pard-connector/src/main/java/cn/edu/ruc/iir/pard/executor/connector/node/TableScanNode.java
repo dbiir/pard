@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.executor.connector.node;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
+
 /**
  * pard
  *
@@ -8,6 +10,7 @@ package cn.edu.ruc.iir.pard.executor.connector.node;
 public class TableScanNode
         extends InputNode
 {
+    private static final long serialVersionUID = 2673717961909269975L;
     private final String schema;
     private final String table;
     private String site;
@@ -18,20 +21,42 @@ public class TableScanNode
         this.table = table;
     }
 
+    public TableScanNode(String schema, String table, String site)
+    {
+        this.schema = schema;
+        this.table = table;
+        this.site = site;
+    }
+
     public String getSchema()
     {
         return schema;
     }
+
     public String getTable()
     {
         return table;
     }
+
     public String getSite()
     {
         return site;
     }
+
     public void setSite(String site)
     {
         this.site = site;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toStringHelper(this)
+                .add("name", "TABLESCAN")
+                .add("schema", schema)
+                .add("table", table)
+                .add("site", site)
+                .add("child", getLeftChild())
+                .toString();
     }
 }

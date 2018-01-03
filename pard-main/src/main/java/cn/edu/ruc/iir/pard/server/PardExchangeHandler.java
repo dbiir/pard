@@ -17,6 +17,7 @@ import java.util.logging.Logger;
  * @author guodong
  */
 public class PardExchangeHandler
+        extends Thread
 {
     private final Socket socket;
     private final Connector connector;
@@ -28,6 +29,7 @@ public class PardExchangeHandler
         this.connector = connector;
     }
 
+    @Override
     public void run()
     {
         try (ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
@@ -35,11 +37,12 @@ public class PardExchangeHandler
             while (true) {
                 Task task = (Task) inputStream.readObject();
                 if (task instanceof EORTask) {
+                    logger.info("Exchange handler session out");
                     break;
                 }
                 PardResultSet resultSet = connector.execute(task);
                 outputStream.writeObject(resultSet);
-                logger.info("Client session out");
+                logger.info("One round interaction done");
             }
         }
         catch (IOException | ClassNotFoundException e) {

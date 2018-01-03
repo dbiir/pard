@@ -1,12 +1,18 @@
 package cn.edu.ruc.iir.pard.client;
 
+import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.commons.memory.Row;
+import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -31,8 +37,8 @@ public class PardClient
     public void run()
     {
         System.out.println("Welcome to Pard.");
-        System.out.print("pard>");
         while (true) {
+            System.out.print("pard>");
             String line = scanner.nextLine();
             if (line.equalsIgnoreCase("QUIT") || line.equalsIgnoreCase("EXIT")) {
                 break;
@@ -49,6 +55,23 @@ public class PardClient
                             PardResultSet resultSet = (PardResultSet) obj;
                             if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
                                 System.out.println(resultSet.toString());
+                                List<String> colNames;
+                                List<DataType> colTypes;
+                                while (resultSet.hasNext()) {
+                                    Block block = resultSet.getNext();
+                                    colNames = block.getColumnNames();
+                                    String header = Arrays.toString(colNames.toArray());
+                                    System.out.println(header);
+                                    for (int i = 0; i < header.length(); i++) {
+                                        System.out.print("-");
+                                    }
+                                    System.out.print("\n");
+                                    colTypes = block.getColumnTypes();
+                                    while (block.hasNext()) {
+                                        Row row = block.getNext();
+                                        System.out.println(RowConstructor.printRow(row, colTypes));
+                                    }
+                                }
                             }
                             else {
                                 System.out.println(resultSet.getStatus().toString());

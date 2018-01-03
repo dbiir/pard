@@ -5,6 +5,8 @@ import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 /**
@@ -16,6 +18,7 @@ public class PardExchangeServer
         implements Runnable
 {
     private final Logger logger = Logger.getLogger(PardExchangeServer.class.getName());
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final int port;
     private final Connector connector;
     private boolean stopFlag = false;
@@ -33,8 +36,7 @@ public class PardExchangeServer
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (!stopFlag) {
                 Socket socket = serverSocket.accept();
-                PardExchangeHandler handler = new PardExchangeHandler(socket, connector);
-                handler.run();
+                executorService.submit(new PardExchangeHandler(socket, connector));
             }
         }
         catch (IOException e) {

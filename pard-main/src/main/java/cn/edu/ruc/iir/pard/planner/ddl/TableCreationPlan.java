@@ -2,12 +2,12 @@ package cn.edu.ruc.iir.pard.planner.ddl;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Condition;
-import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.GddUtil;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.catalog.Table;
+import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.etcd.dao.GDDDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;

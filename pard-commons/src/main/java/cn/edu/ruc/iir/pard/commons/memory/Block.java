@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.commons.memory;
 
+import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import com.google.common.collect.ImmutableList;
 
 import java.io.Serializable;
@@ -16,13 +17,13 @@ public class Block
 {
     private static final long serialVersionUID = 4306066541526735236L;
     private final ImmutableList<String> columnNames;   // column names in schema
-    private final ImmutableList<String> columnTypes;   // column types in schema
+    private final ImmutableList<DataType> columnTypes;   // column types in schema
     private final int capacity;                        // capacity in bytes
     private final List<Row> rows;                      // block content
 
     private int currentCap = 0;
 
-    public Block(List<String> columnNames, List<String> columnTypes, int capacity)
+    public Block(List<String> columnNames, List<DataType> columnTypes, int capacity)
     {
         this.columnNames = ImmutableList.copyOf(columnNames);
         this.columnTypes = ImmutableList.copyOf(columnTypes);
@@ -35,9 +36,10 @@ public class Block
      * */
     public boolean addRow(Row row)
     {
-        if (currentCap >= capacity) {
-            return false;
-        }
+        // todo check block capacity
+//        if (currentCap >= capacity) {
+//            return false;
+//        }
         rows.add(row);
         return true;
     }
@@ -49,11 +51,21 @@ public class Block
 
     public Row getNext()
     {
-        return rows.remove(rows.size());
+        return rows.remove(rows.size() - 1);
     }
 
     public int getRowSize()
     {
         return this.rows.size();
+    }
+
+    public ImmutableList<String> getColumnNames()
+    {
+        return columnNames;
+    }
+
+    public ImmutableList<DataType> getColumnTypes()
+    {
+        return columnTypes;
     }
 }

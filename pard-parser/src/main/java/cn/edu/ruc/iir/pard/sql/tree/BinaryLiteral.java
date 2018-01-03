@@ -20,6 +20,7 @@ public class BinaryLiteral
     // the grammar could possibly include whitespace in the value it passes to us
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("[ \\r\\n\\t]");
     private static final Pattern NOT_HEX_DIGIT_PATTERN = Pattern.compile(".*[^A-F0-9].*");
+    private static final long serialVersionUID = -6204610275585900624L;
 
     private final ByteBuffer value;
 

@@ -1,13 +1,18 @@
 package cn.edu.ruc.iir.pard.catalog;
 
+import java.io.Serializable;
+
 public class Column
+        implements Serializable
 {
+    private static final long serialVersionUID = -5890820616555548532L;
     private int id;
     private int dataType;
     private String columnName;
     private int len;
     private int index; //0:none; 1:hashindex; 2:btreeindex; 3:others
     private int key;
+
     public Column()
     {
     }

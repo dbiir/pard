@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +10,9 @@ import java.util.Optional;
  * @author guodong
  */
 public abstract class Node
+        implements Serializable
 {
+    private static final long serialVersionUID = -4234302301491028376L;
     private final Location location;
 
     protected Node(Location location)

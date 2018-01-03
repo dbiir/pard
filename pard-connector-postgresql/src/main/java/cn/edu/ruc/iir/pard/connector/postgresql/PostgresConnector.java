@@ -1,10 +1,10 @@
 package cn.edu.ruc.iir.pard.connector.postgresql;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
-import cn.edu.ruc.iir.pard.catalog.DataType;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
+import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
@@ -36,7 +36,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -360,7 +359,7 @@ public class PostgresConnector
         try {
             Statement statement = conn.createStatement();
             StringBuilder querySQL = new StringBuilder("select ");
-            PlanNode rootnode = task.getPlanNode();
+            PlanNode rootNode = task.getPlanNode();
             List<PlanNode> nodeList = new ArrayList<>();
             int nodeListCursor = 0;
             String schemaName = null;
@@ -373,7 +372,7 @@ public class PostgresConnector
             boolean isProject = false;
             boolean isSort = false;
             boolean isLimit = false;
-            nodeList.add(rootnode);
+            nodeList.add(rootNode);
             nodeListCursor++;
             while (nodeList.get(nodeListCursor - 1).hasChildren()) {
                 nodeList.add(nodeList.get(nodeListCursor - 1).getLeftChild());
@@ -447,14 +446,13 @@ public class PostgresConnector
             Block block;
             List<Column> columns;
             List<String> columnNames = new ArrayList<>();
-            List<String> columnTypes = new ArrayList<>();
+            List<DataType> columnTypes = new ArrayList<>();
 
             if (isProject) {
                 columns = projectNode.getColumns();
-                Iterator it = columns.iterator();
-                while (it.hasNext()) {
-                    columnNames.add(((Column) it.next()).getColumnName());
-                    columnTypes.add(getTypeInString(((Column) it.next()).getDataType()));
+                for (Column column : columns) {
+                    columnNames.add(column.getColumnName());
+                    columnTypes.add(new DataType(column.getDataType(), column.getLen()));
                 }
                 block = new Block(columnNames, columnTypes, 1024 * 1024);
                 //getResult(block, rs, rsmd, colNum);
@@ -462,33 +460,33 @@ public class PostgresConnector
                 prs.addBlock(block);
             }
             else {
-                for (int i = 0; i < rsmd.getColumnCount(); i++) {
-                    columnNames.add(rsmd.getColumnName(i + 1));
-                    switch (rsmd.getColumnType(i + 1)) {
-                        case Types.CHAR:
-                            columnTypes.add("char");
-                            break;
-                        case Types.VARCHAR:
-                            columnTypes.add("varchar");
-                            break;
-                        case Types.DATE:
-                            columnTypes.add("date");
-                            break;
-                        case Types.INTEGER:
-                            columnTypes.add("int");
-                            break;
-                        case Types.FLOAT:
-                            columnTypes.add("float");
-                            break;
-                        case Types.DOUBLE:
-                            columnTypes.add("double");
-                            break;
-                        default:
-                            columnTypes.add("other");
-                            break;
-                    }
-                    //columnTypes.add(getTypeInString(rsmd.getColumnType(i + 1)));
-                }
+//                for (int i = 0; i < rsmd.getColumnCount(); i++) {
+//                    columnNames.add(rsmd.getColumnName(i + 1));
+//                    switch (rsmd.getColumnType(i + 1)) {
+//                        case Types.CHAR:
+//                            columnTypes.add("char");
+//                            break;
+//                        case Types.VARCHAR:
+//                            columnTypes.add("varchar");
+//                            break;
+//                        case Types.DATE:
+//                            columnTypes.add("date");
+//                            break;
+//                        case Types.INTEGER:
+//                            columnTypes.add("int");
+//                            break;
+//                        case Types.FLOAT:
+//                            columnTypes.add("float");
+//                            break;
+//                        case Types.DOUBLE:
+//                            columnTypes.add("double");
+//                            break;
+//                        default:
+//                            columnTypes.add("other");
+//                            break;
+//                    }
+//                    //columnTypes.add(getTypeInString(rsmd.getColumnType(i + 1)));
+//                }
                 //logger.info(columnTypes.get(0));
                 //logger.info(columnTypes.get(1));
                 block = new Block(columnNames, columnTypes, 1024 * 1024);

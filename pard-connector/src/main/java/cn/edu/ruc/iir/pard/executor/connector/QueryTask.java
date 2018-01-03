@@ -2,13 +2,15 @@ package cn.edu.ruc.iir.pard.executor.connector;
 
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 
+import java.io.Serializable;
+
 /**
  * pard
  *
  * @author guodong
  */
 public class QueryTask
-        extends Task
+        extends Task implements Serializable
 {
     private static final long serialVersionUID = -422729841644838360L;
     private final PlanNode planNode;

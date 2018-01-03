@@ -27,7 +27,11 @@ public class PardPlanner
     {
         if (statement instanceof Query) {
             // query plan
-            return new QueryPlan(statement);
+            QueryPlan plan = new QueryPlan(statement);
+            ErrorMessage errorMessage = plan.semanticAnalysis();
+            if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
+                return plan;
+            }
         }
         if (statement instanceof CreateSchema) {
             // create schema

@@ -13,6 +13,7 @@ import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
 import cn.edu.ruc.iir.pard.nodekeeper.Keeper;
 import cn.edu.ruc.iir.pard.planner.Plan;
@@ -185,11 +186,12 @@ public class TaskScheduler
             logger.info("Task generation for query plan");
             QueryPlan queryPlan = (QueryPlan) plan;
             PlanNode planNode = queryPlan.getPlan();
+            PlanNode currentNode = planNode;
             UnionNode internalUnionNode = null;
-            while (planNode.hasChildren()) {
-                PlanNode internalNode = planNode.getLeftChild();
-                if (internalNode instanceof UnionNode) {
-                    internalUnionNode = (UnionNode) internalNode;
+            while (currentNode.hasChildren()) {
+                currentNode = currentNode.getLeftChild();
+                if (currentNode instanceof UnionNode) {
+                    internalUnionNode = (UnionNode) currentNode;
                     break;
                 }
             }
@@ -200,7 +202,9 @@ public class TaskScheduler
             List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
             for (PlanNode childNode : unionChildren) {
                 internalUnionNode.setChildren(childNode, true, false);
-                QueryTask task = new QueryTask(planNode);
+                // todo hard coded to get site info of task
+                TableScanNode node = (TableScanNode) childNode;
+                QueryTask task = new QueryTask(node.getSite(), planNode);
                 tasks.add(task);
             }
 

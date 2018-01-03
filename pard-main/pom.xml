@@ -65,7 +65,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>pard-server-${project.version}</finalName>
+                            <finalName>pard-server</finalName>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>allinone</shadedClassifierName>
                             <filters>

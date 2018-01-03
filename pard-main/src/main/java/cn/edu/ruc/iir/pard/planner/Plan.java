@@ -10,7 +10,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Statement;
  */
 public abstract class Plan
 {
-    private Statement statment = null;
+    private Statement statment;
     /**
      *
      * @throws SemanticException
@@ -20,11 +20,11 @@ public abstract class Plan
     public Plan(Statement stmt)
     {
         statment = stmt;
-        ErrorMessage msg = semanticAnalysis();
-        if (msg.getErrcode() < 0) {
-            System.err.println(msg.toString());
-            throw new SemanticException(msg);
-        }
+//        ErrorMessage msg = semanticAnalysis();
+//        if (msg.getErrcode() < 0) {
+//            System.err.println(msg.toString());
+//            throw new SemanticException(msg);
+//        }
     }
     public Statement getStatment()
     {
@@ -37,11 +37,6 @@ public abstract class Plan
     }
 
     public abstract ErrorMessage semanticAnalysis();
-
-//    public Map<String, Object> getDistributionHints()
-//    {
-//        return null;
-//    }
 
     public boolean afterExecution(boolean executeSuccess)
     {

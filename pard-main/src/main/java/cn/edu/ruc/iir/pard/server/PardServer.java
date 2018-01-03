@@ -68,7 +68,9 @@ public class PardServer
             System.out.println("Pard started successfully.");
         }
         catch (Exception e) {
+            e.printStackTrace();
             System.out.println("Pard started failed.");
+            System.exit(-1);
         }
     }
 

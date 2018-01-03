@@ -35,6 +35,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Table;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Query Plan
@@ -44,13 +45,13 @@ import java.util.List;
 public class QueryPlan
         extends Plan implements EarlyStopPlan
 {
-    private final PlanNode node;
+    private final Logger logger = Logger.getLogger(QueryPlan.class.getName());
+    private final PlanNode node = new OutputNode();
     private boolean alreadyDone = false;
 
     public QueryPlan(Statement stmt)
     {
         super(stmt);
-        this.node = new OutputNode();
     }
 
     public PlanNode getPlan()
@@ -61,7 +62,7 @@ public class QueryPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
-        PlanNode currentNode = node;
+        PlanNode currentNode = this.node;
 
         // get real objects
         Query query = (Query) this.getStatment();
@@ -194,6 +195,8 @@ public class QueryPlan
             TableScanNode scanNode = new TableScanNode(schemaName, fromTableName, site);
             unionNode.addUnionChild(scanNode);
         }
+
+        logger.info("Parsed query plan: " + node.toString());
 
         return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
     }

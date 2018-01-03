@@ -2,11 +2,17 @@
 Parallel Database Running like a Leopard
 
 ## TODO List
+### LEVEL 1
+1. Add support for vertical partition in table creation.
+2. Add support for DELETE.
+3. Add support for LOAD.
+4. Rule based query optimization.
+5. Refactor exchange server and client.
+6. Refactor execution framework.
+7. Add support for JOIN.
+
+### LEVEL 2
 1. Serializaton and deSerialization of `Task` and `PardResultSet`.
-2. Add support for vertical partition in table creation.
-3. Rule based query optimization.
-4. Refactor execution framework.
-5. Add support for JOIN.
 
 ## Contribution Guide
 #### Recommended Environment

@@ -60,6 +60,9 @@ public class PardClient
                                 while (resultSet.hasNext()) {
                                     Block block = resultSet.getNext();
                                     colNames = block.getColumnNames();
+                                    if (!block.hasNext()) {
+                                        continue;
+                                    }
                                     String header = Arrays.toString(colNames.toArray());
                                     System.out.println(header);
                                     for (int i = 0; i < header.length(); i++) {

@@ -37,8 +37,8 @@ public class PardClient
     public void run()
     {
         System.out.println("Welcome to Pard.");
-        System.out.print("pard>");
         while (true) {
+            System.out.print("pard>");
             String line = scanner.nextLine();
             if (line.equalsIgnoreCase("QUIT") || line.equalsIgnoreCase("EXIT")) {
                 break;

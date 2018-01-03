@@ -15,6 +15,7 @@ import static java.util.Objects.requireNonNull;
 public class CharLiteral
         extends Literal
 {
+    private static final long serialVersionUID = -3045374829540174578L;
     private final String value;
     private final ByteBuffer slice;
 

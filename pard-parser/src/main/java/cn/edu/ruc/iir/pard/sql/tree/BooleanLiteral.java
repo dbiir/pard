@@ -17,6 +17,7 @@ public class BooleanLiteral
 {
     public static final BooleanLiteral TRUE_LITERAL = new BooleanLiteral(null, "true");
     public static final BooleanLiteral FALSE_LITERAL = new BooleanLiteral(null, "false");
+    private static final long serialVersionUID = 3932204226127594723L;
 
     private final boolean value;
 

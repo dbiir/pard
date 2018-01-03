@@ -13,8 +13,9 @@ import static java.util.Objects.requireNonNull;
 public class StringLiteral
         extends Literal
 {
+    private static final long serialVersionUID = -5230281126527636285L;
     private final String value;
-    private final ByteBuffer slice;
+    private final transient ByteBuffer slice;
 
     public StringLiteral(String value)
     {

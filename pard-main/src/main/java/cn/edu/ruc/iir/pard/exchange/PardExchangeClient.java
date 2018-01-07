@@ -1,7 +1,7 @@
 package cn.edu.ruc.iir.pard.exchange;
 
-import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
-import cn.edu.ruc.iir.pard.executor.connector.TestTask;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.executor.connector.Task;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -16,8 +16,6 @@ import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -25,22 +23,21 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *
  * @author guodong
  */
-public class PardNettyExchangeClient
+public class PardExchangeClient
 {
     private final String host;
     private final int port;
-    private final ConcurrentLinkedQueue<PardResultSet> resultSets;
-    private final List<PardResultSet> localRS = new ArrayList<>();
+    private final ConcurrentLinkedQueue<Block> blocks;
     private EventLoopGroup group;
 
-    public PardNettyExchangeClient(String host, int port)
+    public PardExchangeClient(String host, int port)
     {
         this.host = host;
         this.port = port;
-        this.resultSets = new ConcurrentLinkedQueue<>();
+        this.blocks = new ConcurrentLinkedQueue<>();
     }
 
-    public void connect()
+    public Block connect(Task task)
     {
         this.group = new NioEventLoopGroup();
         try {
@@ -56,25 +53,18 @@ public class PardNettyExchangeClient
                             ch.pipeline()
                                     .addLast(new ObjectEncoder(),
                                             new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                            new ExchangeResultSetHandler(resultSets));
+                                            new ExchangeBlockHandler(blocks));
                         }});
             ChannelFuture f = bootstrap.connect(new InetSocketAddress(host, port)).sync();
             Channel channel = f.channel();
-            ChannelFuture taskFuture = channel.writeAndFlush(new TestTask("site0"));
+            ChannelFuture taskFuture = channel.writeAndFlush(task);
             taskFuture.addListener((ChannelFutureListener) future -> System.out.println("Task write complete"));
-            for (;; ) {
-                while (resultSets.size() == 0) {
+            while (blocks.size() == 0) {
                     // do nothing but wait
-                }
-                PardResultSet r = resultSets.poll();
-                System.out.println(r);
-                if (r.getStatus() == PardResultSet.ResultStatus.EOR) {
-                    System.out.println("End of client session");
-                    break;
-                }
-                localRS.add(r);
-//                channel.writeAndFlush(new NextRSTask("site0"));
             }
+            Block block = blocks.poll();
+            System.out.println(block);
+            return block;
         }
         catch (InterruptedException e) {
             e.printStackTrace();
@@ -82,19 +72,11 @@ public class PardNettyExchangeClient
         finally {
             close();
         }
+        return null;
     }
 
     public void close()
     {
         group.shutdownGracefully();
-    }
-
-    public static void main(String[] args)
-    {
-        PardNettyExchangeClient exchangeClient = new PardNettyExchangeClient("127.0.0.1", 10012);
-        exchangeClient.connect();
-        for (PardResultSet r : exchangeClient.localRS) {
-            System.out.println("RE: " + r);
-        }
     }
 }

@@ -50,7 +50,6 @@ public class PardQueryHandler
         catch (IOException e) {
             e.printStackTrace();
         }
-        // todo fill map with nodes
     }
 
     @Override
@@ -78,7 +77,6 @@ public class PardQueryHandler
 
     private PardResultSet executeQuery(String sql)
     {
-        // todo this logic should be abstracted as a automated state machine
         logger.info("Accepted query: " + sql);
         Job job = jobScheduler.newJob();
         if (job == null) {

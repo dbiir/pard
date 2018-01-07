@@ -4,6 +4,7 @@ import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.connector.postgresql.PostgresConnector;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
+import cn.edu.ruc.iir.pard.exchange.PardExchangeServer;
 import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
@@ -42,6 +43,9 @@ public class PardServer
 
         // load connector
         pipeline.addStartupHook(this::loadConnector);
+
+        // load executor
+        pipeline.addStartupHook(this::loadExecutor);
 
 //         load node keeper
 //        pipeline.addStartupHook(this::loadNodeKeeper);
@@ -92,7 +96,12 @@ public class PardServer
     private void loadConnector()
     {
         this.connector = PostgresConnector.INSTANCE();
-        this.executor = new PardTaskExecutor(connector);
+    }
+
+    private void loadExecutor()
+    {
+        this.executor = PardTaskExecutor.INSTANCE();
+        executor.setConnector(connector);
     }
 
     private void startRPCServer()
@@ -103,6 +112,7 @@ public class PardServer
 
     private void startExchangeServer()
     {
+//        this.exchangeServer = new PardSocketExchangeServer(configuration.getExchangePort(), executor);
         this.exchangeServer = new PardExchangeServer(configuration.getExchangePort(), executor);
         new Thread(exchangeServer).start();
     }

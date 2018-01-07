@@ -52,7 +52,7 @@ public class PardRPCService
         CreateSchemaTask task = new CreateSchemaTask(
                 schemaMsg.getName(),
                 schemaMsg.getIsNotExists());
-        PardResultSet resultSet = executor.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }
@@ -72,7 +72,7 @@ public class PardRPCService
         DropSchemaTask task = new DropSchemaTask(
                 schemaMsg.getName(),
                 schemaMsg.getIsNotExists());
-        PardResultSet resultSet = executor.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }
@@ -103,7 +103,7 @@ public class PardRPCService
                 tableMsg.getName(),
                 tableMsg.getIsNotExists(),
                 columns);
-        PardResultSet resultSet = executor.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }
@@ -121,7 +121,7 @@ public class PardRPCService
         PardProto.ResponseStatus.Builder responseStatusBuilder
                 = PardProto.ResponseStatus.newBuilder();
         DropTableTask task = new DropTableTask(tableMsg.getSchemaName(), tableMsg.getName());
-        PardResultSet resultSet = executor.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }
@@ -162,7 +162,7 @@ public class PardRPCService
                 insertMsg.getSchemaName(),
                 insertMsg.getTableName(),
                 columns, rows);
-        PardResultSet resultSet = executor.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }

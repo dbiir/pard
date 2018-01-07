@@ -14,16 +14,16 @@ import java.util.logging.Logger;
  *
  * @author guodong
  */
-public class PardExchangeServer
+public class PardSocketExchangeServer
         implements Runnable
 {
-    private final Logger logger = Logger.getLogger(PardExchangeServer.class.getName());
+    private final Logger logger = Logger.getLogger(PardSocketExchangeServer.class.getName());
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final int port;
     private final PardTaskExecutor executor;
     private boolean stopFlag = false;
 
-    public PardExchangeServer(int port, PardTaskExecutor executor)
+    public PardSocketExchangeServer(int port, PardTaskExecutor executor)
     {
         this.port = port;
         this.executor = executor;
@@ -36,7 +36,7 @@ public class PardExchangeServer
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (!stopFlag) {
                 Socket socket = serverSocket.accept();
-                executorService.submit(new PardExchangeHandler(socket, executor));
+                executorService.submit(new PardSocketExchangeHandler(socket, executor));
             }
         }
         catch (IOException e) {

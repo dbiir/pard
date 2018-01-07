@@ -14,14 +14,14 @@ import java.util.logging.Logger;
  *
  * @author guodong
  */
-public class PardExchangeClient
+public class PardSocketExchangeClient
 {
-    private final Logger logger = Logger.getLogger(PardExchangeClient.class.getName());
+    private final Logger logger = Logger.getLogger(PardSocketExchangeClient.class.getName());
     private final ObjectInputStream inputStream;
     private final ObjectOutputStream outputStream;
     private final Socket socket;
 
-    public PardExchangeClient(String host, int port) throws IOException
+    public PardSocketExchangeClient(String host, int port) throws IOException
     {
         this.socket = new Socket(host, port);
         this.outputStream = new ObjectOutputStream(socket.getOutputStream());

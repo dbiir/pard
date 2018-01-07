@@ -31,7 +31,7 @@ import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.DeletePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
-import cn.edu.ruc.iir.pard.server.PardExchangeClient;
+import cn.edu.ruc.iir.pard.server.PardSocketExchangeClient;
 import cn.edu.ruc.iir.pard.server.PardStartupHook;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Row;
@@ -61,7 +61,7 @@ public class TaskScheduler
 {
     private final Logger logger = Logger.getLogger(TaskScheduler.class.getName());
     private final SiteDao siteDao;
-    private final Map<String, PardExchangeClient> exchangeClients;
+    private final Map<String, PardSocketExchangeClient> exchangeClients;
 
     private TaskScheduler()
     {
@@ -299,9 +299,10 @@ public class TaskScheduler
                     if (nodeSite != null) {
                         executingTasksNum++;
                         try {
-                            PardExchangeClient client = exchangeClients.get(site);
+                            // todo change exchange client from socket to netty
+                            PardSocketExchangeClient client = exchangeClients.get(site);
                             if (client == null) {
-                                client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+                                client = new PardSocketExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
                             }
                             PardResultSet rs = client.call(task);
                             resultSet.addResultSet(rs);
@@ -312,7 +313,7 @@ public class TaskScheduler
                         }
 //                        CompletableFuture<PardResultSet> future = CompletableFuture.supplyAsync(() -> {
 //                            try {
-//                                PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+//                                PardSocketExchangeClient client = new PardSocketExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
 //                                PardResultSet rs = client.call(task);
 //                                client.close();
 //                                return rs;
@@ -343,6 +344,7 @@ public class TaskScheduler
                     }
                 }
             }
+            // other than query task
             else {
                 List<Integer> statusL = new ArrayList<>();
                 for (Task task : tasks) {

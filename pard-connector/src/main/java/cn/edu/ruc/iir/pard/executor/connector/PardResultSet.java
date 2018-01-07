@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.executor.connector;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
@@ -55,15 +56,15 @@ public class PardResultSet
 
     private static final int defaultCapacity = 10 * 1024 * 1024;
 
-    private final List<Row> currentRows;
+    private final List<Row> currentRows;  // as local execution result set
     private final List<Column> schema;
-    private final int capacity;
     private ResultStatus resultStatus;
-    private String taskId;
-    private int resultSetNum = 0;
-    private ResultSet jdbcResultSet;
-    private Connection connection;
-    private int currentSize = 0;
+    private final transient int capacity;
+    private transient String taskId;
+    private transient int resultSetNum = 0;
+    private transient ResultSet jdbcResultSet;
+    private transient Connection connection;
+    private transient int currentSize = 0;
 
     public PardResultSet()
     {
@@ -85,7 +86,7 @@ public class PardResultSet
         this.capacity = capacity;
         this.resultStatus = resultStatus;
         this.schema = schema;
-        currentRows = new LinkedList<>();
+        this.currentRows = new LinkedList<>();
     }
 
     /**
@@ -101,6 +102,16 @@ public class PardResultSet
             this.currentRows.addAll(resultSet.currentRows);
         }
         this.resultSetNum++;
+    }
+
+    public void addBlock(Block block)
+    {
+        currentRows.addAll(block.getRows());
+    }
+
+    public List<Row> getRows()
+    {
+        return currentRows;
     }
 
     public String getTaskId()

@@ -1,8 +1,8 @@
 package cn.edu.ruc.iir.pard.server;
 
+import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import cn.edu.ruc.iir.pard.executor.connector.EORTask;
-import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 
 import java.io.IOException;
@@ -16,14 +16,14 @@ import java.util.logging.Logger;
  *
  * @author guodong
  */
-public class PardExchangeHandler
+public class PardSocketExchangeHandler
         extends Thread
 {
     private final Socket socket;
     private final PardTaskExecutor executor;
-    private final Logger logger = Logger.getLogger(PardExchangeHandler.class.getName());
+    private final Logger logger = Logger.getLogger(PardSocketExchangeHandler.class.getName());
 
-    public PardExchangeHandler(Socket socket, PardTaskExecutor executor)
+    public PardSocketExchangeHandler(Socket socket, PardTaskExecutor executor)
     {
         this.socket = socket;
         this.executor = executor;
@@ -40,8 +40,8 @@ public class PardExchangeHandler
                     logger.info("Exchange handler session out");
                     break;
                 }
-                PardResultSet resultSet = executor.execute(task);
-                outputStream.writeObject(resultSet);
+                Block block = executor.execute(task);
+                outputStream.writeObject(block);
                 logger.info("One round interaction done");
             }
         }

@@ -1,13 +1,16 @@
 package cn.edu.ruc.iir.pard.exchange;
 
-import cn.edu.ruc.iir.pard.executor.connector.Connector;
-import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * pard
@@ -18,32 +21,26 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 public class ExchangeTaskHandler
         extends ChannelInboundHandlerAdapter
 {
-    private final Connector connector;
+    private final Logger logger = Logger.getLogger(ExchangeTaskHandler.class.getName());
+    private final PardTaskExecutor executor;
 
-    public ExchangeTaskHandler(Connector connector)
+    public ExchangeTaskHandler(PardTaskExecutor executor)
     {
-        this.connector = connector;
+        this.executor = executor;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg)
     {
         if (msg instanceof Task) {
-            for (int i = 0; i < 10; i++) {
-                if (ctx.channel().isWritable()) {
-                    Task task = (Task) msg;
-                    System.out.println(task);
-                    ctx.write(PardResultSet.okResultSet);
-                }
-                else {
-                    System.out.println("Not writable");
-                }
-            }
-            ChannelFuture f = ctx.write(PardResultSet.eorResultSet);
+            Task task = (Task) msg;
+            Block block = executor.execute(task);
+            ChannelFuture f = ctx.write(block);
             f.addListener(ChannelFutureListener.CLOSE);
         }
         else {
-            System.out.println("Error task");
+            logger.log(Level.WARNING, "Exchange task handler received a message which is not a task");
+            ctx.close();
         }
     }
 

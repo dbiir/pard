@@ -14,22 +14,25 @@ public class ColumnItem
         this.columnName = columnName;
         this.dataType = dataType;
     }
+
     public String getTableName()
     {
         return tableName;
     }
+
     public String getColumnName()
     {
         return columnName;
     }
+
     public int getDataType()
     {
         return dataType;
     }
+
     @Override
     public String toString()
     {
-        // TODO Auto-generated method stub
         return tableName + "." + columnName;
     }
 }

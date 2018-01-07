@@ -9,13 +9,15 @@ public abstract class SchemaPlan
     public SchemaPlan(Statement stmt)
     {
         super(stmt);
-        // TODO Auto-generated constructor stub
     }
+
     protected boolean alreadyDone = false;
+
     public GDDPlan getGDDPlan()
     {
         return this;
     }
+
     public boolean isAlreadyDone()
     {
         return alreadyDone;

@@ -68,8 +68,8 @@ public class PardClient
                                     System.out.print("-");
                                 }
                                 System.out.print("\n");
-                                Row row;
-                                while ((row = resultSet.getNext()) != null) {
+                                List<Row> rows = resultSet.getRows();
+                                for (Row row : rows) {
                                     System.out.println(RowConstructor.printRow(row, colTypes));
                                 }
                             }

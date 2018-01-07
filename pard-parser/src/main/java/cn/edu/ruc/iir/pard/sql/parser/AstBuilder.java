@@ -217,9 +217,11 @@ public class AstBuilder
     @Override
     public Node visitShowTables(PardSqlBaseParser.ShowTablesContext ctx)
     {
-        return new ShowTables(
-                getLocation(ctx),
-                getQualifiedName(ctx.qualifiedName()));
+        if (ctx.FROM() != null) {
+            return new ShowTables(getLocation(ctx),
+                    (Identifier) visit(ctx.schemaName));
+        }
+        return new ShowTables(getLocation(ctx));
     }
 
     @Override

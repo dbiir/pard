@@ -11,20 +11,30 @@ public class ShowTables
         extends Statement
 {
     private static final long serialVersionUID = -5343733186196510934L;
-    private final QualifiedName schema;
+    private final Identifier schema;
 
-    public ShowTables(QualifiedName schema)
+    public ShowTables()
+    {
+        this(null, null);
+    }
+
+    public ShowTables(Location location)
+    {
+        this(location, null);
+    }
+
+    public ShowTables(Identifier schema)
     {
         this(null, schema);
     }
 
-    public ShowTables(Location location, QualifiedName schema)
+    public ShowTables(Location location, Identifier schema)
     {
         super(location);
         this.schema = schema;
     }
 
-    public QualifiedName getSchema()
+    public Identifier getSchema()
     {
         return schema;
     }

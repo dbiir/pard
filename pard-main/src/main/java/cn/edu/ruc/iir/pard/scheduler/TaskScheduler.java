@@ -1,8 +1,14 @@
 package cn.edu.ruc.iir.pard.scheduler;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Site;
+import cn.edu.ruc.iir.pard.catalog.Table;
+import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.commons.utils.DataType;
+import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.communication.rpc.PardRPCClient;
+import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -15,13 +21,15 @@ import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
-import cn.edu.ruc.iir.pard.nodekeeper.Keeper;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.SchemaCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.SchemaDropPlan;
+import cn.edu.ruc.iir.pard.planner.ddl.SchemaShowPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableDropPlan;
+import cn.edu.ruc.iir.pard.planner.ddl.TableShowPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.planner.dml.DeletePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.server.PardExchangeClient;
@@ -53,13 +61,11 @@ public class TaskScheduler
         implements PardStartupHook
 {
     private final Logger logger = Logger.getLogger(TaskScheduler.class.getName());
-    private final Keeper nodeKeeper;
     private final SiteDao siteDao;
     private final Map<String, PardExchangeClient> exchangeClients;
 
     private TaskScheduler()
     {
-        this.nodeKeeper = Keeper.INSTANCE();
         this.siteDao = new SiteDao();
         this.exchangeClients = new HashMap<>();
     }
@@ -80,6 +86,7 @@ public class TaskScheduler
         return TaskSchedulerHolder.instance;
     }
 
+    // todo this sucks, full of if else
     public List<Task> generateTasks(Plan plan)
     {
         Set<String> sites = siteDao.listNodes().keySet();
@@ -152,6 +159,16 @@ public class TaskScheduler
             return ImmutableList.copyOf(tasks);
         }
 
+        // show schemas
+        if (plan instanceof SchemaShowPlan) {
+            return ImmutableList.of();
+        }
+
+        // show tables
+        if (plan instanceof TableShowPlan) {
+            return ImmutableList.of();
+        }
+
         // insert plan
         if (plan instanceof InsertPlan) {
             logger.info("Task generation for insert plan");
@@ -181,6 +198,10 @@ public class TaskScheduler
                 tasks.add(task);
             }
             return ImmutableList.copyOf(tasks);
+        }
+
+        if (plan instanceof DeletePlan) {
+            // todo generate tasks for delete plan
         }
 
         // query plan
@@ -215,6 +236,7 @@ public class TaskScheduler
         return null;
     }
 
+    // todo this sucks, full of if else
     public PardResultSet executeJob(Job job)
     {
         logger.info("Executing job[" + job.getJobId() + "]");
@@ -230,11 +252,42 @@ public class TaskScheduler
 
         if (tasks.isEmpty()) {
             logger.info("Job[" + job.getJobId() + "] has empty task list");
+            // show schemas
+            if (plan instanceof SchemaShowPlan) {
+                SchemaDao schemaDao = new SchemaDao();
+                Set<String> schemas = schemaDao.listAll();
+                Column header = new Column(0, DataType.VARCHAR.getType(), "schema", 100, 0, 0);
+                PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header), 1);
+                Block block = new Block();
+                for (String schemaName : schemas) {
+                    RowConstructor rowConstructor = new RowConstructor();
+                    rowConstructor.appendString(schemaName);
+                    block.addRow(rowConstructor.build());
+                }
+                resultSet.addBlock(block);
+                return resultSet;
+            }
+            // show tables
+            if (plan instanceof TableShowPlan) {
+                SchemaDao schemaDao = new SchemaDao();
+                Schema schema = schemaDao.loadByName(((TableShowPlan) plan).getSchema());
+                List<Table> tables = schema.getTableList();
+                Column header = new Column(0, DataType.VARCHAR.getType(), "table", 100, 0, 0);
+                PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header), 1);
+                Block block = new Block();
+                for (Table table : tables) {
+                    RowConstructor rowConstructor = new RowConstructor();
+                    rowConstructor.appendString(table.getTablename());
+                    block.addRow(rowConstructor.build());
+                }
+                resultSet.addBlock(block);
+                return resultSet;
+            }
+            // I don't know who will come here currently, just keep it
             if (plan.afterExecution(true)) {
                 return new PardResultSet(PardResultSet.ResultStatus.OK);
             }
         }
-
         else {
             // distribute query result and collect
             // this is a simplest implementation

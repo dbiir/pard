@@ -56,7 +56,7 @@ statement
     | ROLLBACK WORK?                                                   #rollback
     | SHOW PARTITIONS (FROM | IN) qualifiedName                        #showPartitions
     | SHOW SCHEMAS                                                     #showSchemas
-    | SHOW TABLES FROM schemaName=qualifiedName                        #showTables
+    | SHOW TABLES (FROM schemaName=identifier)?                        #showTables
     ;
 
 partitionOps

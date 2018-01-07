@@ -1,6 +1,6 @@
 package cn.edu.ruc.iir.pard.server;
 
-import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 
 import java.io.IOException;

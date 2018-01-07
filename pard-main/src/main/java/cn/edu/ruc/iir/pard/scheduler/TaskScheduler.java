@@ -2,7 +2,6 @@ package cn.edu.ruc.iir.pard.scheduler;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Site;
-import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.communication.rpc.PardRPCClient;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
@@ -10,6 +9,7 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;

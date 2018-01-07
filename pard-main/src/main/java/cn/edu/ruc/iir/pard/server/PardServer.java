@@ -4,6 +4,7 @@ import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.connector.postgresql.PostgresConnector;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
+import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
 import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
@@ -20,6 +21,7 @@ public class PardServer
     private PardSocketListener socketListener;
     private PardExchangeServer exchangeServer;
     private Connector connector;
+    private PardTaskExecutor executor;
     private JobScheduler jobScheduler;
     private TaskScheduler taskScheduler;
 
@@ -90,17 +92,18 @@ public class PardServer
     private void loadConnector()
     {
         this.connector = PostgresConnector.INSTANCE();
+        this.executor = new PardTaskExecutor(connector);
     }
 
     private void startRPCServer()
     {
-        this.rpcServer = new PardRPCServer(configuration.getRPCPort(), connector);
+        this.rpcServer = new PardRPCServer(configuration.getRPCPort(), executor);
         new Thread(rpcServer).start();
     }
 
     private void startExchangeServer()
     {
-        this.exchangeServer = new PardExchangeServer(configuration.getExchangePort(), connector);
+        this.exchangeServer = new PardExchangeServer(configuration.getExchangePort(), executor);
         new Thread(exchangeServer).start();
     }
 

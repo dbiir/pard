@@ -1,8 +1,5 @@
 package cn.edu.ruc.iir.pard.commons.memory;
 
-import cn.edu.ruc.iir.pard.commons.utils.DataType;
-import com.google.common.collect.ImmutableList;
-
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,17 +13,20 @@ public class Block
         implements Serializable
 {
     private static final long serialVersionUID = 4306066541526735236L;
-    private final ImmutableList<String> columnNames;   // column names in schema
-    private final ImmutableList<DataType> columnTypes;   // column types in schema
+    private static final int defaultCapacity = 10 * 1024 * 1024;       // default to 10MB
+
     private final int capacity;                        // capacity in bytes
     private final List<Row> rows;                      // block content
 
     private int currentCap = 0;
 
-    public Block(List<String> columnNames, List<DataType> columnTypes, int capacity)
+    public Block()
     {
-        this.columnNames = ImmutableList.copyOf(columnNames);
-        this.columnTypes = ImmutableList.copyOf(columnTypes);
+        this(defaultCapacity);
+    }
+
+    public Block(int capacity)
+    {
         this.capacity = capacity;
         this.rows = new LinkedList<>();
     }
@@ -37,10 +37,11 @@ public class Block
     public boolean addRow(Row row)
     {
         // todo check block capacity
-//        if (currentCap >= capacity) {
-//            return false;
-//        }
+        if (currentCap + row.getSize() >= capacity) {
+            return false;
+        }
         rows.add(row);
+        currentCap += row.getSize();
         return true;
     }
 
@@ -54,18 +55,8 @@ public class Block
         return rows.remove(rows.size() - 1);
     }
 
-    public int getRowSize()
+    public int getRowNum()
     {
         return this.rows.size();
-    }
-
-    public ImmutableList<String> getColumnNames()
-    {
-        return columnNames;
-    }
-
-    public ImmutableList<DataType> getColumnTypes()
-    {
-        return columnTypes;
     }
 }

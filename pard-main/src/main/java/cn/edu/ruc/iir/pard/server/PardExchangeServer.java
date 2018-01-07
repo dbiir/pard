@@ -1,6 +1,6 @@
 package cn.edu.ruc.iir.pard.server;
 
-import cn.edu.ruc.iir.pard.executor.connector.Connector;
+import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -20,13 +20,13 @@ public class PardExchangeServer
     private final Logger logger = Logger.getLogger(PardExchangeServer.class.getName());
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final int port;
-    private final Connector connector;
+    private final PardTaskExecutor executor;
     private boolean stopFlag = false;
 
-    public PardExchangeServer(int port, Connector connector)
+    public PardExchangeServer(int port, PardTaskExecutor executor)
     {
         this.port = port;
-        this.connector = connector;
+        this.executor = executor;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class PardExchangeServer
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (!stopFlag) {
                 Socket socket = serverSocket.accept();
-                executorService.submit(new PardExchangeHandler(socket, connector));
+                executorService.submit(new PardExchangeHandler(socket, executor));
             }
         }
         catch (IOException e) {

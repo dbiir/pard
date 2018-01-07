@@ -14,7 +14,6 @@ import java.util.List;
  */
 public class RowConstructor
 {
-    private Row row;
     private ByteBuffer byteBuffer = ByteBuffer.allocate(1024 * 10);
     private List<Integer> offsets = new ArrayList<>();
 
@@ -53,17 +52,18 @@ public class RowConstructor
         return new Row(byteBuffer.array(), offsets.stream().mapToInt(i->i).toArray());
     }
 
-    public static String printRow(Row row, List<DataType> dataTypes)
+    public static String printRow(Row row, List<Integer> dataTypes)
     {
         StringBuilder sb = new StringBuilder();
         ByteBuffer byteBuffer = ByteBuffer.wrap(row.getContent());
         int[] offsets = row.getOffsets();
         for (int i = 0; i < offsets.length; i++) {
-            DataType dataType = dataTypes.get(i);
-            if (dataType.getType() == DataType.INT.getType()) {
+            int dataType = dataTypes.get(i);
+            if (dataType == DataType.INT.getType()) {
                 sb.append(byteBuffer.getInt()).append(", ");
+                continue;
             }
-            if (dataType.getType() == DataType.CHAR.getType() || dataType.getType() == DataType.VARCHAR.getType()) {
+            if (dataType == DataType.CHAR.getType() || dataType == DataType.VARCHAR.getType()) {
                 int len = 0;
                 if (i == 0) {
                     len = offsets[i];
@@ -74,17 +74,20 @@ public class RowConstructor
                 byte[] temp = new byte[len];
                 byteBuffer.get(temp);
                 try {
-                    sb.append(new String(temp, "UTF-8")).append(", ");
+                    sb.append(new String(temp, "UTF-8").trim()).append(", ");
                 }
                 catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
+                continue;
             }
-            if (dataType.getType() == DataType.BIGINT.getType()) {
+            if (dataType == DataType.BIGINT.getType()) {
                 sb.append(byteBuffer.getLong()).append(", ");
+                continue;
             }
-            if (dataType.getType() == DataType.FLOAT.getType()) {
+            if (dataType == DataType.FLOAT.getType()) {
                 sb.append(byteBuffer.getFloat()).append(", ");
+                continue;
             }
             // todo add more types
         }

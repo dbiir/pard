@@ -11,7 +11,11 @@ service Pard {
     rpc insertInto(InsertMsg) returns (ResponseStatus) {}
     rpc dropSchema(SchemaMsg) returns (ResponseStatus) {}
     rpc dropTable(TableMsg) returns (ResponseStatus) {}
+    rpc showSchema(NullMsg) returns (ResponseStatus) {}
+    rpc showTable(SchemaMsg) returns (ResponseStatus) {}
 }
+
+message NullMsg {}
 
 message HeartBeatMsg {
     int32 beatType = 1;
@@ -51,4 +55,5 @@ message RowMsg {
 
 message ResponseStatus {
     int32 status = 1;
+    repeated string infos = 2;
 }

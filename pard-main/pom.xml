@@ -46,7 +46,13 @@
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty</artifactId>
         </dependency>
-                <dependency>
+        <!-- marshalling -->
+        <dependency>
+            <groupId>org.jboss.marshalling</groupId>
+            <artifactId>jboss-marshalling-serial</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <scope>test</scope>

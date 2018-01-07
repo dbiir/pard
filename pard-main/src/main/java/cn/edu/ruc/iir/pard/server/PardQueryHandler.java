@@ -1,7 +1,7 @@
 package cn.edu.ruc.iir.pard.server;
 
 import cn.edu.ruc.iir.pard.commons.exception.ParsingException;
-import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;

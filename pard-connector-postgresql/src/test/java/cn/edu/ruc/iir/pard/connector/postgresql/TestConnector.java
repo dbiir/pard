@@ -3,12 +3,12 @@ package cn.edu.ruc.iir.pard.connector.postgresql;
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
-import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
@@ -134,7 +134,6 @@ public class TestConnector
         InsertIntoTask task = new InsertIntoTask("pardschema", "table1", columns, values);
         PardResultSet resultSet = pConn.execute(task);
         System.out.println(resultSet.getStatus().toString());
-        System.out.println("Added Number: " + pConn.getChNum());
     }
 
     @Test

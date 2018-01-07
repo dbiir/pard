@@ -1,7 +1,7 @@
 package cn.edu.ruc.iir.pard.exchange;
 
-import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
+import cn.edu.ruc.iir.pard.executor.connector.Block;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -35,8 +35,13 @@ public class ExchangeTaskHandler
         if (msg instanceof Task) {
             Task task = (Task) msg;
             Block block = executor.execute(task);
-            ChannelFuture f = ctx.write(block);
-            f.addListener(ChannelFutureListener.CLOSE);
+            if (block.isSequenceHasNext()) {
+                ctx.write(block);
+            }
+            else {
+                ChannelFuture f = ctx.write(block);
+                f.addListener(ChannelFutureListener.CLOSE);
+            }
         }
         else {
             logger.log(Level.WARNING, "Exchange task handler received a message which is not a task");

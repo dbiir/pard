@@ -9,6 +9,8 @@ import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.communication.rpc.PardRPCClient;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
+import cn.edu.ruc.iir.pard.exchange.PardExchangeClient;
+import cn.edu.ruc.iir.pard.executor.connector.Block;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
@@ -31,19 +33,17 @@ import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.DeletePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
-import cn.edu.ruc.iir.pard.server.PardSocketExchangeClient;
 import cn.edu.ruc.iir.pard.server.PardStartupHook;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Row;
 import com.google.common.collect.ImmutableList;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,12 +61,10 @@ public class TaskScheduler
 {
     private final Logger logger = Logger.getLogger(TaskScheduler.class.getName());
     private final SiteDao siteDao;
-    private final Map<String, PardSocketExchangeClient> exchangeClients;
 
     private TaskScheduler()
     {
         this.siteDao = new SiteDao();
-        this.exchangeClients = new HashMap<>();
     }
 
     @Override
@@ -290,59 +288,31 @@ public class TaskScheduler
             if (plan instanceof QueryPlan) {
                 logger.info("Executing query tasks for job[" + job.getJobId() + "]");
                 PardResultSet resultSet = new PardResultSet();
-                int executingTasksNum = 0;
-                List<Future> futures = new ArrayList<>();
+                Map<String, Task> taskMap = new HashMap<>();
+                ConcurrentLinkedQueue<Block> blocks = new ConcurrentLinkedQueue<>();
                 for (Task task : tasks) {
                     String site = task.getSite();
+                    String taskId = task.getTaskId();
+                    taskMap.put(taskId, task);
                     Site nodeSite = siteDao.listNodes().get(site);
-//                    ServerInfo info = nodeKeeper.getExchangeServers().get(site);
                     if (nodeSite != null) {
-                        executingTasksNum++;
-                        try {
-                            // todo change exchange client from socket to netty
-                            PardSocketExchangeClient client = exchangeClients.get(site);
-                            if (client == null) {
-                                client = new PardSocketExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
-                            }
-                            PardResultSet rs = client.call(task);
-                            resultSet.addResultSet(rs);
-//                            client.close();
-                        }
-                        catch (IOException | ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-//                        CompletableFuture<PardResultSet> future = CompletableFuture.supplyAsync(() -> {
-//                            try {
-//                                PardSocketExchangeClient client = new PardSocketExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
-//                                PardResultSet rs = client.call(task);
-//                                client.close();
-//                                return rs;
-//                            }
-//                            catch (IOException | ClassNotFoundException e) {
-//                                e.printStackTrace();
-//                            }
-//                            return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
-//                        });
-//                        future.exceptionally(throwable -> new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR));
-//                        future.thenAccept(resultSet::addResultSet);
-//                        futures.add(future);
+                        PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+                        client.connect(task, blocks);
                     }
                 }
-                while (true) {
-//                    if (resultSet.getStatus() != PardResultSet.ResultStatus.OK && resultSet.getStatus() != PardResultSet.ResultStatus.EOR) {
-//                        logger.info("Some task went wrong. Cancel the job execution.");
-//                        for (Future future : futures) {
-//                            if (!future.isDone()) {
-//                                future.cancel(true);
-//                            }
-//                        }
-//                        return resultSet;
-//                    }
-                    if (resultSet.getResultSetNum() == executingTasksNum) {
-                        logger.info("Query execution done. Collected results for job[" + job.getJobId() + "]");
-                        return resultSet;
+                // wait for all task done
+                while (!taskMap.isEmpty()) {
+                    Block block = blocks.poll();
+                    if (block == null) {
+                        continue;
+                    }
+                    resultSet.addBlock(block);
+                    if (!block.isSequenceHasNext()) {
+                        String taskId = block.getTaskId();
+                        taskMap.remove(taskId);
                     }
                 }
+                return resultSet;
             }
             // other than query task
             else {

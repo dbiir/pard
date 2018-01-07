@@ -1,6 +1,6 @@
 package cn.edu.ruc.iir.pard.exchange;
 
-import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.executor.connector.Block;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -27,17 +27,15 @@ public class PardExchangeClient
 {
     private final String host;
     private final int port;
-    private final ConcurrentLinkedQueue<Block> blocks;
     private EventLoopGroup group;
 
     public PardExchangeClient(String host, int port)
     {
         this.host = host;
         this.port = port;
-        this.blocks = new ConcurrentLinkedQueue<>();
     }
 
-    public Block connect(Task task)
+    public void connect(Task task, ConcurrentLinkedQueue<Block> blocks)
     {
         this.group = new NioEventLoopGroup();
         try {
@@ -53,18 +51,13 @@ public class PardExchangeClient
                             ch.pipeline()
                                     .addLast(new ObjectEncoder(),
                                             new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                            new ExchangeBlockHandler(blocks));
+                                            new ExchangeBlockHandler(task, blocks));
                         }});
             ChannelFuture f = bootstrap.connect(new InetSocketAddress(host, port)).sync();
             Channel channel = f.channel();
             ChannelFuture taskFuture = channel.writeAndFlush(task);
             taskFuture.addListener((ChannelFutureListener) future -> System.out.println("Task write complete"));
-            while (blocks.size() == 0) {
-                    // do nothing but wait
-            }
-            Block block = blocks.poll();
-            System.out.println(block);
-            return block;
+            channel.closeFuture().sync();
         }
         catch (InterruptedException e) {
             e.printStackTrace();
@@ -72,7 +65,6 @@ public class PardExchangeClient
         finally {
             close();
         }
-        return null;
     }
 
     public void close()

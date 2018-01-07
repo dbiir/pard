@@ -1,8 +1,8 @@
 package cn.edu.ruc.iir.pard.executor;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
-import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
+import cn.edu.ruc.iir.pard.executor.connector.Block;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
@@ -20,16 +20,14 @@ import java.util.Map;
 public class PardTaskExecutor
 {
     private final Map<String, PardResultSet> resultSetMap;    // taskId -> result set
-    private final Map<String, List<String>> namesMap;         // taskId -> names
-    private final Map<String, List<Integer>> typesMap;        // taskId -> types
+    private final Map<String, List<Column>> schemaMap;        // taskId -> schema
     private final Map<String, Integer> sequenceIds;           // taskId -> sequence id
     private Connector connector;
 
     private PardTaskExecutor()
     {
         this.resultSetMap = new HashMap<>();
-        this.namesMap = new HashMap<>();
-        this.typesMap = new HashMap<>();
+        this.schemaMap = new HashMap<>();
         this.sequenceIds = new HashMap<>();
     }
 
@@ -66,14 +64,12 @@ public class PardTaskExecutor
                 names.add(column.getColumnName());
                 types.add(column.getDataType());
             }
-            namesMap.put(taskId, names);
-            typesMap.put(taskId, types);
             sequenceIds.put(taskId, 0);
         }
 
         PardResultSet resultSet = resultSetMap.get(taskId);
         int seq = sequenceIds.get(taskId) + 1;
-        Block block = new Block(namesMap.get(taskId), typesMap.get(taskId), 10 * 1024 * 1024, seq);
+        Block block = new Block(schemaMap.get(taskId), 10 * 1024 * 1024, seq, taskId);
         sequenceIds.put(taskId, seq);
         Row row;
         while ((row = resultSet.getNext()) != null) {
@@ -84,8 +80,7 @@ public class PardTaskExecutor
         }
         if (block.isSequenceHasNext()) {
             resultSetMap.remove(taskId);
-            namesMap.remove(taskId);
-            typesMap.remove(taskId);
+            schemaMap.remove(taskId);
             sequenceIds.remove(taskId);
         }
         return block;

@@ -1,7 +1,7 @@
 package cn.edu.ruc.iir.pard.server;
 
-import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
+import cn.edu.ruc.iir.pard.executor.connector.Block;
 import cn.edu.ruc.iir.pard.executor.connector.EORTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 

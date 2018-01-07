@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.executor.connector;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
-import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
@@ -57,11 +56,9 @@ public class PardResultSet
     private static final int defaultCapacity = 10 * 1024 * 1024;
 
     private final List<Row> currentRows;  // as local execution result set
-    private final List<Column> schema;
+    private List<Column> schema;
     private ResultStatus resultStatus;
     private final transient int capacity;
-    private transient String taskId;
-    private transient int resultSetNum = 0;
     private transient ResultSet jdbcResultSet;
     private transient Connection connection;
     private transient int currentSize = 0;
@@ -83,9 +80,9 @@ public class PardResultSet
 
     public PardResultSet(ResultStatus resultStatus, List<Column> schema, int capacity)
     {
-        this.capacity = capacity;
         this.resultStatus = resultStatus;
         this.schema = schema;
+        this.capacity = capacity;
         this.currentRows = new LinkedList<>();
     }
 
@@ -101,27 +98,17 @@ public class PardResultSet
         else {
             this.currentRows.addAll(resultSet.currentRows);
         }
-        this.resultSetNum++;
     }
 
     public void addBlock(Block block)
     {
+        this.schema = block.getColumns();
         currentRows.addAll(block.getRows());
     }
 
     public List<Row> getRows()
     {
         return currentRows;
-    }
-
-    public String getTaskId()
-    {
-        return taskId;
-    }
-
-    public void setTaskId(String taskId)
-    {
-        this.taskId = taskId;
     }
 
     public void setJdbcResultSet(ResultSet jdbcResultSet)
@@ -139,9 +126,9 @@ public class PardResultSet
         return resultStatus;
     }
 
-    public int getResultSetNum()
+    public void setSchema(List<Column> schema)
     {
-        return resultSetNum;
+        this.schema = schema;
     }
 
     public List<Column> getSchema()
@@ -241,7 +228,6 @@ public class PardResultSet
     public String toString()
     {
         return toStringHelper(this)
-                .add("task", taskId)
                 .add("status", resultStatus)
                 .omitNullValues()
                 .toString();

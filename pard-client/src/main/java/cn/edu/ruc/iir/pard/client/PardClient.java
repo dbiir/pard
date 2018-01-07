@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.client;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
-import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
@@ -69,15 +68,9 @@ public class PardClient
                                     System.out.print("-");
                                 }
                                 System.out.print("\n");
-                                while (resultSet.hasNext()) {
-                                    Block block = resultSet.getNext();
-                                    if (!block.hasNext()) {
-                                        continue;
-                                    }
-                                    while (block.hasNext()) {
-                                        Row row = block.getNext();
-                                        System.out.println(RowConstructor.printRow(row, colTypes));
-                                    }
+                                Row row;
+                                while ((row = resultSet.getNext()) != null) {
+                                    System.out.println(RowConstructor.printRow(row, colTypes));
                                 }
                             }
                             else {

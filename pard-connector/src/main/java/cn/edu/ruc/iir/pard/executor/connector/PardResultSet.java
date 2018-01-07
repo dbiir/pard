@@ -1,16 +1,16 @@
 package cn.edu.ruc.iir.pard.executor.connector;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
-import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import com.google.common.collect.ImmutableList;
 
 import java.io.Serializable;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
@@ -53,40 +53,39 @@ public class PardResultSet
         }
     }
 
-    private static final int defaultCapcity = 10;
+    private static final int defaultCapacity = 10 * 1024 * 1024;
 
-    private final List<Block> currentBlocks;
+    private final List<Row> currentRows;
     private final List<Column> schema;
     private final int capacity;
     private ResultStatus resultStatus;
     private String taskId;
-    private int resultSeqId;
-    private boolean resultHasNext;
     private int resultSetNum = 0;
     private ResultSet jdbcResultSet;
-    private Row currentRow;
+    private Connection connection;
+    private int currentSize = 0;
 
     public PardResultSet()
     {
-        this(ResultStatus.OK, ImmutableList.of(), defaultCapcity);
+        this(ResultStatus.OK, ImmutableList.of(), defaultCapacity);
     }
 
     public PardResultSet(ResultStatus resultStatus)
     {
-        this(resultStatus, ImmutableList.of(), defaultCapcity);
+        this(resultStatus, ImmutableList.of(), defaultCapacity);
     }
 
     public PardResultSet(ResultStatus resultStatus, List<Column> schema)
     {
-        this(resultStatus, schema, defaultCapcity);
+        this(resultStatus, schema, defaultCapacity);
     }
 
-    public PardResultSet(ResultStatus resultStatus, List<Column> schema, int capcity)
+    public PardResultSet(ResultStatus resultStatus, List<Column> schema, int capacity)
     {
-        this.capacity = capcity;
+        this.capacity = capacity;
         this.resultStatus = resultStatus;
         this.schema = schema;
-        currentBlocks = new ArrayList<>(this.capacity);
+        currentRows = new LinkedList<>();
     }
 
     /**
@@ -99,9 +98,7 @@ public class PardResultSet
             this.resultStatus = resultSet.resultStatus;
         }
         else {
-            while (resultSet.hasNext()) {
-                currentBlocks.add(resultSet.getNext());
-            }
+            this.currentRows.addAll(resultSet.currentRows);
         }
         this.resultSetNum++;
     }
@@ -116,24 +113,14 @@ public class PardResultSet
         this.taskId = taskId;
     }
 
-    public int getResultSeqId()
+    public void setJdbcResultSet(ResultSet jdbcResultSet)
     {
-        return resultSeqId;
+        this.jdbcResultSet = jdbcResultSet;
     }
 
-    public void setResultSeqId(int resultSeqId)
+    public void setJdbcConnection(Connection connection)
     {
-        this.resultSeqId = resultSeqId;
-    }
-
-    public boolean isResultHasNext()
-    {
-        return resultHasNext;
-    }
-
-    public void setResultHasNext(boolean resultHasNext)
-    {
-        this.resultHasNext = resultHasNext;
+        this.connection = connection;
     }
 
     public ResultStatus getStatus()
@@ -146,61 +133,69 @@ public class PardResultSet
         return resultSetNum;
     }
 
-    public void setJdbcResultSet(ResultSet jdbcResultSet)
-    {
-        this.jdbcResultSet = jdbcResultSet;
-    }
-
     public List<Column> getSchema()
     {
         return this.schema;
     }
 
-    public boolean addBlock(Block block)
+    public boolean add(Row row)
     {
-        if (currentBlocks.size() >= capacity) {
-            return false;
-        }
-        currentBlocks.add(block);
-        return true;
+        return add(row, true);
     }
 
-    public boolean hasNext()
+    private boolean add(Row row, boolean check)
     {
-        if (currentBlocks.size() > 0) {
+        if (!check) {
+            currentRows.add(row);
+            currentSize += row.getSize();
             return true;
         }
-        return false;
+        if (currentSize + row.getSize() >= capacity) {
+            return false;
+        }
+        currentRows.add(row);
+        currentSize += row.getSize();
+        return true;
     }
 
     /**
      * Get next block in result set.
      * @return null if no block available.
      * */
-    public Block getNext()
+    public Row getNext()
     {
-        if (currentBlocks.size() == 0) {
+        if (currentRows.size() == 0) {
+            // if current no content, try fetch
             fetch();
         }
-        if (currentBlocks.size() == 0) {
+        if (currentRows.size() == 0) {
+            // no more result, close connection
+            try {
+                connection.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
             return null;
         }
-        return currentBlocks.remove(currentBlocks.size() - 1);
+        // return header row
+        Row row = currentRows.remove(0);
+        currentSize -= row.getSize();
+        return row;
     }
 
     private void fetch()
     {
         if (jdbcResultSet != null) {
-            Block block = new Block();
             try {
-                while (jdbcResultSet.next() && currentBlocks.size() < this.capacity) {
+                while (jdbcResultSet.next()) {
                     RowConstructor rowConstructor = new RowConstructor();
                     for (int i = 0; i < schema.size(); i++) {
                         Column column = schema.get(i);
                         if (column.getDataType() == DataType.CHAR.getType()
                                 || column.getDataType() == DataType.VARCHAR.getType()
                                 || column.getDataType() == DataType.DATE.getType()) {
-                            rowConstructor.appendString(jdbcResultSet.getString(i + 1));
+                            rowConstructor.appendString(jdbcResultSet.getString(i + 1).trim());
                             continue;
                         }
                         if (column.getDataType() == DataType.INT.getType()
@@ -218,13 +213,10 @@ public class PardResultSet
                         }
                     }
                     Row row = rowConstructor.build();
-                    if (!block.addRow(row)) {
-                        if (!addBlock(block)) {
-                            this.currentRow = row;
-                            return;
-                        }
-                        block = new Block();
-                        block.addRow(row);
+                    // if result set is full, add this row as the last one and break
+                    if (!this.add(row)) {
+                        this.add(row, false);
+                        break;
                     }
                 }
             }
@@ -240,6 +232,7 @@ public class PardResultSet
         return toStringHelper(this)
                 .add("task", taskId)
                 .add("status", resultStatus)
+                .omitNullValues()
                 .toString();
     }
 }

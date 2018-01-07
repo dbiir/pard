@@ -4,7 +4,6 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.catalog.Table;
-import cn.edu.ruc.iir.pard.commons.memory.Block;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.communication.rpc.PardRPCClient;
@@ -258,13 +257,11 @@ public class TaskScheduler
                 Set<String> schemas = schemaDao.listAll();
                 Column header = new Column(0, DataType.VARCHAR.getType(), "schema", 100, 0, 0);
                 PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header), 1);
-                Block block = new Block();
                 for (String schemaName : schemas) {
                     RowConstructor rowConstructor = new RowConstructor();
                     rowConstructor.appendString(schemaName);
-                    block.addRow(rowConstructor.build());
+                    resultSet.add(rowConstructor.build());
                 }
-                resultSet.addBlock(block);
                 return resultSet;
             }
             // show tables
@@ -274,13 +271,11 @@ public class TaskScheduler
                 List<Table> tables = schema.getTableList();
                 Column header = new Column(0, DataType.VARCHAR.getType(), "table", 100, 0, 0);
                 PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header), 1);
-                Block block = new Block();
                 for (Table table : tables) {
                     RowConstructor rowConstructor = new RowConstructor();
                     rowConstructor.appendString(table.getTablename());
-                    block.addRow(rowConstructor.build());
+                    resultSet.add(rowConstructor.build());
                 }
-                resultSet.addBlock(block);
                 return resultSet;
             }
             // I don't know who will come here currently, just keep it

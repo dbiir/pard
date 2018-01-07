@@ -49,7 +49,11 @@ public class RowConstructor
 
     public Row build()
     {
-        return new Row(byteBuffer.array(), offsets.stream().mapToInt(i->i).toArray());
+        byteBuffer.flip();
+        int limit = byteBuffer.limit();
+        byte[] content = new byte[limit];
+        byteBuffer.get(content);
+        return new Row(content, offsets.stream().mapToInt(i->i).toArray());
     }
 
     public static String printRow(Row row, List<Integer> dataTypes)

@@ -420,23 +420,23 @@ public class PostgresConnector
                 columns = projectNode.getColumns();
             }
             logger.info("QUERY SUCCESSFULLY");
-            conn.close();
             PardResultSet prs = new PardResultSet(PardResultSet.ResultStatus.OK, columns);
             prs.setJdbcResultSet(rs);
+            prs.setJdbcConnection(conn);
             return prs;
         }
         catch (SQLException e) {
             logger.info("QUERY FAILED");
             e.printStackTrace();
         }
-        finally {
-            try {
-                conn.close();
-            }
-            catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+//        finally {
+//            try {
+//                conn.close();
+//            }
+//            catch (SQLException e) {
+//                e.printStackTrace();
+//            }
+//        }
         return PardResultSet.execErrResultSet;
     }
 

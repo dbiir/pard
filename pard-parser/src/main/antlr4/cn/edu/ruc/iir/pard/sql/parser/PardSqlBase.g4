@@ -57,6 +57,7 @@ statement
     | SHOW PARTITIONS (FROM | IN) qualifiedName                        #showPartitions
     | SHOW SCHEMAS                                                     #showSchemas
     | SHOW TABLES (FROM schemaName=identifier)?                        #showTables
+    | LOAD path=identifier INTO table=qualifiedName                    #load
     ;
 
 partitionOps
@@ -527,6 +528,7 @@ LESSEQ: 'LESSEQ';
 LEVEL: 'LEVEL';
 LIKE: 'LIKE';
 LIMIT: 'LIMIT';
+LOAD: 'LOAD';
 LIST: 'LIST';
 LOCALTIME: 'LOCALTIME';
 LOCALTIMESTAMP: 'LOCALTIMESTAMP';

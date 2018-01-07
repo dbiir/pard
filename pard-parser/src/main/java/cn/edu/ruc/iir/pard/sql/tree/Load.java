@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -10,54 +12,41 @@ import static com.google.common.base.MoreObjects.toStringHelper;
  *
  * @author guodong
  */
-public class ShowTables
+public class Load
         extends Statement
 {
-    private static final long serialVersionUID = -5343733186196510934L;
-    private final Identifier schema;
+    private static final long serialVersionUID = 7933595140893095119L;
+    private final Identifier path;
+    private final QualifiedName table;
 
-    public ShowTables()
+    public Load(Identifier path, QualifiedName table)
     {
-        this(null, null);
+        this(null, path, table);
     }
 
-    public ShowTables(Location location)
-    {
-        this(location, null);
-    }
-
-    public ShowTables(Identifier schema)
-    {
-        this(null, schema);
-    }
-
-    public ShowTables(Location location, Identifier schema)
+    public Load(Location location, Identifier path, QualifiedName table)
     {
         super(location);
-        this.schema = schema;
-    }
-
-    public Identifier getSchema()
-    {
-        return schema;
+        this.path = path;
+        this.table = table;
     }
 
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {
-        return visitor.visitShowTables(this, context);
+        return visitor.visitLoad(this, context);
     }
 
     @Override
     public List<? extends Node> getChildren()
     {
-        return null;
+        return ImmutableList.of();
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(schema);
+        return Objects.hash(path, table);
     }
 
     @Override
@@ -69,15 +58,17 @@ public class ShowTables
         if ((obj == null) || (getClass() != obj.getClass())) {
             return false;
         }
-        ShowTables o = (ShowTables) obj;
-        return Objects.equals(schema, o.schema);
+        Load o = (Load) obj;
+        return Objects.equals(path, o.path) &&
+                Objects.equals(table, o.table);
     }
 
     @Override
     public String toString()
     {
         return toStringHelper(this)
-                .add("schema", schema)
+                .add("path", path)
+                .add("table", table)
                 .omitNullValues()
                 .toString();
     }

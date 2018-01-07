@@ -36,6 +36,7 @@ import cn.edu.ruc.iir.pard.sql.tree.JoinOn;
 import cn.edu.ruc.iir.pard.sql.tree.JoinUsing;
 import cn.edu.ruc.iir.pard.sql.tree.ListPartitionElement;
 import cn.edu.ruc.iir.pard.sql.tree.ListPartitionElementCondition;
+import cn.edu.ruc.iir.pard.sql.tree.Load;
 import cn.edu.ruc.iir.pard.sql.tree.Location;
 import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
 import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
@@ -222,6 +223,15 @@ public class AstBuilder
                     (Identifier) visit(ctx.schemaName));
         }
         return new ShowTables(getLocation(ctx));
+    }
+
+    @Override
+    public Node visitLoad(PardSqlBaseParser.LoadContext ctx)
+    {
+        return new Load(
+                getLocation(ctx),
+                (Identifier) visit(ctx.path),
+                getQualifiedName(ctx.table));
     }
 
     @Override

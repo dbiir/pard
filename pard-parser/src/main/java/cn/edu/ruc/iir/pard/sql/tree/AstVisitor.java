@@ -73,6 +73,11 @@ public abstract class AstVisitor<R, C>
         return visitStatement(node, context);
     }
 
+    protected R visitLoad(Load node, C context)
+    {
+        return visitStatement(node, context);
+    }
+
     protected R visitTableHPartitioner(TableHPartitioner node, C context)
     {
         return visitStatement(node, context);

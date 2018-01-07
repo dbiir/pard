@@ -12,6 +12,7 @@ import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpressionType;
 import cn.edu.ruc.iir.pard.sql.tree.CreateIndex;
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
 import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
+import cn.edu.ruc.iir.pard.sql.tree.Delete;
 import cn.edu.ruc.iir.pard.sql.tree.DereferenceExpression;
 import cn.edu.ruc.iir.pard.sql.tree.DoubleLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.DropIndex;
@@ -55,6 +56,8 @@ import cn.edu.ruc.iir.pard.sql.tree.Row;
 import cn.edu.ruc.iir.pard.sql.tree.SampledRelation;
 import cn.edu.ruc.iir.pard.sql.tree.Select;
 import cn.edu.ruc.iir.pard.sql.tree.SelectItem;
+import cn.edu.ruc.iir.pard.sql.tree.ShowSchemas;
+import cn.edu.ruc.iir.pard.sql.tree.ShowTables;
 import cn.edu.ruc.iir.pard.sql.tree.SingleColumn;
 import cn.edu.ruc.iir.pard.sql.tree.SortItem;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
@@ -190,6 +193,7 @@ public class AstBuilder
     public Node visitInsertInto(PardSqlBaseParser.InsertIntoContext ctx)
     {
         return new Insert(
+                getLocation(ctx),
                 getQualifiedName(ctx.qualifiedName()),
                 Optional.ofNullable(getColumnAliases(ctx.columnAliases())),
                 (Query) visit(ctx.query()));
@@ -198,64 +202,24 @@ public class AstBuilder
     @Override
     public Node visitDelete(PardSqlBaseParser.DeleteContext ctx)
     {
-        // todo delete
-        return null;
+        return new Delete(
+                getLocation(ctx),
+                getQualifiedName(ctx.qualifiedName()),
+                (Expression) visit(ctx.booleanExpression()));
     }
 
     @Override
-    public Node visitExplain(PardSqlBaseParser.ExplainContext ctx)
+    public Node visitShowSchemas(PardSqlBaseParser.ShowSchemasContext ctx)
     {
-        // todo explain
-        return null;
+        return new ShowSchemas(getLocation(ctx));
     }
 
     @Override
-    public Node visitShowStats(PardSqlBaseParser.ShowStatsContext ctx)
+    public Node visitShowTables(PardSqlBaseParser.ShowTablesContext ctx)
     {
-        // todo show stats
-        return null;
-    }
-
-    @Override
-    public Node visitShowStatsForQuery(PardSqlBaseParser.ShowStatsForQueryContext ctx)
-    {
-        // todo show stats for query
-        return null;
-    }
-
-    @Override
-    public Node visitShowColumns(PardSqlBaseParser.ShowColumnsContext ctx)
-    {
-        // todo show cols
-        return null;
-    }
-
-    @Override
-    public Node visitStartTransaction(PardSqlBaseParser.StartTransactionContext ctx)
-    {
-        // todo start tx
-        return null;
-    }
-
-    @Override
-    public Node visitCommit(PardSqlBaseParser.CommitContext ctx)
-    {
-        // todo commit
-        return null;
-    }
-
-    @Override
-    public Node visitRollback(PardSqlBaseParser.RollbackContext ctx)
-    {
-        // todo rollback
-        return null;
-    }
-
-    @Override
-    public Node visitShowPartitions(PardSqlBaseParser.ShowPartitionsContext ctx)
-    {
-        // todo show parts
-        return null;
+        return new ShowTables(
+                getLocation(ctx),
+                getQualifiedName(ctx.qualifiedName()));
     }
 
     @Override

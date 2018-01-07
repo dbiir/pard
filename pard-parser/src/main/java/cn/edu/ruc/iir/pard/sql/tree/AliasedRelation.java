@@ -16,6 +16,7 @@ import static java.util.Objects.requireNonNull;
 public class AliasedRelation
         extends Relation
 {
+    private static final long serialVersionUID = 168169268920259769L;
     private final Relation relation;
     private final Identifier alias;
     private final List<Identifier> columnNames;

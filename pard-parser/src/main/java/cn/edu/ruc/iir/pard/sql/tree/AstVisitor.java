@@ -58,6 +58,21 @@ public abstract class AstVisitor<R, C>
         return visitStatement(node, context);
     }
 
+    protected R visitDelete(Delete node, C context)
+    {
+        return visitStatement(node, context);
+    }
+
+    protected R visitShowSchemas(ShowSchemas node, C context)
+    {
+        return visitStatement(node, context);
+    }
+
+    protected R visitShowTables(ShowTables node, C context)
+    {
+        return visitStatement(node, context);
+    }
+
     protected R visitTableHPartitioner(TableHPartitioner node, C context)
     {
         return visitStatement(node, context);

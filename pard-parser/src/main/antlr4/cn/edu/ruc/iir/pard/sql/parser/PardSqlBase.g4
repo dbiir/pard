@@ -55,6 +55,8 @@ statement
     | COMMIT WORK?                                                     #commit
     | ROLLBACK WORK?                                                   #rollback
     | SHOW PARTITIONS (FROM | IN) qualifiedName                        #showPartitions
+    | SHOW SCHEMAS                                                     #showSchemas
+    | SHOW TABLES FROM schemaName=qualifiedName                        #showTables
     ;
 
 partitionOps

@@ -1,8 +1,11 @@
 package cn.edu.ruc.iir.pard.communication.rpc;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.Schema;
+import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.communication.proto.PardGrpc;
 import cn.edu.ruc.iir.pard.communication.proto.PardProto;
+import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -14,6 +17,7 @@ import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * pard
@@ -164,6 +168,40 @@ public class PardRPCService
                 columns, rows);
         PardResultSet resultSet = executor.execute(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+            responseStatusBuilder.setStatus(1);
+        }
+        else {
+            responseStatusBuilder.setStatus(0);
+        }
+        responseStatusStreamObserver.onNext(responseStatusBuilder.build());
+        responseStatusStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void showSchema(PardProto.NullMsg msg,
+                           StreamObserver<PardProto.ResponseStatus> responseStatusStreamObserver)
+    {
+        PardProto.ResponseStatus.Builder responseStatusBuilder
+                = PardProto.ResponseStatus.newBuilder();
+        SchemaDao schemaDao = new SchemaDao();
+        Set<String> schemas = schemaDao.listAll();
+        schemas.forEach(responseStatusBuilder::addInfos);
+        responseStatusBuilder.setStatus(1);
+        responseStatusStreamObserver.onNext(responseStatusBuilder.build());
+        responseStatusStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void showTable(PardProto.SchemaMsg msg,
+                          StreamObserver<PardProto.ResponseStatus> responseStatusStreamObserver)
+    {
+        PardProto.ResponseStatus.Builder responseStatusBuilder
+                = PardProto.ResponseStatus.newBuilder();
+        SchemaDao schemaDao = new SchemaDao();
+        Schema schema = schemaDao.loadByName(msg.getName());
+        if (schema != null) {
+            List<Table> tables = schema.getTableList();
+            tables.forEach(t -> responseStatusBuilder.addInfos(t.getTablename()));
             responseStatusBuilder.setStatus(1);
         }
         else {

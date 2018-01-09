@@ -48,7 +48,7 @@ public class PardFileExchangeServer
                                             new LineBasedFrameDecoder(8192),
                                             new StringDecoder(CharsetUtil.UTF_8),
                                             new ChunkedWriteHandler(),
-                                            new ExchangeFileReceiveHandler(null));
+                                            new ExchangeFileReceiveHandler());
                         }
                     });
             ChannelFuture f = serverBootstrap.bind(port).sync();

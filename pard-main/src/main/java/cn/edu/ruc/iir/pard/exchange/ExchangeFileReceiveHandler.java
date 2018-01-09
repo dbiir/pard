@@ -1,6 +1,5 @@
 package cn.edu.ruc.iir.pard.exchange;
 
-import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -19,16 +18,8 @@ public class ExchangeFileReceiveHandler
         extends ChannelInboundHandlerAdapter
 {
     private final Logger logger = Logger.getLogger(ExchangeFileReceiveHandler.class.getName());
-    private final PardTaskExecutor executor;
-    private String schema = null;
-    private String table = null;
     private String path = "/dev/shm/tmp" + String.valueOf(System.currentTimeMillis());
     private BufferedWriter writer = null;
-
-    public ExchangeFileReceiveHandler(PardTaskExecutor executor)
-    {
-        this.executor = executor;
-    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx)
@@ -44,12 +35,7 @@ public class ExchangeFileReceiveHandler
                 String message = (String) msg;
                 if (message.startsWith("HEADER: ")) {
                     logger.info("File header: " + message);
-                    String[] eles = message.split(",");
-                    this.schema = eles[0];
-                    this.table = eles[1];
-                    this.path = eles[2];
-                    this.path = path + ".copy";
-                    System.out.println(path);
+                    this.path = message;
                     writer = new BufferedWriter(new FileWriter(path));
                     ctx.writeAndFlush("OKHEADER\n");
                 }

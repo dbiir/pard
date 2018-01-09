@@ -2,11 +2,15 @@ package cn.edu.ruc.iir.pard.planner.ddl;
 
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
+import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.sql.tree.DropTable;
 import cn.edu.ruc.iir.pard.sql.tree.QualifiedName;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * pard
@@ -19,10 +23,12 @@ public class TableDropPlan
     private String schemaName = null;
     private String tableName;
     private boolean isExists;
+    private Map<String, String> distributionHints;
 
     public TableDropPlan(Statement stmt)
     {
         super(stmt);
+        this.distributionHints = new HashMap<>();
     }
 
     @Override
@@ -61,6 +67,12 @@ public class TableDropPlan
             }
         }
 
+        // add all sites
+        SiteDao siteDao = new SiteDao();
+        for (String site : siteDao.listNodes().keySet()) {
+            distributionHints.put(site, "");
+        }
+
         return ErrorMessage.getOKMessage();
     }
 
@@ -83,5 +95,10 @@ public class TableDropPlan
     public boolean isExists()
     {
         return isExists;
+    }
+
+    public Map<String, String> getDistributionHints()
+    {
+        return distributionHints;
     }
 }

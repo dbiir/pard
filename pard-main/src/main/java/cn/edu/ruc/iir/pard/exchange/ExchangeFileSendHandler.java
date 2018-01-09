@@ -19,14 +19,10 @@ public class ExchangeFileSendHandler
         extends ChannelInboundHandlerAdapter
 {
     private final Logger logger = Logger.getLogger(ExchangeFileSendHandler.class.getName());
-    private final String schema;
-    private final String table;
     private final String path;
 
-    public ExchangeFileSendHandler(String schema, String table, String path)
+    public ExchangeFileSendHandler(String path)
     {
-        this.schema = schema;
-        this.table = table;
         this.path = path;
     }
 
@@ -34,7 +30,7 @@ public class ExchangeFileSendHandler
     public void channelActive(ChannelHandlerContext ctx)
     {
         logger.info("Channel is active, sending file...");
-        ctx.writeAndFlush("HEADER: " + schema + "," + table + "," + path + "\n");
+        ctx.writeAndFlush("HEADER: " + path + "\n");
     }
 
     @Override

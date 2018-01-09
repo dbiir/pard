@@ -24,17 +24,13 @@ public class PardFileExchangeClient
 {
     private final String host;
     private final int port;
-    private final String schema;
-    private final String table;
     private final String path;
     private EventLoopGroup group;
 
-    public PardFileExchangeClient(String host, int port, String schema, String table, String path)
+    public PardFileExchangeClient(String host, int port, String path)
     {
         this.host = host;
         this.port = port;
-        this.schema = schema;
-        this.table = table;
         this.path = path;
     }
 
@@ -56,7 +52,7 @@ public class PardFileExchangeClient
                                             new LineBasedFrameDecoder(8192),
                                             new StringDecoder(CharsetUtil.UTF_8),
                                             new ChunkedWriteHandler(),
-                                            new ExchangeFileSendHandler(schema, table, path));
+                                            new ExchangeFileSendHandler(path));
                         }});
             ChannelFuture f = bootstrap.connect(new InetSocketAddress(host, port)).sync();
             f.channel().closeFuture().sync();

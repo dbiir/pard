@@ -13,13 +13,17 @@ import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.CharsetUtil;
 
+import java.util.logging.Logger;
+
 /**
  * pard
  *
  * @author guodong
  */
 public class PardFileExchangeServer
+        implements Runnable
 {
+    private final Logger logger = Logger.getLogger(PardFileExchangeServer.class.getName());
     private final int port;
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
@@ -29,6 +33,7 @@ public class PardFileExchangeServer
         this.port = port;
     }
 
+    @Override
     public void run()
     {
         this.bossGroup = new NioEventLoopGroup();
@@ -52,6 +57,7 @@ public class PardFileExchangeServer
                         }
                     });
             ChannelFuture f = serverBootstrap.bind(port).sync();
+            logger.info("Exchange file server started at port: " + port);
             f.channel().closeFuture().sync();
         }
         catch (InterruptedException e) {
@@ -61,5 +67,11 @@ public class PardFileExchangeServer
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }
+    }
+
+    public void stop()
+    {
+        workerGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully();
     }
 }

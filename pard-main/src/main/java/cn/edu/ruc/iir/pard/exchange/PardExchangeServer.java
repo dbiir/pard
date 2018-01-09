@@ -12,6 +12,8 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 
+import java.util.logging.Logger;
+
 /**
  * pard
  *
@@ -20,6 +22,7 @@ import io.netty.handler.codec.serialization.ObjectEncoder;
 public class PardExchangeServer
         implements Runnable
 {
+    private final Logger logger = Logger.getLogger(PardExchangeServer.class.getName());
     private final int port;
     private final PardTaskExecutor executor;
     private EventLoopGroup bossGroup;
@@ -56,6 +59,7 @@ public class PardExchangeServer
                         }
                     });
             ChannelFuture f = serverBootstrap.bind(port).sync();
+            logger.info("Exchange server started at port: " + port);
             f.channel().closeFuture().sync();
         }
         catch (InterruptedException e) {

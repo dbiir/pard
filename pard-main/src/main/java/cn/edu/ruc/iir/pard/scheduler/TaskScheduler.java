@@ -182,8 +182,12 @@ public class TaskScheduler
             String tableName = loadPlan.getTableName();
             List<Task> tasks = new ArrayList<>();
             List<String> paths = ImmutableList.of(loadPlan.getPath());
+            int index = 0;
             for (String site : sites) {
-                tasks.add(new LoadTask(schemaName, tableName, paths, site));
+                Task task = new LoadTask(schemaName, tableName, paths, site);
+                task.setTaskId(plan.getJobId() + "-" + index);
+                tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -242,11 +246,13 @@ public class TaskScheduler
             }
             List<Task> tasks = new ArrayList<>();
             List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
+            int index = 0;
             for (PlanNode childNode : unionChildren) {
                 internalUnionNode.setChildren(childNode, true, false);
                 // todo hard coded to get site info of task
                 TableScanNode node = (TableScanNode) childNode;
                 QueryTask task = new QueryTask(node.getSite(), planNode);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
             }
 
@@ -277,7 +283,7 @@ public class TaskScheduler
                 SchemaDao schemaDao = new SchemaDao();
                 Set<String> schemas = schemaDao.listAll();
                 Column header = new Column(0, DataType.VARCHAR.getType(), "schema", 100, 0, 0);
-                PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header), 1);
+                PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header));
                 for (String schemaName : schemas) {
                     RowConstructor rowConstructor = new RowConstructor();
                     rowConstructor.appendString(schemaName);
@@ -291,7 +297,7 @@ public class TaskScheduler
                 Schema schema = schemaDao.loadByName(((TableShowPlan) plan).getSchema());
                 List<Table> tables = schema.getTableList();
                 Column header = new Column(0, DataType.VARCHAR.getType(), "table", 100, 0, 0);
-                PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header), 1);
+                PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header));
                 for (Table table : tables) {
                     RowConstructor rowConstructor = new RowConstructor();
                     rowConstructor.appendString(table.getTablename());
@@ -351,16 +357,19 @@ public class TaskScheduler
                         client.connect(task, blocks);
                     }
                 }
-                // wait for all task done
+                // wait for all tasks done
                 while (!taskMap.isEmpty()) {
                     Block block = blocks.poll();
                     if (block == null) {
+                        logger.info("Waiting for more blocks...");
                         continue;
                     }
                     resultSet.addBlock(block);
+                    logger.info("Added block " + block.getSequenceId());
                     if (!block.isSequenceHasNext()) {
                         String taskId = block.getTaskId();
                         taskMap.remove(taskId);
+                        logger.info("Task " + taskId + " done.");
                     }
                 }
                 return resultSet;

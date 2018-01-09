@@ -21,9 +21,9 @@ import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
-import org.postgresql.util.ReaderInputStream;
 
-import java.io.FileReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -438,14 +438,6 @@ public class PostgresConnector
             logger.info("QUERY FAILED");
             e.printStackTrace();
         }
-//        finally {
-//            try {
-//                conn.close();
-//            }
-//            catch (SQLException e) {
-//                e.printStackTrace();
-//            }
-//        }
         return PardResultSet.execErrResultSet;
     }
 
@@ -458,14 +450,25 @@ public class PostgresConnector
             BaseConnection pgCon = (BaseConnection) conn;
             CopyManager copyManager = new CopyManager(pgCon);
             for (String path : paths) {
+                logger.info("Copying " + path + " into " + schema + "." + table);
                 String sql = "COPY " + schema + "." + table + " FROM STDIN DELIMITER E'\t'";
-                InputStream inputStream = new ReaderInputStream(new FileReader(path));
+                File file = new File(path);
+                InputStream inputStream = new FileInputStream(file);
                 copyManager.copyIn(sql, inputStream);
+                file.deleteOnExit();
             }
             return PardResultSet.okResultSet;
         }
         catch (SQLException | IOException e) {
             e.printStackTrace();
+        }
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         return PardResultSet.execErrResultSet;
     }

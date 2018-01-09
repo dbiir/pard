@@ -5,6 +5,11 @@ public class ValueItem
 {
     @SuppressWarnings("rawtypes")
     private final Comparable comp;
+    public ValueItem(ValueItem vi)
+    {
+        super();
+        this.comp = vi.comp;
+    }
     public ValueItem(@SuppressWarnings("rawtypes") Comparable comp)
     {
         super();
@@ -32,5 +37,36 @@ public class ValueItem
     public String toString()
     {
         return comp.toString();
+    }
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((comp == null) ? 0 : comp.hashCode());
+        return result;
+    }
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        ValueItem other = (ValueItem) obj;
+        if (comp == null) {
+            if (other.comp != null) {
+                return false;
+            }
+        }
+        else if (!comp.equals(other.comp)) {
+            return false;
+        }
+        return true;
     }
 }

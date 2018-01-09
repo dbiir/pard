@@ -72,7 +72,7 @@ public class ErrorMessage
         template.put(ErrCode.MissingPartitionColumnsWhenInsert, "Column '%s' is necessary when determine which site receive this insert statement, but missing.");
         template.put(ErrCode.UnkownCompareTypeWhenPartition, "Unkown compare type when partition");
         template.put(ErrCode.LimitIsNotANumber, "Specified limit value is not a number");
-        template.put(ErrCode.UnSupportedQuery, "Unsupported query");
+        template.put(ErrCode.UnSupportedQuery, "Unsupported query:%s");
         template.put(ErrCode.OK, "success");
     }
     static

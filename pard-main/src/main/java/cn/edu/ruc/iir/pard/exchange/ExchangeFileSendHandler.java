@@ -8,6 +8,7 @@ import io.netty.channel.DefaultFileRegion;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.logging.Logger;
 
 /**
  * pard
@@ -17,6 +18,7 @@ import java.io.RandomAccessFile;
 public class ExchangeFileSendHandler
         extends ChannelInboundHandlerAdapter
 {
+    private final Logger logger = Logger.getLogger(ExchangeFileSendHandler.class.getName());
     private final String schema;
     private final String table;
     private final String path;
@@ -31,7 +33,7 @@ public class ExchangeFileSendHandler
     @Override
     public void channelActive(ChannelHandlerContext ctx)
     {
-        System.out.println("Channel is active, sending file...");
+        logger.info("Channel is active, sending file...");
         ctx.writeAndFlush("HEADER: " + schema + "," + table + "," + path + "\n");
     }
 
@@ -61,10 +63,11 @@ public class ExchangeFileSendHandler
                 }
             }
 
-            ctx.writeAndFlush(new DefaultFileRegion(raf.getChannel(), 0, length));
-            ctx.writeAndFlush("\n");
-            ChannelFuture f = ctx.writeAndFlush("OKDONE\n");
-            f.addListener((ChannelFutureListener) future -> ctx.close());
+            ChannelFuture f = ctx.writeAndFlush(new DefaultFileRegion(raf.getChannel(), 0, length));
+            f.addListener((ChannelFutureListener) future -> {
+                ChannelFuture lastFuture = ctx.writeAndFlush("OKDONE\n");
+                lastFuture.addListener((ChannelFutureListener) future1 -> ctx.close());
+            });
         }
     }
 

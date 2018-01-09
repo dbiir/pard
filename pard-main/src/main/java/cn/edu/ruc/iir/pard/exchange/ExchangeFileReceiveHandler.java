@@ -8,6 +8,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 /**
  * pard
@@ -17,6 +18,7 @@ import java.io.IOException;
 public class ExchangeFileReceiveHandler
         extends ChannelInboundHandlerAdapter
 {
+    private final Logger logger = Logger.getLogger(ExchangeFileReceiveHandler.class.getName());
     private final PardTaskExecutor executor;
     private String schema = null;
     private String table = null;
@@ -31,7 +33,7 @@ public class ExchangeFileReceiveHandler
     @Override
     public void channelActive(ChannelHandlerContext ctx)
     {
-        System.out.println("Channel is active, ready to receive file");
+        logger.info("Channel is active, ready to receive file");
     }
 
     @Override
@@ -40,8 +42,8 @@ public class ExchangeFileReceiveHandler
         try {
             if (msg instanceof String) {
                 String message = (String) msg;
-                System.out.println(msg);
                 if (message.startsWith("HEADER: ")) {
+                    logger.info("File header: " + message);
                     String[] eles = message.split(",");
                     this.schema = eles[0];
                     this.table = eles[1];
@@ -52,10 +54,11 @@ public class ExchangeFileReceiveHandler
                     ctx.writeAndFlush("OKHEADER\n");
                 }
                 else if (message.equalsIgnoreCase("OKDONE")) {
-                    ctx.close();
+                    logger.info("File writer close");
                     if (writer != null) {
                         writer.close();
                     }
+                    ctx.close();
                 }
                 else {
                     if (writer != null) {

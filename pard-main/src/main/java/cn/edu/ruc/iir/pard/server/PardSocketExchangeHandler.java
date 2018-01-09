@@ -40,7 +40,7 @@ public class PardSocketExchangeHandler
                     logger.info("Exchange handler session out");
                     break;
                 }
-                Block block = executor.execute(task);
+                Block block = executor.executeQuery(task);
                 outputStream.writeObject(block);
                 logger.info("One round interaction done");
             }

@@ -34,7 +34,7 @@ public class ExchangeTaskHandler
     {
         if (msg instanceof Task) {
             Task task = (Task) msg;
-            Block block = executor.execute(task);
+            Block block = executor.executeQuery(task);
             if (block.isSequenceHasNext()) {
                 ctx.write(block);
             }

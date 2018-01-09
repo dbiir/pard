@@ -51,7 +51,7 @@ public class PardTaskExecutor
         return connector.execute(task);
     }
 
-    public Block execute(Task task)
+    public Block executeQuery(Task task)
     {
         String taskId = task.getTaskId();
 

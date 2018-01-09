@@ -314,7 +314,7 @@ public class TaskScheduler
                 }
                 return resultSet;
             }
-            // other than query task
+            // rpc task
             else {
                 List<Integer> statusL = new ArrayList<>();
                 for (Task task : tasks) {

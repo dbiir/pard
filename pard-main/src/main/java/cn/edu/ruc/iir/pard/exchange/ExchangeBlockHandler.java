@@ -32,7 +32,9 @@ public class ExchangeBlockHandler
     {
         if (msg instanceof Block) {
             Block block = (Block) msg;
-            blocks.add(block);
+            if (!blocks.add(block)) {
+                logger.log(Level.WARNING, "Block add failed!");
+            }
             if (block.isSequenceHasNext()) {
                 ctx.write(task);
             }

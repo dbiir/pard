@@ -9,6 +9,7 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
@@ -18,7 +19,13 @@ import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
+import org.postgresql.copy.CopyManager;
+import org.postgresql.core.BaseConnection;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -80,8 +87,10 @@ public class PostgresConnector
                 return executeDropTable(conn, (DropTableTask) task);
             }
             if (task instanceof InsertIntoTask) {
-                //return executeInsertInto(conn, (InsertIntoTask) task);
                 return executeBatchInsertInto(conn, (InsertIntoTask) task);
+            }
+            if (task instanceof LoadTask) {
+                return executeLoad(conn, (LoadTask) task);
             }
         }
         catch (SQLException e) {
@@ -429,14 +438,38 @@ public class PostgresConnector
             logger.info("QUERY FAILED");
             e.printStackTrace();
         }
-//        finally {
-//            try {
-//                conn.close();
-//            }
-//            catch (SQLException e) {
-//                e.printStackTrace();
-//            }
-//        }
+        return PardResultSet.execErrResultSet;
+    }
+
+    private PardResultSet executeLoad(Connection conn, LoadTask task)
+    {
+        String schema = task.getSchema();
+        String table = task.getTable();
+        List<String> paths = task.getPaths();
+        try {
+            BaseConnection pgCon = (BaseConnection) conn;
+            CopyManager copyManager = new CopyManager(pgCon);
+            for (String path : paths) {
+                logger.info("Copying " + path + " into " + schema + "." + table);
+                String sql = "COPY " + schema + "." + table + " FROM STDIN DELIMITER E'\t'";
+                File file = new File(path);
+                InputStream inputStream = new FileInputStream(file);
+                copyManager.copyIn(sql, inputStream);
+                file.deleteOnExit();
+            }
+            return PardResultSet.okResultSet;
+        }
+        catch (SQLException | IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return PardResultSet.execErrResultSet;
     }
 

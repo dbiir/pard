@@ -1,6 +1,5 @@
 package cn.edu.ruc.iir.pard.planner;
 
-import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
 /**
@@ -10,30 +9,32 @@ import cn.edu.ruc.iir.pard.sql.tree.Statement;
  */
 public abstract class Plan
 {
-    private Statement statment;
-    /**
-     *
-     * @throws SemanticException
-     *
-     * @author hagen
-     * */
+    private Statement statement;
+    private String jobId;
+
     public Plan(Statement stmt)
     {
-        statment = stmt;
-//        ErrorMessage msg = semanticAnalysis();
-//        if (msg.getErrcode() < 0) {
-//            System.err.println(msg.toString());
-//            throw new SemanticException(msg);
-//        }
+        statement = stmt;
     }
+
     public Statement getStatment()
     {
-        return statment;
+        return statement;
     }
 
     public void setStatment(Statement statment)
     {
-        this.statment = statment;
+        this.statement = statment;
+    }
+
+    public String getJobId()
+    {
+        return jobId;
+    }
+
+    public void setJobId(String jobId)
+    {
+        this.jobId = jobId;
     }
 
     public abstract ErrorMessage semanticAnalysis();

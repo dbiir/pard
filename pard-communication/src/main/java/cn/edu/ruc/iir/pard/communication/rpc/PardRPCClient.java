@@ -8,6 +8,7 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -194,6 +195,27 @@ public class PardRPCClient
                     .build();
         }
 
+        logger.info("RPC call: " + task);
+
+        return receiving.getStatus();
+    }
+
+    public int load(LoadTask task)
+    {
+        PardProto.ResponseStatus receiving;
+        PardProto.LoadMsg request = PardProto.LoadMsg.newBuilder()
+                .setSchemaName(task.getSchema())
+                .setTableName(task.getTable())
+                .addAllPath(task.getPaths())
+                .build();
+        try {
+            receiving = blockingStub.load(request);
+        }
+        catch (StatusRuntimeException e) {
+            receiving = PardProto.ResponseStatus.newBuilder()
+                    .setStatus(-1)
+                    .build();
+        }
         logger.info("RPC call: " + task);
 
         return receiving.getStatus();

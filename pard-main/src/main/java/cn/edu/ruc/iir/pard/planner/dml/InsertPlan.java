@@ -27,6 +27,7 @@ import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.Values;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +103,7 @@ public class InsertPlan
             for (String key : table.getColumns().keySet()) {
                 colList.add(table.getColumns().get(key));
             }
-            colList.sort((x, y) -> x.getId() - y.getId());
+            colList.sort(Comparator.comparingInt(Column::getId));
         }
         Query q = insert.getQuery();
         QueryBody qb = q.getQueryBody();
@@ -131,7 +132,7 @@ public class InsertPlan
             }
             for (String key : table.getFragment().keySet()) {
                 Fragment f = table.getFragment().get(key);
-                boolean belongTo = ConditionComparator.match(f.getCondition(), literalMap);
+                boolean belongTo = ConditionComparator.matchLiteral(f.getCondition(), literalMap);
                 //System.out.println(belongTo + " " + key);
                 if (belongTo) {
                     List<Row> o = distributionHints.get(f.getSiteName());

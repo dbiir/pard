@@ -12,7 +12,7 @@ public abstract class Task
 {
     private static final long serialVersionUID = 2852783693682417924L;
 
-    protected String taskId;
+    private String taskId;
     protected final String site;
 
     public Task(String site)

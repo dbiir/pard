@@ -58,10 +58,10 @@ public class PardResultSet
     private final List<Row> currentRows;  // as local execution result set
     private List<Column> schema;
     private ResultStatus resultStatus;
-    private final transient int capacity;
+    private final int capacity;
+    private int currentSize = 0;
     private transient ResultSet jdbcResultSet;
     private transient Connection connection;
-    private transient int currentSize = 0;
 
     public PardResultSet()
     {

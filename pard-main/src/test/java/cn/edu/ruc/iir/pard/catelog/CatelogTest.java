@@ -117,10 +117,11 @@ public class CatelogTest
         InsertPlan iplan = new InsertPlan(stmt);
         Map<String, List<Row>> map = iplan.getDistributionHints();
         System.out.print("node\t");
-        List<Column> clist = iplan.getColList();
+        /*
+        List<Column> clist = iplan.getColListMap();
         for (Column col : clist) {
             System.out.print(col.getColumnName() + "\t");
-        }
+        }*/
         System.out.println();
         for (String key : map.keySet()) {
             List<Row> row = map.get(key);

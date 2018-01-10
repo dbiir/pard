@@ -3,6 +3,7 @@ package cn.edu.ruc.iir.pard.semantic;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
+import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
@@ -12,6 +13,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Query;
 import cn.edu.ruc.iir.pard.sql.tree.QueryBody;
 import cn.edu.ruc.iir.pard.sql.tree.SortItem;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
+import net.sf.json.JSONObject;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -60,7 +62,23 @@ public class SemanticAnalysisTest
 
         return null;
     }
-
+    @Test
+    public void testVP()
+    {
+        String sql2 = "use pardtest";
+        Statement useStmt = parser.createStatement(sql2);
+        Plan plan = new UsePlan(useStmt);
+        plan.semanticAnalysis();
+        String sql =
+                "CREATE TABLE orders_range\n" +
+                "(id INT PRIMARY KEY, name VARCHAR(30)) ON pard1,\n" +
+                "(id INT PRIMARY KEY, order_date DATE) on pard2";
+        Statement statement = parser.createStatement(sql);
+        TableCreationPlan ct = new TableCreationPlan(statement);
+        ErrorMessage msg = ct.semanticAnalysis();
+        System.out.println(JSONObject.fromObject(ct.getTable()).toString(1));
+        System.out.println(msg);
+    }
     @Test
     public void testQueryPlanner()
     {
@@ -69,7 +87,7 @@ public class SemanticAnalysisTest
         Plan plan = new UsePlan(useStmt);
         plan.semanticAnalysis();
         plan.afterExecution(true);
-        String sql = "SELECT * FROM emp@pard1 where eno < 'E0010' and eno > 'E0000'";
+        String sql = "SELECT * FROM emp@pard3 where eno < 'E0010' and eno > 'E0000'";
         Statement statement = parser.createStatement(sql);
         UsePlan.setCurrentSchema("pard");
         plan = new QueryPlan(statement);

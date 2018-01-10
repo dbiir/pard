@@ -8,7 +8,6 @@ import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
-import cn.edu.ruc.iir.pard.etcd.dao.GDDDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
@@ -38,13 +37,13 @@ public class TableCreationPlan
         extends TablePlan
 {
     private Map<String, List<Column>> distributionHints;
-    private CreateTable stmt = null;
-    private String tableName = null;
-    private String schemaName = null;
-    private Table table = null;
-    private boolean isNotExists = false;
-    private TableDao tableDao = null;
-
+    private CreateTable stmt;
+    private String tableName;
+    private String schemaName;
+    private Table table;
+    private boolean isNotExists;
+    private TableDao tableDao;
+    private Map<ColumnDefinition, Column> vpmap;
     public TableCreationPlan(Statement stmt)
     {
         super(stmt);
@@ -81,7 +80,9 @@ public class TableCreationPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
-        colList = new ArrayList<>();
+        vpmap = new HashMap<ColumnDefinition, Column>();
+        //colListMap = new HashMap<String, List<Column>>();
+        colList = new ArrayList<Column>();
         distributionHints = new HashMap<>();
         Statement statement = this.getStatment();
         if (!(statement instanceof CreateTable)) {
@@ -130,6 +131,7 @@ public class TableCreationPlan
             for (TableElement e : v.getElements()) {
                 if (e instanceof ColumnDefinition) {
                     list.add((ColumnDefinition) e);
+                    //vpmap.put((ColumnDefinition) e, new ArrayList<>());
                 }
                 else {
                     return ErrorMessage.throwMessage(ErrCode.NotaColumnDefinition, e.toString());
@@ -139,6 +141,7 @@ public class TableCreationPlan
         table = new Table();
         table.setTablename(tableName);
         for (ColumnDefinition cd : list) {
+            //List<Column> cols = vpmap.get(cd);
             String type = cd.getType();
             String colName = cd.getName().toString();
             //System.out.println("type:" + type + " colName: " + colName);
@@ -152,11 +155,15 @@ public class TableCreationPlan
             column.setDataType(dt.getType());
             column.setLen(dt.getLength());
             column.setKey(cd.isPrimary() ? 1 : 0);
+            vpmap.put(cd, column);
             colList.add(column);
             table.getColumns().put(column.getColumnName(), column);
         }
 
         // check partition
+        if (hp == null && !vp.isEmpty()) {
+            return parseVPartition(vp);
+        }
         if (hp != null && hp instanceof TableHRangePartitioner) {
             // do sth
             TableHRangePartitioner thp = (TableHRangePartitioner) hp;
@@ -184,7 +191,33 @@ public class TableCreationPlan
                             return ErrorMessage.throwMessage(ErrCode.VerticalPartitionNotImplement);
                         }
     }
-
+    public ErrorMessage parseVPartition(List<TableVPartitioner> vp)
+    {
+        SiteDao siteDao = new SiteDao();
+        for (TableVPartitioner v : vp) {
+            String siteName = v.getNodeId();
+            Site site = siteDao.loadByName(siteName);
+            if (site == null) {
+                return ErrorMessage.throwMessage(ErrCode.SiteNotExist, siteName);
+            }
+            Fragment frag = new Fragment();
+            frag.setFragmentName(v.getNodeId());
+            frag.setFragmentType(GddUtil.fragmentVERTICAL);
+            frag.setSiteName(site.getName());
+            frag.setSubTable(null);
+            List<Column> vpColList = new ArrayList<>();
+            for (TableElement e : v.getElements()) {
+                if (e instanceof ColumnDefinition) {
+                    ColumnDefinition cd = (ColumnDefinition) e;
+                    vpColList.add(vpmap.get(cd));
+                    frag.getCondition().add(new Condition(cd.getName().getValue(), 0, "0", cd.getType().hashCode()));
+                }
+            }
+            table.getFragment().put(frag.getFragmentName(), frag);
+            distributionHints.put(siteName, vpColList);
+        }
+        return ErrorMessage.getOKMessage();
+    }
     private ErrorMessage parseRangePartition(TableHRangePartitioner thp)
     {
         SiteDao siteDao = new SiteDao();
@@ -212,11 +245,15 @@ public class TableCreationPlan
             // TODO: 此处应检查condition中左值和右值的类型
             table.getFragment().put(partitionName, frag);
         }
-        Map<String, Site> siteMap = (new GDDDao()).load().getSiteMap();
-
+        //Map<String, Site> siteMap = (new GDDDao()).load().getSiteMap();
+/*
         for (String key : siteMap.keySet()) {
             Site site = siteMap.get(key);
             distributionHints.put(site.getName(), colList);
+        }
+        */
+        for (Fragment frag : table.getFragment().values()) {
+            distributionHints.put(frag.getSiteName(), colList);
         }
         return ErrorMessage.getOKMessage();
     }

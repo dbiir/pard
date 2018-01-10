@@ -1,7 +1,9 @@
 package cn.edu.ruc.iir.pard.planner.dml;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.Condition;
 import cn.edu.ruc.iir.pard.catalog.Fragment;
+import cn.edu.ruc.iir.pard.catalog.GddUtil;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
@@ -38,7 +40,7 @@ public class InsertPlan
     private String schemaName = null;
     private String tableName = null;
     private Table table = null;
-    private List<Column> colList;
+    private Map<String, List<Column>> colListMap;
     private Map<String, List<Row>> distributionHints;
 
     public InsertPlan(Statement stmt)
@@ -49,8 +51,9 @@ public class InsertPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        List<Column> colLists = new ArrayList<>();
         distributionHints = new HashMap<>();
-        colList = new ArrayList<>();
+        colListMap = new HashMap<>();
         Statement statement = this.getStatment();
         Schema schema = null;
         if (!(statement instanceof Insert)) {
@@ -84,6 +87,30 @@ public class InsertPlan
         if (table == null) {
             return ErrorMessage.throwMessage(ErrCode.TableNotExists, schemaName + "." + tableName);
         }
+        Map<String, List<String>> col2site = new HashMap<String, List<String>>();
+        List<String> siteList = new ArrayList<String>();
+        table.getFragment().values().forEach(x->siteList.add(x.getSiteName()));
+        //TODO: 混合分区需要修改
+        boolean isHorizontal = true;
+        if (table.getFragment().values().iterator().next().getFragmentType() == GddUtil.fragementHORIZONTIAL) {
+            isHorizontal = true;
+            for (Column col : table.getColumns().values()) {
+                col2site.put(col.getColumnName(), siteList);
+            }
+        }
+        else {
+            isHorizontal = false;
+            for (Column col : table.getColumns().values()) {
+                col2site.put(col.getColumnName(), new ArrayList<>());
+            }
+            for (Fragment frag : table.getFragment().values()) {
+                colListMap.put(frag.getSiteName(), new ArrayList<>());
+                String siteName = frag.getSiteName();
+                for (Condition cond : frag.getCondition()) {
+                    col2site.get(cond.getColumnName()).add(siteName);
+                }
+            }
+        }
         // prepared for col.
         if (insert.getColumns().isPresent()) {
             List<String> colStrList = insert.getColumns().get();
@@ -95,15 +122,27 @@ public class InsertPlan
                     return ErrorMessage.throwMessage(ErrCode.ColumnInTableNotFound, colStr, tableName);
                 }
                 else {
-                    colList.add(col);
+                    colLists.add(col);
+                    List<String> sites = col2site.get(col.getColumnName());
+                    for (String site : sites) {
+                        colListMap.get(site).add(col);
+                    }
                 }
             }
         }
         else {
             for (String key : table.getColumns().keySet()) {
-                colList.add(table.getColumns().get(key));
+                colLists.add(table.getColumns().get(key));
+                Column col = table.getColumns().get(key);
+                List<String> sites = col2site.get(col.getColumnName());
+                for (String site : sites) {
+                    colListMap.get(site).add(col);
+                }
             }
-            colList.sort(Comparator.comparingInt(Column::getId));
+            for (String site : siteList) {
+                colListMap.get(site).sort(Comparator.comparingInt(Column::getId));
+            }
+            colLists.sort(Comparator.comparingInt(Column::getId));
         }
         Query q = insert.getQuery();
         QueryBody qb = q.getQueryBody();
@@ -111,40 +150,57 @@ public class InsertPlan
             return ErrorMessage.throwMessage(ErrCode.InsertFromSelectNotImplemented);
         }
         Values values = (Values) qb;
-
+        for (String key : table.getFragment().keySet()) {
+            distributionHints.put(table.getFragment().get(key).getSiteName(), new ArrayList<>());
+        }
         for (Expression expr : values.getRows()) {
             if (!(expr instanceof Row)) {
                 return ErrorMessage.throwMessage(ErrCode.InsertExpectedRow);
             }
             Row row = (Row) expr;
-            if (row.getItems().size() != colList.size()) {
-                return ErrorMessage.throwMessage(ErrCode.InsertRowValuesNotMatchColumns, row.getItems().size(), colList.size());
+            if (row.getItems().size() != colLists.size()) {
+                return ErrorMessage.throwMessage(ErrCode.InsertRowValuesNotMatchColumns, row.getItems().size(), colLists.size());
             }
             Map<String, Literal> literalMap = new HashMap<String, Literal>();
+            Map<String, Row> distRow = new HashMap<>();
+            for (String key : distributionHints.keySet()) {
+                distRow.put(key, new Row(new ArrayList<>()));
+            }
             for (int i = 0; i < row.getItems().size(); i++) {
                 Expression item = row.getItems().get(i);
                 //System.out.println(item.getClass().getName());
                 Literal literal = (Literal) item;
-                if (!typeMatch(colList.get(i), literal)) {
+                if (!typeMatch(colLists.get(i), literal)) {
                     return ErrorMessage.throwMessage(ErrCode.ValuesTypeNotMatch, literal.toString());
                 }
-                literalMap.put(colList.get(i).getColumnName(), literal);
+                Column col = colLists.get(i);
+                literalMap.put(col.getColumnName(), literal);
+                if (!isHorizontal) {
+                    for (String site : col2site.get(col.getColumnName())) {
+                        distRow.get(site).getItems().add(item);
+                    }
+                }
             }
-            for (String key : table.getFragment().keySet()) {
-                Fragment f = table.getFragment().get(key);
-                boolean belongTo = ConditionComparator.matchLiteral(f.getCondition(), literalMap);
-                //System.out.println(belongTo + " " + key);
-                if (belongTo) {
-                    List<Row> o = distributionHints.get(f.getSiteName());
-                    List<Row> rlist = null;
-                    if (o == null) {
-                        rlist = new ArrayList<Row>();
-                        distributionHints.put(f.getSiteName(), rlist);
+            for (String key : distRow.keySet()) {
+                distributionHints.get(key).add(distRow.get(key));
+            }
+            if (isHorizontal) {
+                for (String key : table.getFragment().keySet()) {
+                    Fragment f = table.getFragment().get(key);
+                    boolean belongTo = ConditionComparator.matchLiteral(f.getCondition(), literalMap);
+                    //System.out.println(belongTo + " " + key);
+                    if (belongTo) {
+                        List<Row> o = distributionHints.get(f.getSiteName());
+                        List<Row> rlist = null;
+                        if (o == null) {
+                            rlist = new ArrayList<Row>();
+                            distributionHints.put(f.getSiteName(), rlist);
+                        }
+                        else {
+                            rlist = o;
+                        }
+                        rlist.add(row);
                     }
-                    else {
-                        rlist = o;
-                    }
-                    rlist.add(row);
                 }
             }
         }
@@ -180,9 +236,9 @@ public class InsertPlan
         return true;
     }
 
-    public List<Column> getColList()
+    public Map<String, List<Column>> getColListMap()
     {
-        return colList;
+        return colListMap;
     }
 
     public Map<String, List<Row>> getDistributionHints()

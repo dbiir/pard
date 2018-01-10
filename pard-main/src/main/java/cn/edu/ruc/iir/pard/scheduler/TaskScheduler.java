@@ -200,9 +200,9 @@ public class TaskScheduler
             Map<String, List<Row>> partitionMap = insertPlan.getDistributionHints();
             String tableName = insertPlan.getTableName();
             String schemaName = insertPlan.getSchemaName();
-            List<Column> columns = insertPlan.getColList();
-            int columnSize = columns.size();
             for (String site : partitionMap.keySet()) {
+                List<Column> columns = insertPlan.getColListMap().get(site);
+                int columnSize = columns.size();
                 List<Row> rows = partitionMap.get(site);
                 int rowSize = rows.size();
                 String[][] rowsStr = new String[rowSize][];

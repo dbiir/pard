@@ -48,7 +48,9 @@ public abstract class Item
         }
         else if (expr instanceof Identifier) {
             Identifier identifier = (Identifier) expr;
-            ColumnItem ci = new ColumnItem(null, identifier.getValue(), 0);
+            String tableName = null;
+            tableName = ColumnItem.getCol2TblMap().get(identifier.getValue());
+            ColumnItem ci = new ColumnItem(tableName, identifier.getValue(), 0);
             return ci;
         }
         else {

@@ -151,9 +151,9 @@ public class MinimalItemLaw
     }
     public List<Expr> mergeTwo(SingleExpr expr1, SingleExpr expr2, LogicOperator opt)
     {
-        System.out.println("m1 " + expr1.toString());
-        System.out.println("m2 " + expr2.toString());
-        System.out.println();
+        //System.out.println("m1 " + expr1.toString());
+        //System.out.println("m2 " + expr2.toString());
+        //System.out.println();
         List<Expr> expr = new ArrayList<Expr>();
         ValueItem rv1 = (ValueItem) expr1.getRvalue();
         ValueItem rv2 = (ValueItem) expr2.getRvalue();
@@ -405,11 +405,11 @@ public class MinimalItemLaw
                     ret.getConditions().add(s);
                 }
             }
-            for (ColumnItem ci : colmap.keySet()) {
-                System.out.println(ci);
-            }
-            System.out.println();
-            System.out.println();
+            //for (ColumnItem ci : colmap.keySet()) {
+                //System.out.println(ci);
+           // }
+            //System.out.println();
+            //System.out.println();
             for (List<SingleExpr> group : colmap.values()) {
                 if (group.size() <= 1) {
                     ret.getConditions().addAll(group);

@@ -69,7 +69,7 @@ public class SemanticAnalysisTest
         Plan plan = new UsePlan(useStmt);
         plan.semanticAnalysis();
         plan.afterExecution(true);
-        String sql = "SELECT * FROM emp where emp.eno < 'E0010' and emp.eno > 'E0000'";
+        String sql = "SELECT * FROM emp@pard1 where eno < 'E0010' and eno > 'E0000'";
         Statement statement = parser.createStatement(sql);
         UsePlan.setCurrentSchema("pard");
         plan = new QueryPlan(statement);

@@ -4,13 +4,33 @@ import cn.edu.ruc.iir.pard.sql.tree.DereferenceExpression;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ColumnItem
         extends Item
 {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
     private final String tableName;
     private final String columnName;
     private int dataType;
-
+    private static ThreadLocal<Map<String, String>> col2tblMap = new ThreadLocal<>();
+    public static Map<String, String> getCol2TblMap()
+    {
+        Map<String, String> map = col2tblMap.get();
+        if (map == null) {
+            map = new HashMap<String, String>();
+            col2tblMap.set(map);
+        }
+        return map;
+    }
+    public static void clearCol2TblMap()
+    {
+        col2tblMap.remove();
+    }
     public ColumnItem(ColumnItem ci)
     {
         super();

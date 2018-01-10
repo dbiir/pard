@@ -4,6 +4,7 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
+import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
@@ -18,6 +19,7 @@ import cn.edu.ruc.iir.pard.planner.EarlyStopPlan;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.sql.expr.ColumnItem;
 import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
 import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
@@ -39,6 +41,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Table;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -53,7 +56,6 @@ public class QueryPlan
     private final Logger logger = Logger.getLogger(QueryPlan.class.getName());
     private final PlanNode node = new OutputNode();
     private boolean alreadyDone = false;
-
     private Optional<LimitNode> limit;
     private Optional<SortNode> sort;
     private Optional<DistinctNode> distinct;
@@ -64,7 +66,6 @@ public class QueryPlan
     {
         super(stmt);
     }
-
     public PlanNode getPlan()
     {
         return node;
@@ -73,6 +74,8 @@ public class QueryPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        ColumnItem.clearCol2TblMap();
+        Map<String, String> col2tbl = ColumnItem.getCol2TblMap();
         this.limit = Optional.ofNullable(null);
         this.sort = Optional.ofNullable(null);
         this.distinct = Optional.ofNullable(null);
@@ -130,10 +133,27 @@ public class QueryPlan
                 return ErrorMessage.throwMessage(ErrorMessage.ErrCode.SchemaNotExsits, schemaName);
             }
         }
+        List<String> siteList = new ArrayList<String>();
+        SiteDao sdao = new SiteDao();
+        int pos = fromTableName.indexOf("@");
+        if (pos > 0) {
+            String site = fromTableName.substring(pos + 1);
+            if (sdao.loadByName(site) == null) {
+                return ErrorMessage.throwMessage(ErrorMessage.ErrCode.SiteNotExist, site);
+            }
+            siteList.add(site);
+            fromTableName = fromTableName.substring(0, pos);
+        }
+        else {
+            siteList.addAll(sdao.listNodes().keySet());
+        }
         TableDao tableDao = new TableDao(schema);
         catalogTable = tableDao.loadByName(fromTableName);
         if (catalogTable == null) {
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.TableNotExists, schemaName + "." + fromTableName);
+        }
+        for (Column col : catalogTable.getColumns().values()) {
+            col2tbl.put(col.getColumnName(), fromTableName);
         }
         // construct operator tree
         // limit
@@ -222,6 +242,9 @@ public class QueryPlan
             unionNode.addUnionChild(scanNode);
         }*/
         for (Fragment frag : catalogTable.getFragment().values()) {
+            if (!siteList.contains(frag.getSiteName())) {
+                continue;
+            }
             Expr expr = Expr.parse(frag.getCondition(), fromTableName);
             PlanNode childrenNode = new TableScanNode(schemaName, fromTableName, frag.getSiteName());
             if (filter.isPresent()) {
@@ -256,6 +279,7 @@ public class QueryPlan
             this.alreadyDone = true;
         }
         logger.info("Parsed query plan: " + node.toString());
+        //col2tblMap.remove();
         return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
     }
 

@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.planner.ddl;
 
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
+import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
@@ -10,6 +11,7 @@ import cn.edu.ruc.iir.pard.sql.tree.QualifiedName;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,6 +76,29 @@ public class TableDropPlan
         }
 
         return ErrorMessage.getOKMessage();
+    }
+
+    @Override
+    public boolean afterExecution(boolean executeSuccess)
+    {
+        SchemaDao schemaDao = new SchemaDao();
+        if (!alreadyDone) {
+            Schema schema = schemaDao.loadByName(schemaName);
+            if (schema != null) {
+                List<Table> tables = schema.getTableList();
+                int index = 0;
+                for (int i = 0; i < tables.size(); i++) {
+                    Table table = tables.get(i);
+                    if (table.getTablename().equalsIgnoreCase(tableName)) {
+                        index = i;
+                        break;
+                    }
+                }
+                schema.getTableList().remove(index);
+                schemaDao.update(schema);
+            }
+        }
+        return true;
     }
 
     @Override

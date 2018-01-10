@@ -125,7 +125,7 @@ public class PardServer
 
     private void startFileExchangeServer()
     {
-        this.fileExchangeServer = new PardFileExchangeServer(configuration.getFileExchangePort());
+        this.fileExchangeServer = new PardFileExchangeServer(configuration.getFileExchangePort(), executor);
         new Thread(fileExchangeServer).start();
     }
 

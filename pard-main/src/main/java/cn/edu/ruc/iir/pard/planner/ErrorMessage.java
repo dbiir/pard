@@ -46,6 +46,8 @@ public class ErrorMessage
         public static final int UnkownCompareTypeWhenPartition = -10020;
         public static final int LimitIsNotANumber = -10021;
         public static final int UnSupportedQuery = -10022;
+        public static final int FileNotFound = -10023;
+        public static final int FileIOError = -10024;
     }
     public static void init()
     {
@@ -73,6 +75,9 @@ public class ErrorMessage
         template.put(ErrCode.UnkownCompareTypeWhenPartition, "Unkown compare type when partition");
         template.put(ErrCode.LimitIsNotANumber, "Specified limit value is not a number");
         template.put(ErrCode.UnSupportedQuery, "Unsupported query");
+        template.put(ErrCode.UnSupportedQuery, "Unsupported query:%s");
+        template.put(ErrCode.FileNotFound, "File not exists");
+        template.put(ErrCode.FileIOError, "File IO error");
         template.put(ErrCode.OK, "success");
     }
     static

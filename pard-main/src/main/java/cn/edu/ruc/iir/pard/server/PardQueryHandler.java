@@ -110,6 +110,7 @@ public class PardQueryHandler
             return new PardResultSet(PardResultSet.ResultStatus.PLANNING_ERR);
         }
         job.setPlan(plan);
+        plan.setJobId(job.getJobId());
         jobScheduler.updateJob(job.getJobId());
         logger.info("Created plan for job[" + job.getJobId() + "], job state: " + job.getJobState());
 

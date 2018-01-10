@@ -67,6 +67,11 @@ public final class PardUserConfiguration
         return Integer.parseInt(getProperty("pard.exchange.port"));
     }
 
+    public int getFileExchangePort()
+    {
+        return Integer.parseInt(getProperty("pard.file.port"));
+    }
+
     public String getConnectorHost()
     {
         return getProperty("pard.connector.host");

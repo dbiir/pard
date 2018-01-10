@@ -68,22 +68,22 @@ public class QueryPlan
         Query query = (Query) this.getStatment();
         QueryBody queryBody = query.getQueryBody();
         if (!(queryBody instanceof QuerySpecification)) {
-            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery);
+            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery, "Query Body is not a query specification!");
         }
         QuerySpecification querySpecification = (QuerySpecification) queryBody;
         Select select = querySpecification.getSelect();
         if (!querySpecification.getFrom().isPresent()) {
-            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery);
+            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery, " FROM is missing!");
         }
         Relation from = querySpecification.getFrom().get();
         if (!(from instanceof Table)) {
-            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery);
+            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery, " FROM ITEM is not a table!");
         }
         if (querySpecification.getGroupBy().isPresent()) {
-            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery);
+            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery, " Group by not supported at present!");
         }
         if (querySpecification.getHaving().isPresent()) {
-            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery);
+            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery, " Having is not supported!");
         }
 
         // check schema and table
@@ -118,7 +118,6 @@ public class QueryPlan
         if (catalogTable == null) {
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.TableNotExists, schemaName + "." + fromTableName);
         }
-
         // construct operator tree
         // limit
         if (query.getLimit().isPresent()) {
@@ -161,7 +160,7 @@ public class QueryPlan
             else {
                 Expression expression = ((SingleColumn) selectItem).getExpression();
                 if (!(expression instanceof Identifier)) {
-                    return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery);
+                    return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery, "expession " + expression.toString() + " is not supported!");
                 }
                 Identifier identifier = (Identifier) expression;
                 if (catalogTable.getColumns().keySet().contains(identifier.getValue())) {
@@ -189,7 +188,7 @@ public class QueryPlan
         // scan
         UnionNode unionNode = new UnionNode();
         currentNode.setChildren(unionNode, true, true);
-        // todo check for sites that really need query execution.
+        //TODO: check for sites that really need query execution.
         SiteDao siteDao = new SiteDao();
         for (String site : siteDao.listNodes().keySet()) {
             TableScanNode scanNode = new TableScanNode(schemaName, fromTableName, site);

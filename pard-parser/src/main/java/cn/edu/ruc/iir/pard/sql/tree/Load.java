@@ -31,6 +31,16 @@ public class Load
         this.table = table;
     }
 
+    public Identifier getPath()
+    {
+        return path;
+    }
+
+    public QualifiedName getTable()
+    {
+        return table;
+    }
+
     @Override
     public <R, C> R accept(AstVisitor<R, C> visitor, C context)
     {

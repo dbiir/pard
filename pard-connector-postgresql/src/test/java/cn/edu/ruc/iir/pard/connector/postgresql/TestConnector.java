@@ -5,11 +5,13 @@ import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
+import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
@@ -22,6 +24,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
 import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
+import com.google.common.collect.ImmutableList;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -186,5 +189,14 @@ public class TestConnector
         while ((row = resultSet.getNext()) != null) {
             System.out.println(RowConstructor.printRow(row, types));
         }
+    }
+
+    @Test
+    public void testLoad()
+    {
+        PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
+        Connector connector = PostgresConnector.INSTANCE();
+        LoadTask loadTask = new LoadTask("pard", "emp", ImmutableList.of("/Users/Jelly/Desktop/emp.tsv"));
+        connector.execute(loadTask);
     }
 }

@@ -5,6 +5,7 @@ import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.connector.postgresql.PostgresConnector;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.exchange.PardExchangeServer;
+import cn.edu.ruc.iir.pard.exchange.PardFileExchangeServer;
 import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
@@ -21,12 +22,13 @@ public class PardServer
     private PardRPCServer rpcServer;
     private PardSocketListener socketListener;
     private PardExchangeServer exchangeServer;
+    private PardFileExchangeServer fileExchangeServer;
     private Connector connector;
     private PardTaskExecutor executor;
     private JobScheduler jobScheduler;
     private TaskScheduler taskScheduler;
 
-    PardServer(String configurationPath)
+    private PardServer(String configurationPath)
     {
         this.configuration = PardUserConfiguration.INSTANCE();
         configuration.init(configurationPath);
@@ -52,6 +54,9 @@ public class PardServer
 
         // start exchange server
         pipeline.addStartupHook(this::startExchangeServer);
+
+        // start file exchange server
+        pipeline.addStartupHook(this::startFileExchangeServer);
 
         // load job scheduler
         pipeline.addStartupHook(this::loadJobScheduler);
@@ -89,6 +94,7 @@ public class PardServer
         currentSite.setIp(configuration.getHost());
         currentSite.setRpcPort(configuration.getRPCPort());
         currentSite.setExchangePort(configuration.getExchangePort());
+        currentSite.setFileExchangePort(configuration.getFileExchangePort());
         currentSite.setServerPort(configuration.getServerPort());
         siteDao.add(currentSite, false);
     }
@@ -117,6 +123,12 @@ public class PardServer
         new Thread(exchangeServer).start();
     }
 
+    private void startFileExchangeServer()
+    {
+        this.fileExchangeServer = new PardFileExchangeServer(configuration.getFileExchangePort(), executor);
+        new Thread(fileExchangeServer).start();
+    }
+
     private void startSocketListener()
     {
         this.socketListener = new PardSocketListener(configuration.getServerPort(),
@@ -140,6 +152,7 @@ public class PardServer
         socketListener.stop();
         rpcServer.stop();
         exchangeServer.stop();
+        fileExchangeServer.stop();
         connector.close();
         System.out.println("****** Pard is down");
     }

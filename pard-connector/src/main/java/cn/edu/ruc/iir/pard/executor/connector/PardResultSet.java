@@ -32,12 +32,12 @@ public class PardResultSet
     public enum ResultStatus
     {
         OK("OK"),
-        BEGIN_ERR("Create job error"),
-        PARSING_ERR("Parse error"),
-        PLANNING_ERR("Plan error"),
-        SCHEDULING_ERR("Schedule error"),
-        EXECUTING_ERR("Execution error"),
-        EOR("End of result set");
+        BEGIN_ERR("CREATE_JOB_ERROR"),
+        PARSING_ERR("PARSE_ERROR"),
+        PLANNING_ERR("PLAN_ERROR"),
+        SCHEDULING_ERR("SCHEDULE_ERROR"),
+        EXECUTING_ERR("EXECUTION_ERROR"),
+        EOR("END_OF_RS");
 
         private String msg;
 
@@ -58,10 +58,11 @@ public class PardResultSet
     private final List<Row> currentRows;  // as local execution result set
     private List<Column> schema;
     private ResultStatus resultStatus;
-    private final transient int capacity;
+    private final int capacity;
+    private int currentSize = 0;
+    private String taskId;
     private transient ResultSet jdbcResultSet;
     private transient Connection connection;
-    private transient int currentSize = 0;
 
     public PardResultSet()
     {
@@ -134,6 +135,16 @@ public class PardResultSet
     public List<Column> getSchema()
     {
         return this.schema;
+    }
+
+    public String getTaskId()
+    {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId)
+    {
+        this.taskId = taskId;
     }
 
     public boolean add(Row row)

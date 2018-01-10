@@ -9,6 +9,7 @@ import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import io.grpc.stub.StreamObserver;
 
@@ -163,6 +164,24 @@ public class PardRPCService
                 insertMsg.getTableName(),
                 columns, rows);
         PardResultSet resultSet = executor.executeStatus(task);
+        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+            responseStatusBuilder.setStatus(1);
+        }
+        else {
+            responseStatusBuilder.setStatus(0);
+        }
+        responseStatusStreamObserver.onNext(responseStatusBuilder.build());
+        responseStatusStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void load(PardProto.LoadMsg msg,
+                     StreamObserver<PardProto.ResponseStatus> responseStatusStreamObserver)
+    {
+        PardProto.ResponseStatus.Builder responseStatusBuilder
+                = PardProto.ResponseStatus.newBuilder();
+        LoadTask loadTask = new LoadTask(msg.getSchemaName(), msg.getTableName(), msg.getPathList());
+        PardResultSet resultSet = executor.executeStatus(loadTask);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }

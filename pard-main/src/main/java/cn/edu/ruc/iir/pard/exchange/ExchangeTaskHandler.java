@@ -5,7 +5,6 @@ import cn.edu.ruc.iir.pard.executor.connector.Block;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
@@ -17,7 +16,6 @@ import java.util.logging.Logger;
  *
  * @author guodong
  */
-@ChannelHandler.Sharable
 public class ExchangeTaskHandler
         extends ChannelInboundHandlerAdapter
 {
@@ -34,7 +32,7 @@ public class ExchangeTaskHandler
     {
         if (msg instanceof Task) {
             Task task = (Task) msg;
-            Block block = executor.execute(task);
+            Block block = executor.executeQuery(task);
             if (block.isSequenceHasNext()) {
                 ctx.write(block);
             }

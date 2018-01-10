@@ -8,9 +8,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.serialization.ClassResolvers;
-import io.netty.handler.codec.serialization.ObjectDecoder;
-import io.netty.handler.codec.serialization.ObjectEncoder;
+import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.CharsetUtil;
 
 import java.util.logging.Logger;
 
@@ -19,25 +21,21 @@ import java.util.logging.Logger;
  *
  * @author guodong
  */
-public class PardExchangeServer
+public class PardFileExchangeServer
         implements Runnable
 {
-    private final Logger logger = Logger.getLogger(PardExchangeServer.class.getName());
+    private final Logger logger = Logger.getLogger(PardFileExchangeServer.class.getName());
     private final int port;
     private final PardTaskExecutor executor;
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
 
-    public PardExchangeServer(int port, PardTaskExecutor executor)
+    public PardFileExchangeServer(int port, PardTaskExecutor executor)
     {
         this.port = port;
         this.executor = executor;
     }
 
-    /**
-     * pipeline inbound: ByteToTaskDecoder -> TaskHandler
-     * pipeline outbound: ResultSetToByteEncoder
-     * */
     @Override
     public void run()
     {
@@ -53,20 +51,24 @@ public class PardExchangeServer
                         public void initChannel(SocketChannel ch)
                         {
                             ch.pipeline()
-                                    .addLast(new ObjectEncoder(),
-                                            new ObjectDecoder(100 * 1024 * 1024, ClassResolvers.cacheDisabled(null)),
-                                            new ExchangeTaskHandler(executor));
+                                    .addLast(
+                                            new StringEncoder(CharsetUtil.UTF_8),
+                                            new LineBasedFrameDecoder(8192),
+                                            new StringDecoder(CharsetUtil.UTF_8),
+                                            new ChunkedWriteHandler(),
+                                            new ExchangeFileReceiveHandler(executor));
                         }
                     });
             ChannelFuture f = serverBootstrap.bind(port).sync();
-            logger.info("Exchange server started at port: " + port);
+            logger.info("Exchange file server started at port: " + port);
             f.channel().closeFuture().sync();
         }
         catch (InterruptedException e) {
             e.printStackTrace();
         }
         finally {
-            stop();
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
         }
     }
 

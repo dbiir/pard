@@ -16,6 +16,7 @@ import static java.util.Objects.requireNonNull;
 public class AllColumns
         extends SelectItem
 {
+    private static final long serialVersionUID = -4092581908128380462L;
     private final Optional<QualifiedName> prefix;
 
     public AllColumns()

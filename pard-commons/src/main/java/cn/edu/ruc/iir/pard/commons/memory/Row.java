@@ -11,6 +11,7 @@ public class Row
         implements Serializable
 {
     private static final long serialVersionUID = -8278491114129236654L;
+
     private final byte[] content;
     private final int[] offsets;
 
@@ -28,5 +29,10 @@ public class Row
     public int[] getOffsets()
     {
         return offsets;
+    }
+
+    public int getSize()
+    {
+        return content.length;
     }
 }

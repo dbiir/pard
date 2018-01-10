@@ -2,6 +2,18 @@
 Parallel Database Running like a Leopard
 
 ## TODO List
+### LEVEL 1
+1. Add support for vertical partition in table creation.  @hanhan
+2. Add support for DELETE.  @jishen
+3. Add support for LOAD.  @guod
+4. Query logical optimization.  @hanhan
+5. Branches pruning for plan.  @hanhan, guod
+6. Refactor exchange server and client.  @guod
+7. Refactor execution framework.  @guod
+8. Add support for JOIN.  @guod
+9. Join optimization.
+
+### LEVEL 2
 1. Serializaton and deSerialization of `Task` and `PardResultSet`.
 
 ## Contribution Guide
@@ -15,15 +27,3 @@ Git + Intellij IDEA + Java8 + Maven3.3.9+
 #### Tips
 1. Compile locally to ensure everything is ok before pushing to Github.
 2. Pay attention to CheckStyle. Make sure your code style satisfies the code style rules.
-
-## Code Style Rules
-#### SPACE
-#### IF-ELSE
-#### FOR-LOOP
-#### TRY-CATCH
-#### FUNCTION
-#### CLASS/INTERFACE
-#### COMMENT
-#### IMPORTS
-#### VARIABLES AND CONSTANTS
-#### NAMING CONVENTION

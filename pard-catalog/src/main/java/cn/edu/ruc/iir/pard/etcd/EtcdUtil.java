@@ -159,20 +159,7 @@ public class EtcdUtil
         gdd.setNextSiteId(parseInt(getIntKV(client.getClient(), "nextSiteId")));
         gdd.setNextUserId(parseInt(getIntKV(client.getClient(), "nextUserId")));
         HashMap<String, Site> siteHashMap = loadSiteFromEtcd();
-        for (String name : siteHashMap.keySet()) {
-           //  System.out.println(siteHashMap.get(name).getName());
-        }
         HashMap<String, User> userHashMap = loadUserFromEtcd();
-        for (String name : userHashMap.keySet()) {
-            HashMap<String, Privilege> schemaMap = userHashMap.get(name).getSchemaMap();
-            for (String sname : schemaMap.keySet()) {
-                // System.out.println(schemaMap.get(sname).getUse());
-            }
-            HashMap<String, Privilege> tableMap = userHashMap.get(name).getTableMap();
-            for (String sname : tableMap.keySet()) {
-                //System.out.println(tableMap.get(sname).getUsername());
-            }
-        }
         HashMap<String, Schema> schemaHashMap = loadSchemaFromEtcd();
         gdd.setSiteMap(siteHashMap);
         gdd.setSchemaMap(schemaHashMap);
@@ -187,6 +174,9 @@ public class EtcdUtil
         try {
             GetResponse response = getFuture.get();
             List<KeyValue> list = response.getKvs();
+            if (list.isEmpty()) {
+                return siteHashMap;
+            }
             String sitestr = list.get(0).getValue().toStringUtf8();
             JSONObject jsonObject = JSONObject.fromObject(sitestr);
             for (Object obj : jsonObject.keySet()) {
@@ -208,6 +198,9 @@ public class EtcdUtil
         try {
             GetResponse response = getFuture.get();
             List<KeyValue> list = response.getKvs();
+            if (list.isEmpty()) {
+                return userHashMap;
+            }
             String userstr = list.get(0).getValue().toStringUtf8();
             JSONObject jsonObject = JSONObject.fromObject(userstr);
             for (Object obj : jsonObject.keySet()) {
@@ -255,6 +248,9 @@ public class EtcdUtil
         try {
             GetResponse response = getFuture.get();
             List<KeyValue> list = response.getKvs();
+            if (list.isEmpty()) {
+                return schemaHashMap;
+            }
             String schemastr = list.get(0).getValue().toStringUtf8();
             JSONObject jsonObject = JSONObject.fromObject(schemastr);
             for (Object obj : jsonObject.keySet()) {

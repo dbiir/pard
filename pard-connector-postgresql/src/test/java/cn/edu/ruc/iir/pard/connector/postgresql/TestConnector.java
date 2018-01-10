@@ -2,18 +2,20 @@ package cn.edu.ruc.iir.pard.connector.postgresql;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
+import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
-import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
+import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
-import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
+import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
+import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpressionType;
@@ -22,6 +24,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
 import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
+import com.google.common.collect.ImmutableList;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -134,13 +137,14 @@ public class TestConnector
         InsertIntoTask task = new InsertIntoTask("pardschema", "table1", columns, values);
         PardResultSet resultSet = pConn.execute(task);
         System.out.println(resultSet.getStatus().toString());
-        System.out.println("Added Number: " + pConn.getChNum());
     }
 
     @Test
-    public void testQuery()
+    public void testResultSet()
     {
-//        final PostgresConnector pConn = PostgresConnector.INSTANCE();
+        PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
+        configuration.init("/Users/Jelly/Developer/pard/pard-main/etc/pard.properties");
+        final PostgresConnector pConn = PostgresConnector.INSTANCE();
         List<Column> columns = new ArrayList<>();
         Column col0 = new Column();
         col0.setDataType(DataType.CHAR.getType());
@@ -170,35 +174,29 @@ public class TestConnector
 
         // SELECT name, id FROM pardschema.table1 WHERE name='tomcat' AND id<5 ORDER BY id LIMIT 8;
         OutputNode outputNode = new OutputNode();
-        LimitNode limitNode = new LimitNode(3);
-        SortNode sortNode = new SortNode();
-        sortNode.addSort(col1, true);
         ProjectNode projectNode = new ProjectNode(columns);
-        FilterNode filterNode = new FilterNode(expression);
-        //FilterNode filterNode = new FilterNode(idLT5Expr);
-        TableScanNode tableScanNode = new TableScanNode("pardschema", "table1");
-        /*
-        System.out.println("IN TEST");
-        System.out.println(outputNode);
-        System.out.println(limitNode);
-        System.out.println(sortNode);
-        System.out.println(projectNode);
-        System.out.println(filterNode);
-        System.out.println(tableScanNode);
-        System.out.println("IN TEST");
-        */
+        TableScanNode tableScanNode = new TableScanNode("pard", "testquery");
         // LIMIT -> SORT -> PROJECT -> FILTER -> SCAN
-        outputNode.setChildren(limitNode, true, true);
-        limitNode.setChildren(sortNode, true, true);
-        sortNode.setChildren(projectNode, true, true);
-        projectNode.setChildren(filterNode, true, true);
-        //sortNode.setChildren(filterNode,true);
-        filterNode.setChildren(tableScanNode, true, true);
+        outputNode.setChildren(projectNode, true, true);
+        projectNode.setChildren(tableScanNode, true, true);
         System.out.println(outputNode);
 
-//        QueryTask task = new QueryTask(outputNode);
-//        PardResultSet resultSet = pConn.execute(task);
-//        System.out.println(resultSet.getNext().getRowSize());
-        // todo print out resultSet and it satisfies the actual result
+        QueryTask task = new QueryTask(outputNode);
+        PardResultSet resultSet = pConn.execute(task);
+        List<Integer> types = new ArrayList<>();
+        columns.forEach(c -> types.add(c.getDataType()));
+        Row row;
+        while ((row = resultSet.getNext()) != null) {
+            System.out.println(RowConstructor.printRow(row, types));
+        }
+    }
+
+    @Test
+    public void testLoad()
+    {
+        PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
+        Connector connector = PostgresConnector.INSTANCE();
+        LoadTask loadTask = new LoadTask("pard", "emp", ImmutableList.of("/Users/Jelly/Desktop/emp.tsv"));
+        connector.execute(loadTask);
     }
 }

@@ -5,6 +5,8 @@ import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.etcd.WatchThread;
 
 import java.util.Map;
+import java.util.Set;
+
 /**
  * pard
  * SchemaDao
@@ -21,6 +23,12 @@ public class SchemaDao
     {
         //watchThread = new WatchThread("schema");
         //watchThread.start();
+    }
+
+    public Set<String> listAll()
+    {
+        GDD gdd = load();
+        return gdd.getSchemaMap().keySet();
     }
 
     public Schema loadByName(String name)

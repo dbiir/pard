@@ -1,16 +1,16 @@
 package cn.edu.ruc.iir.pard.client;
 
-import cn.edu.ruc.iir.pard.commons.memory.Block;
+import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
-import cn.edu.ruc.iir.pard.commons.utils.DataType;
-import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -54,23 +54,23 @@ public class PardClient
                         if (obj instanceof PardResultSet) {
                             PardResultSet resultSet = (PardResultSet) obj;
                             if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+                                List<Column> columns = resultSet.getSchema();
                                 System.out.println(resultSet.toString());
-                                List<String> colNames;
-                                List<DataType> colTypes;
-                                while (resultSet.hasNext()) {
-                                    Block block = resultSet.getNext();
-                                    colNames = block.getColumnNames();
-                                    String header = Arrays.toString(colNames.toArray());
-                                    System.out.println(header);
-                                    for (int i = 0; i < header.length(); i++) {
-                                        System.out.print("-");
-                                    }
-                                    System.out.print("\n");
-                                    colTypes = block.getColumnTypes();
-                                    while (block.hasNext()) {
-                                        Row row = block.getNext();
-                                        System.out.println(RowConstructor.printRow(row, colTypes));
-                                    }
+                                final List<String> colNames = new ArrayList<>();
+                                final List<Integer> colTypes = new ArrayList<>();
+                                columns.forEach(c -> {
+                                    colNames.add(c.getColumnName());
+                                    colTypes.add(c.getDataType());
+                                });
+                                String header = Arrays.toString(colNames.toArray());
+                                System.out.println(header);
+                                for (int i = 0; i < header.length(); i++) {
+                                    System.out.print("-");
+                                }
+                                System.out.print("\n");
+                                List<Row> rows = resultSet.getRows();
+                                for (Row row : rows) {
+                                    System.out.println(RowConstructor.printRow(row, colTypes));
                                 }
                             }
                             else {

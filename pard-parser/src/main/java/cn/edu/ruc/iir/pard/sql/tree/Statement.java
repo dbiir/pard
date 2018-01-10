@@ -8,6 +8,8 @@ package cn.edu.ruc.iir.pard.sql.tree;
 public abstract class Statement
         extends Node
 {
+    private static final long serialVersionUID = -532468778950537649L;
+
     protected Statement(Location location)
     {
         super(location);

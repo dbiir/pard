@@ -13,6 +13,7 @@ import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.NullLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,35 @@ public class ConditionComparator
 {
     private ConditionComparator()
     {}
-    public static boolean match(List<Condition> conditions, Map<String, Literal> valueMap)
+
+    public static boolean matchString(List<Condition> conditions, String[] names, String[] values)
+    {
+        for (Condition cond : conditions) {
+            Comparable condCmp = parseFromString(cond.getDataType(), cond.getValue());
+            int vIndex = Arrays.binarySearch(names, cond.getColumnName());
+            if (vIndex < 0 || vIndex >= values.length) {
+                // column not found
+                continue;
+            }
+            String str = values[vIndex];
+            if (str == null) {
+                throw new SemanticException(ErrCode.MissingPartitionColumnsWhenInsert, cond.getColumnName());
+            }
+            Comparable valueCmp = parseFromString(cond.getDataType(), str);
+            try {
+                if (!compare(cond, condCmp, valueCmp)) {
+                    return false;
+                }
+            }
+            catch (SemanticException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean matchLiteral(List<Condition> conditions, Map<String, Literal> valueMap)
     {
         for (Condition cond : conditions) {
             Comparable condcmp = parseFromString(cond.getDataType(), cond.getValue());
@@ -28,7 +57,7 @@ public class ConditionComparator
             if (literal == null) {
                 throw new SemanticException(ErrCode.MissingPartitionColumnsWhenInsert, cond.getColumnName());
             }
-            Comparable condcmp2 = parseFromLiteral(literal);
+            Comparable valueCmp = parseFromLiteral(literal);
             if (literal instanceof NullLiteral) {
                 if (cond.getCompareType() != GddUtil.compareLESS && cond.getCompareType() != GddUtil.compareLESSEQUAL) {
                     if (!"null".equals(cond.getColumnName())) {
@@ -37,48 +66,18 @@ public class ConditionComparator
                 }
             }
             try {
-                switch (cond.getCompareType()) {
-                    case GddUtil.compareEQUAL:
-                        if (!condcmp2.equals(condcmp)) {
-                            return false;
-                        }
-                        break;
-                    case GddUtil.compareGREAT:
-                        if (!(condcmp2.compareTo(condcmp) > 0)) {
-                            return false;
-                        }
-                        break;
-                    case GddUtil.compareGREATEQUAL:
-                        if (!(condcmp2.compareTo(condcmp) >= 0)) {
-                            return false;
-                        }
-                        break;
-                    case GddUtil.compareLESS:
-                        if (!(condcmp2.compareTo(condcmp) < 0)) {
-                            return false;
-                        }
-                        break;
-                    case GddUtil.compareLESSEQUAL:
-                        if (!(condcmp2.compareTo(condcmp) <= 0)) {
-                            return false;
-                        }
-                        break;
-                    case GddUtil.compareNOTEQUAL:
-                        if (!(condcmp2.compareTo(condcmp) != 0)) {
-                            return false;
-                        }
-                        break;
-                    default:
-                        throw new SemanticException(ErrCode.UnkownCompareTypeWhenPartition);
+                if (!compare(cond, condcmp, valueCmp)) {
+                    return false;
                 }
             }
-            catch (ClassCastException e) {
+            catch (SemanticException e) {
                 e.printStackTrace();
-                throw new SemanticException(ErrCode.ValuesTypeNotMatch, literal.toString());
+                return false;
             }
         }
         return true;
     }
+
     public static Comparable parseFromString(int dataType, String value)
     {
         switch(dataType) {
@@ -100,6 +99,7 @@ public class ConditionComparator
         }
         return value;
     }
+
     public static Comparable parseFromLiteral(Literal literal)
     {
         if (literal instanceof LongLiteral) {
@@ -126,5 +126,44 @@ public class ConditionComparator
                                 return literal.toString();
                             }
         return null;
+    }
+
+    private static boolean compare(Condition cond, Comparable condCmp, Comparable valueCmp) throws SemanticException
+    {
+        switch (cond.getCompareType()) {
+            case GddUtil.compareEQUAL:
+                if (!valueCmp.equals(condCmp)) {
+                    return false;
+                }
+                break;
+            case GddUtil.compareGREAT:
+                if (!(valueCmp.compareTo(condCmp) > 0)) {
+                    return false;
+                }
+                break;
+            case GddUtil.compareGREATEQUAL:
+                if (!(valueCmp.compareTo(condCmp) >= 0)) {
+                    return false;
+                }
+                break;
+            case GddUtil.compareLESS:
+                if (!(valueCmp.compareTo(condCmp) < 0)) {
+                    return false;
+                }
+                break;
+            case GddUtil.compareLESSEQUAL:
+                if (!(valueCmp.compareTo(condCmp) <= 0)) {
+                    return false;
+                }
+                break;
+            case GddUtil.compareNOTEQUAL:
+                if (!(valueCmp.compareTo(condCmp) != 0)) {
+                    return false;
+                }
+                break;
+            default:
+                throw new SemanticException(ErrCode.UnkownCompareTypeWhenPartition);
+        }
+        return true;
     }
 }

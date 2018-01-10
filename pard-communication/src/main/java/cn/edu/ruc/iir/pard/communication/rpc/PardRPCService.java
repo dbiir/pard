@@ -1,15 +1,16 @@
 package cn.edu.ruc.iir.pard.communication.rpc;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
-import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
 import cn.edu.ruc.iir.pard.communication.proto.PardGrpc;
 import cn.edu.ruc.iir.pard.communication.proto.PardProto;
-import cn.edu.ruc.iir.pard.executor.connector.Connector;
+import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
@@ -23,10 +24,10 @@ import java.util.List;
 public class PardRPCService
         extends PardGrpc.PardImplBase
 {
-    private Connector connector;
-    public PardRPCService(Connector connector)
+    private final PardTaskExecutor executor;
+    public PardRPCService(PardTaskExecutor executor)
     {
-        this.connector = connector;
+        this.executor = executor;
     }
 
     @Override
@@ -52,7 +53,7 @@ public class PardRPCService
         CreateSchemaTask task = new CreateSchemaTask(
                 schemaMsg.getName(),
                 schemaMsg.getIsNotExists());
-        PardResultSet resultSet = connector.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }
@@ -72,7 +73,7 @@ public class PardRPCService
         DropSchemaTask task = new DropSchemaTask(
                 schemaMsg.getName(),
                 schemaMsg.getIsNotExists());
-        PardResultSet resultSet = connector.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }
@@ -103,7 +104,7 @@ public class PardRPCService
                 tableMsg.getName(),
                 tableMsg.getIsNotExists(),
                 columns);
-        PardResultSet resultSet = connector.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }
@@ -121,7 +122,7 @@ public class PardRPCService
         PardProto.ResponseStatus.Builder responseStatusBuilder
                 = PardProto.ResponseStatus.newBuilder();
         DropTableTask task = new DropTableTask(tableMsg.getSchemaName(), tableMsg.getName());
-        PardResultSet resultSet = connector.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }
@@ -162,7 +163,25 @@ public class PardRPCService
                 insertMsg.getSchemaName(),
                 insertMsg.getTableName(),
                 columns, rows);
-        PardResultSet resultSet = connector.execute(task);
+        PardResultSet resultSet = executor.executeStatus(task);
+        if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
+            responseStatusBuilder.setStatus(1);
+        }
+        else {
+            responseStatusBuilder.setStatus(0);
+        }
+        responseStatusStreamObserver.onNext(responseStatusBuilder.build());
+        responseStatusStreamObserver.onCompleted();
+    }
+
+    @Override
+    public void load(PardProto.LoadMsg msg,
+                     StreamObserver<PardProto.ResponseStatus> responseStatusStreamObserver)
+    {
+        PardProto.ResponseStatus.Builder responseStatusBuilder
+                = PardProto.ResponseStatus.newBuilder();
+        LoadTask loadTask = new LoadTask(msg.getSchemaName(), msg.getTableName(), msg.getPathList());
+        PardResultSet resultSet = executor.executeStatus(loadTask);
         if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
             responseStatusBuilder.setStatus(1);
         }

@@ -1,7 +1,7 @@
 package cn.edu.ruc.iir.pard.server;
 
 import cn.edu.ruc.iir.pard.commons.exception.ParsingException;
-import cn.edu.ruc.iir.pard.commons.utils.PardResultSet;
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
@@ -50,7 +50,6 @@ public class PardQueryHandler
         catch (IOException e) {
             e.printStackTrace();
         }
-        // todo fill map with nodes
     }
 
     @Override
@@ -78,7 +77,6 @@ public class PardQueryHandler
 
     private PardResultSet executeQuery(String sql)
     {
-        // todo this logic should be abstracted as a automated state machine
         logger.info("Accepted query: " + sql);
         Job job = jobScheduler.newJob();
         if (job == null) {
@@ -112,6 +110,7 @@ public class PardQueryHandler
             return new PardResultSet(PardResultSet.ResultStatus.PLANNING_ERR);
         }
         job.setPlan(plan);
+        plan.setJobId(job.getJobId());
         jobScheduler.updateJob(job.getJobId());
         logger.info("Created plan for job[" + job.getJobId() + "], job state: " + job.getJobState());
 

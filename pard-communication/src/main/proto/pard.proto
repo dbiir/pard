@@ -11,6 +11,7 @@ service Pard {
     rpc insertInto(InsertMsg) returns (ResponseStatus) {}
     rpc dropSchema(SchemaMsg) returns (ResponseStatus) {}
     rpc dropTable(TableMsg) returns (ResponseStatus) {}
+    rpc load(LoadMsg) returns (ResponseStatus) {}
 }
 
 message HeartBeatMsg {
@@ -47,6 +48,12 @@ message InsertMsg {
 
 message RowMsg {
     repeated string columnValues = 2;     // column values
+}
+
+message LoadMsg {
+    string schemaName = 1;
+    string tableName = 2;
+    repeated string path = 3;
 }
 
 message ResponseStatus {

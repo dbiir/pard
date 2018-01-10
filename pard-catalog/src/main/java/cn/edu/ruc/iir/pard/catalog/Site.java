@@ -13,6 +13,7 @@ public class Site
     private int serverPort;
     private int rpcPort;
     private int exchangePort;
+    private int fileExchangePort;
     private int leader;
     private int status;
     public Site()
@@ -66,6 +67,16 @@ public class Site
     public void setExchangePort(int exchangePort)
     {
         this.exchangePort = exchangePort;
+    }
+
+    public void setFileExchangePort(int fileExchangePort)
+    {
+        this.fileExchangePort = fileExchangePort;
+    }
+
+    public int getFileExchangePort()
+    {
+        return fileExchangePort;
     }
 
     public void setLeader(int leader)

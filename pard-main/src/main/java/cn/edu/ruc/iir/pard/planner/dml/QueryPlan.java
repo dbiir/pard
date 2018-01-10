@@ -54,9 +54,9 @@ import java.util.logging.Logger;
 public class QueryPlan
         extends Plan implements EarlyStopPlan
 {
-    private final Logger logger = Logger.getLogger(QueryPlan.class.getName());
-    private final PlanNode node = new OutputNode();
-    private boolean alreadyDone = false;
+    private Logger logger = Logger.getLogger(QueryPlan.class.getName());
+    private PlanNode node;
+    private boolean alreadyDone;
     private Optional<LimitNode> limit;
     private Optional<SortNode> sort;
     private Optional<DistinctNode> distinct;
@@ -75,6 +75,8 @@ public class QueryPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        logger = Logger.getLogger(QueryPlan.class.getName());
+        node = new OutputNode();
         ColumnItem.clearCol2TblMap();
         Map<String, String> col2tbl = ColumnItem.getCol2TblMap();
         this.limit = Optional.ofNullable(null);

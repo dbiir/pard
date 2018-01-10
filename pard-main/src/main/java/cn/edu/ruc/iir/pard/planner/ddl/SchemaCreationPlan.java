@@ -14,10 +14,10 @@ public class SchemaCreationPlan
     {
         super(stmt);
     }
-    private String schemaName = null;
-    private Schema schema = null;
-    private boolean isNotExists = false;
-    private CreateSchema stmt = null;
+    private String schemaName;
+    private Schema schema;
+    private boolean isNotExists;
+    private CreateSchema stmt;
     public String getSchemaName()
     {
         return schemaName;

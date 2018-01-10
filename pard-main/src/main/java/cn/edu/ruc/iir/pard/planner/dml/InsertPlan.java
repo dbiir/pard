@@ -37,8 +37,8 @@ import java.util.Map;
 public class InsertPlan
         extends Plan
 {
-    private String schemaName = null;
-    private String tableName = null;
+    private String schemaName;
+    private String tableName;
     private Table table = null;
     private Map<String, List<Column>> colListMap;
     private Map<String, List<Row>> distributionHints;

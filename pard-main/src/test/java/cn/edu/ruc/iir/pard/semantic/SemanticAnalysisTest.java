@@ -2,10 +2,10 @@ package cn.edu.ruc.iir.pard.semantic;
 
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
+import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
-import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Node;
 import cn.edu.ruc.iir.pard.sql.tree.OrderBy;
@@ -82,22 +82,24 @@ public class SemanticAnalysisTest
     @Test
     public void testQueryPlanner()
     {
+        PardPlanner planner = new PardPlanner();
         String sql2 = "use pardtest";
         Statement useStmt = parser.createStatement(sql2);
         Plan plan = new UsePlan(useStmt);
-        plan.semanticAnalysis();
-        plan.afterExecution(true);
+       //plan.semanticAnalysis();
+        //plan.afterExecution(true);
         String sql = "SELECT * FROM emp@pard3 where eno < 'E0010' and eno > 'E0000'";
         Statement statement = parser.createStatement(sql);
-        UsePlan.setCurrentSchema("pard");
-        plan = new QueryPlan(statement);
-        ErrorMessage errorMessage = plan.semanticAnalysis();
+        //UsePlan.setCurrentSchema("pard");
+        plan = planner.plan(statement);
+        //ErrorMessage errorMessage = plan.semanticAnalysis();
+        /*
         if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
             System.out.println("OK");
             System.out.println(((QueryPlan) plan).getPlan());
         }
         else {
             System.out.println("Plan error " + errorMessage.getErrmsg());
-        }
+        }*/
     }
 }

@@ -15,9 +15,9 @@ public class UsePlan
     {
         super(stmt);
     }
-    protected boolean alreadyDone = false;
-    private String schemaName = null;
-    private static Use stmt = null;
+    protected boolean alreadyDone;
+    private String schemaName;
+    private Use stmt;
     private static SchemaDao dao = new SchemaDao();
     private static ThreadLocal<String> currentSchema = new ThreadLocal<String>();
     public static Schema getCurrentSchema()

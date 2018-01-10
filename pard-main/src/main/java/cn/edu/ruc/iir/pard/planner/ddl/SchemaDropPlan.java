@@ -15,8 +15,8 @@ public class SchemaDropPlan
         super(stmt);
     }
 
-    private DropSchema stmt = null;
-    private String schemaName = null;
+    private DropSchema stmt;
+    private String schemaName;
     private boolean exists;
     //TODO: How to process cascade.
     private boolean cascade;

@@ -22,7 +22,7 @@ import java.util.Map;
 public class TableDropPlan
         extends TablePlan
 {
-    private String schemaName = null;
+    private String schemaName;
     private String tableName;
     private boolean isExists;
     private Map<String, String> distributionHints;

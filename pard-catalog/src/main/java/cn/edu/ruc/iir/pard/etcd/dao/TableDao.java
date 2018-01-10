@@ -27,7 +27,10 @@ public class TableDao
         this.schema = schema;
         parseList2Map();
     }
-
+    public List<Table> getTableList()
+    {
+        return schema.getTableList();
+    }
     public TableDao(String schemaName)
     {
         schemaDao = new SchemaDao();

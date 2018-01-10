@@ -53,7 +53,7 @@ public class ColumnItem
         final int prime = 31;
         int result = 1;
         result = prime * result + ((columnName == null) ? 0 : columnName.hashCode());
-        result = prime * result + dataType;
+        //result = prime * result + dataType;
         result = prime * result + ((tableName == null) ? 0 : tableName.hashCode());
         return result;
     }
@@ -78,9 +78,9 @@ public class ColumnItem
         else if (!columnName.equals(other.columnName)) {
             return false;
         }
-        if (dataType != other.dataType) {
-            return false;
-        }
+        //if (dataType != other.dataType) {
+          //  return false;
+        //}
         if (tableName == null) {
             if (other.tableName != null) {
                 return false;
@@ -96,6 +96,9 @@ public class ColumnItem
     {
         if (expression != null) {
             return expression;
+        }
+        else if (tableName == null) {
+            return new Identifier(this.columnName);
         }
         else {
             return new DereferenceExpression(new Identifier(tableName), new Identifier(this.columnName));

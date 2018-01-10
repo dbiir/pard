@@ -1,9 +1,9 @@
 package cn.edu.ruc.iir.pard.planner.dml;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
-import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
@@ -18,6 +18,10 @@ import cn.edu.ruc.iir.pard.planner.EarlyStopPlan;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.sql.expr.Expr;
+import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
+import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
+import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.tree.AllColumns;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
@@ -35,6 +39,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Table;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -49,6 +54,12 @@ public class QueryPlan
     private final PlanNode node = new OutputNode();
     private boolean alreadyDone = false;
 
+    private Optional<LimitNode> limit;
+    private Optional<SortNode> sort;
+    private Optional<DistinctNode> distinct;
+    private ProjectNode project;
+    private Optional<FilterNode> filter;
+    private UnionNode union;
     public QueryPlan(Statement stmt)
     {
         super(stmt);
@@ -62,8 +73,14 @@ public class QueryPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        this.limit = Optional.ofNullable(null);
+        this.sort = Optional.ofNullable(null);
+        this.distinct = Optional.ofNullable(null);
+        this.project = null;
+        this.filter = Optional.ofNullable(null);
+        this.union = null;
         PlanNode currentNode = this.node;
-
+        System.out.println("currentNode" + currentNode);
         // get real objects
         Query query = (Query) this.getStatment();
         QueryBody queryBody = query.getQueryBody();
@@ -129,6 +146,7 @@ public class QueryPlan
                 return ErrorMessage.throwMessage(ErrorMessage.ErrCode.LimitIsNotANumber);
             }
             LimitNode limitNode = new LimitNode(limitVal);
+            limit = Optional.of(limitNode);
             currentNode.setChildren(limitNode, true, true);
             currentNode = limitNode;
         }
@@ -146,14 +164,17 @@ public class QueryPlan
                 }
             }
             currentNode.setChildren(sortNode, true, true);
+            sort = Optional.of(sortNode);
             currentNode = sortNode;
         }
         // distinct and project
+        boolean hasAllColumn = false;
         List<SelectItem> selectItems = select.getSelectItems();
         List<Column> columns = new ArrayList<>();
         for (SelectItem selectItem : selectItems) {
             if (selectItem instanceof AllColumns) {
                 columns.clear();
+                hasAllColumn = true;
                 columns.addAll(catalogTable.getColumns().values());
                 break;
             }
@@ -170,39 +191,77 @@ public class QueryPlan
         }
         if (select.isDistinct()) {
             DistinctNode distinctNode = new DistinctNode(columns);
+            distinct = Optional.of(distinctNode);
             currentNode.setChildren(distinctNode, true, true);
             currentNode = distinctNode;
         }
         ProjectNode projectNode = new ProjectNode(columns);
         currentNode.setChildren(projectNode, true, true);
+        project = projectNode;
         currentNode = projectNode;
 
         // filter
         if (querySpecification.getWhere().isPresent()) {
             Expression filterExpr = querySpecification.getWhere().get();
             FilterNode filterNode = new FilterNode(filterExpr);
-            currentNode.setChildren(filterNode, true, true);
-            currentNode = filterNode;
+            filter = Optional.of(filterNode);
+            //currentNode.setChildren(filterNode, true, true);
+            //currentNode = filterNode;
         }
 
         // scan
         UnionNode unionNode = new UnionNode();
+        union = unionNode;
         currentNode.setChildren(unionNode, true, true);
         //TODO: check for sites that really need query execution.
-        SiteDao siteDao = new SiteDao();
-        for (String site : siteDao.listNodes().keySet()) {
-            TableScanNode scanNode = new TableScanNode(schemaName, fromTableName, site);
+        //SiteDao siteDao = new SiteDao();
+        /*
+        for (Site site : siteDao.listNodes().values()) {
+            if()
+            TableScanNode scanNode = new TableScanNode(schemaName, fromTableName, site.getName());
             unionNode.addUnionChild(scanNode);
+        }*/
+        for (Fragment frag : catalogTable.getFragment().values()) {
+            Expr expr = Expr.parse(frag.getCondition(), fromTableName);
+            PlanNode childrenNode = new TableScanNode(schemaName, fromTableName, frag.getSiteName());
+            if (filter.isPresent()) {
+                Expr expr2 = Expr.parse(filter.get().getExpression());
+                Expr merge = Expr.and(expr, expr2, LogicOperator.AND);
+                if (merge instanceof TrueExpr) {
+                    // do nothing.
+                }
+                else if (merge instanceof FalseExpr) {
+                    continue;
+                }
+                else {
+                    //merge = Expr.and(expr, expr2, LogicOperator.OR);
+                    FilterNode childrenFilter = new FilterNode(merge.toExpression());
+                    childrenFilter.setChildren(childrenNode, true, true);
+                    childrenNode = childrenFilter;
+                }
+            }
+            if (project != null && !hasAllColumn) {
+                ProjectNode pnode = new ProjectNode(project.getColumns());
+                pnode.setChildren(childrenNode, true, true);
+                childrenNode = pnode;
+            }
+            if (distinct.isPresent()) {
+                DistinctNode dnode = new DistinctNode(distinct.get().getColumns());
+                dnode.setChildren(childrenNode, true, true);
+                childrenNode = dnode;
+            }
+            unionNode.addUnionChild(childrenNode);
         }
-
+        if (unionNode.getUnionChildren().isEmpty()) {
+            this.alreadyDone = true;
+        }
         logger.info("Parsed query plan: " + node.toString());
-
         return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
     }
 
-    public void optimize()
+    public PlanNode optimize()
     {
-        // todo add optimization rules
+        return node;
     }
 
     @Override

@@ -14,6 +14,7 @@ public abstract class PlanNode
 {
     private static final long serialVersionUID = -2786495926657736341L;
     private int childrenNum = 0;
+    private PlanNode parent;
     private PlanNode[] children = new PlanNode[2];
 
     public boolean hasChildren()
@@ -41,10 +42,22 @@ public abstract class PlanNode
         }
         if (left) {
             children[0] = planNode;
+            planNode.setParent(this);
         }
         else {
             children[1] = planNode;
+            planNode.setParent(this);
         }
+    }
+
+    public PlanNode getParent()
+    {
+        return parent;
+    }
+
+    void setParent(PlanNode parent)
+    {
+        this.parent = parent;
     }
 
     @Override

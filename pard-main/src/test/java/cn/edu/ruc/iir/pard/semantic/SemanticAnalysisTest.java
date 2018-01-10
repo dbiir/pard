@@ -2,7 +2,6 @@ package cn.edu.ruc.iir.pard.semantic;
 
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
-import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
@@ -65,17 +64,22 @@ public class SemanticAnalysisTest
     @Test
     public void testQueryPlanner()
     {
-        String sql = "SELECT * FROM emp";
+        String sql2 = "use pardtest";
+        Statement useStmt = parser.createStatement(sql2);
+        Plan plan = new UsePlan(useStmt);
+        plan.semanticAnalysis();
+        plan.afterExecution(true);
+        String sql = "SELECT * FROM emp where emp.eno < 'E0010' and emp.eno > 'E0000'";
         Statement statement = parser.createStatement(sql);
         UsePlan.setCurrentSchema("pard");
-        Plan plan = new PardPlanner().plan(statement);
+        plan = new QueryPlan(statement);
         ErrorMessage errorMessage = plan.semanticAnalysis();
         if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
             System.out.println("OK");
             System.out.println(((QueryPlan) plan).getPlan());
         }
         else {
-            System.out.println("Plan error");
+            System.out.println("Plan error " + errorMessage.getErrmsg());
         }
     }
 }

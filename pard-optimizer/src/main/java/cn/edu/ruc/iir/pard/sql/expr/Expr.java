@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.catalog.Condition;
-import cn.edu.ruc.iir.pard.planner.ConditionComparator;
 import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
 import cn.edu.ruc.iir.pard.sql.expr.rules.MinimalItemLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.PushDownLaw;
@@ -86,6 +85,7 @@ public abstract class Expr
         CompositionExpr comp = new CompositionExpr(LogicOperator.AND);
         comp.getConditions().add(e1);
         comp.getConditions().add(e2);
+        comp = PushDownLaw.formatExpr(comp);
         Expr and = null;
         if (opt == LogicOperator.AND) {
             and = pdAnd.apply(comp);

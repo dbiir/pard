@@ -4,8 +4,11 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
+import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
+import cn.edu.ruc.iir.pard.planner.PardPlanner;
+import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
@@ -27,17 +30,27 @@ public class CatelogTest
     public void createSchema()
     {
         SchemaDao schemaDao = new SchemaDao();
-        Schema schema = new Schema();
-        schema.setName("testSchema");
-        schemaDao.add(schema, true);
+        for (String schemaName : schemaDao.listAll()) {
+            TableDao tableDao = new TableDao(schemaName);
+            System.out.println("Schema:" + schemaName);
+            for (Table table : tableDao.getTableList()) {
+                System.out.println("\tTable: " + table.getTablename());
+                for (Column col : table.getColumns().values()) {
+                    System.out.print(col.getColumnName() + "\t");
+                }
+                System.out.println();
+            }
+        }
+        //schema.setName("testSchema");
+        //schemaDao.add(schema, true);
        // schema = schemaDao.loadByName("testSchema");
-        TableDao tableDao = new TableDao("testSchema");
-        tableDao.dropAll();
+        //TableDao tableDao = new TableDao("testSchema");
+        //tableDao.dropAll();
     }
     @Test
     public void viewTable()
     {
-        String schemaName = "testSchema";
+        String schemaName = "pardtest";
         SchemaDao schemaDao = new SchemaDao();
         Schema schema = schemaDao.loadByName(schemaName);
         TableDao tdao = new TableDao(schemaName);
@@ -46,6 +59,12 @@ public class CatelogTest
             System.out.println(schema.getTableList().get(0).getFragment().size());
         }
         tdao.dropAll();
+    }
+    @Test
+    public void viewSite()
+    {
+        SiteDao siteDao = new SiteDao();
+        siteDao.listNodes().keySet().forEach(System.out::println);
     }
     @Test
     public void createTable()
@@ -59,14 +78,14 @@ public class CatelogTest
                 + ")"
                 + "partition by  range"
                 + "("
-                + "p0 eno < 'E1000' AND title < 'N' on node1,"
-                + "p1 eno < 'E1000' AND title >='N' on node2,"
-                + "p2 eno >= 'E1000' AND title < 'N' on node3,"
-                + "p3 eno >= 'E1000' AND title >= 'N' on node4"
+                + "p0 eno < 'E1000' AND title < 'N' on pard0,"
+                + "p1 eno < 'E1000' AND title >='N' on pard1,"
+                + "p2 eno >= 'E1000' AND title < 'N' on pard2,"
+                + "p3 eno >= 'E1000' AND title >= 'N' on pard3"
                 + ")";
         Statement stmt = parser.createStatement(sql);
         System.out.println(stmt.toString());
-        String sql2 = "use testSchema";
+        String sql2 = "use pardtest";
         Statement useStmt = parser.createStatement(sql2);
         UsePlan plan = new UsePlan(useStmt);
         //plan.setStatment(useStmt);
@@ -78,7 +97,7 @@ public class CatelogTest
         msg = tcp.semanticAnalysis();
         System.out.println(msg);
         tcp.afterExecution(true);
-        String schemaName = "testSchema";
+        String schemaName = "pardtest";
         TableDao tdao = new TableDao(schemaName);
         SchemaDao schemaDao = new SchemaDao();
         Table t = schemaDao.loadByName(schemaName).getTableList().get(0);
@@ -119,6 +138,8 @@ public class CatelogTest
     {
         String sql = "select * from EMP where eno < 'E0010' and eno > 'E0000'";
         Statement stmt = parser.createStatement(sql);
-        System.out.println(stmt);
+        PardPlanner planner = new PardPlanner();
+        Plan plan = planner.plan(stmt);
+        //System.out.println(stmt);
     }
 }

@@ -25,10 +25,6 @@
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-parser</artifactId>
         </dependency>
-        <dependency>
-            <groupId>cn.edu.ruc.iir</groupId>
-            <artifactId>pard-main</artifactId>
-        </dependency>
                 <dependency>
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-catalog</artifactId>

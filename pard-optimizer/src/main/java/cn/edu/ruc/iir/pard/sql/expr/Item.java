@@ -5,6 +5,7 @@ import cn.edu.ruc.iir.pard.sql.tree.CharLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.DereferenceExpression;
 import cn.edu.ruc.iir.pard.sql.tree.DoubleLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 import cn.edu.ruc.iir.pard.sql.tree.Literal;
 import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.NullLiteral;
@@ -44,6 +45,11 @@ public abstract class Item
             ValueItem value = new ValueItem(parseFromLiteral((Literal) expr));
             value.expression = expr;
             return value;
+        }
+        else if (expr instanceof Identifier) {
+            Identifier identifier = (Identifier) expr;
+            ColumnItem ci = new ColumnItem(null, identifier.getValue(), 0);
+            return ci;
         }
         else {
             throw new NullPointerException("cannot parse the class " + expr.getClass().getName());

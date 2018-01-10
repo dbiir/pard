@@ -8,6 +8,7 @@ import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.JoinNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
@@ -228,26 +229,32 @@ public class QueryPlan
             //currentNode.setChildren(filterNode, true, true);
             //currentNode = filterNode;
         }
-
         // scan
+        UnionNode node = horizonLocalization(tableDao, siteList, fromTableName, hasAllColumn);
+        currentNode.setChildren(node, true, true);
+        currentNode = node;
+        logger.info("Parsed query plan: " + node.toString());
+        //col2tblMap.remove();
+        return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
+    }
+    public JoinNode verticalLocalization(TableDao tdao, List<String> siteList, String fromTableName, boolean projectColumn)
+    {
+        //TODO: join localization
+        return null;
+    }
+    public UnionNode horizonLocalization(TableDao tdao, List<String> siteList, String fromTableName, boolean projectColumn)
+    {
         UnionNode unionNode = new UnionNode();
-        union = unionNode;
-        currentNode.setChildren(unionNode, true, true);
-        //TODO: check for sites that really need query execution.
-        //SiteDao siteDao = new SiteDao();
-        /*
-        for (Site site : siteDao.listNodes().values()) {
-            if()
-            TableScanNode scanNode = new TableScanNode(schemaName, fromTableName, site.getName());
-            unionNode.addUnionChild(scanNode);
-        }*/
+        cn.edu.ruc.iir.pard.catalog.Table catalogTable = tdao.loadByName(fromTableName);
+        //union = unionNode;
         for (Fragment frag : catalogTable.getFragment().values()) {
             if (!siteList.contains(frag.getSiteName())) {
                 continue;
             }
             Expr expr = Expr.parse(frag.getCondition(), fromTableName);
-            PlanNode childrenNode = new TableScanNode(schemaName, fromTableName, frag.getSiteName());
+            PlanNode childrenNode = new TableScanNode(tdao.getSchemaName(), fromTableName, frag.getSiteName());
             if (filter.isPresent()) {
+                //TODO: 从expr2中选择自己的
                 Expr expr2 = Expr.parse(filter.get().getExpression());
                 Expr merge = Expr.and(expr, expr2, LogicOperator.AND);
                 if (merge instanceof TrueExpr) {
@@ -263,12 +270,14 @@ public class QueryPlan
                     childrenNode = childrenFilter;
                 }
             }
-            if (project != null && !hasAllColumn) {
+            if (project != null && !projectColumn) {
+                //TODO: 选择自己表里元素下推
                 ProjectNode pnode = new ProjectNode(project.getColumns());
                 pnode.setChildren(childrenNode, true, true);
                 childrenNode = pnode;
             }
             if (distinct.isPresent()) {
+              //TODO: 选择自己表里元素distinct
                 DistinctNode dnode = new DistinctNode(distinct.get().getColumns());
                 dnode.setChildren(childrenNode, true, true);
                 childrenNode = dnode;
@@ -276,13 +285,10 @@ public class QueryPlan
             unionNode.addUnionChild(childrenNode);
         }
         if (unionNode.getUnionChildren().isEmpty()) {
-            this.alreadyDone = true;
+            //this.alreadyDone = true;
         }
-        logger.info("Parsed query plan: " + node.toString());
-        //col2tblMap.remove();
-        return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
+        return unionNode;
     }
-
     public PlanNode optimize()
     {
         return node;

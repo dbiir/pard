@@ -118,4 +118,9 @@ public class TableDao
         schema.getTableList().clear();
         return schemaDao.update(schema);
     }
+
+    public String getSchemaName()
+    {
+        return schema.getName();
+    }
 }

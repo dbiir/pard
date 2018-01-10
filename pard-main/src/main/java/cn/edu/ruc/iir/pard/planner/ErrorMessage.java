@@ -75,6 +75,7 @@ public class ErrorMessage
         template.put(ErrCode.UnkownCompareTypeWhenPartition, "Unkown compare type when partition");
         template.put(ErrCode.LimitIsNotANumber, "Specified limit value is not a number");
         template.put(ErrCode.UnSupportedQuery, "Unsupported query");
+        template.put(ErrCode.UnSupportedQuery, "Unsupported query:%s");
         template.put(ErrCode.FileNotFound, "File not exists");
         template.put(ErrCode.FileIOError, "File IO error");
         template.put(ErrCode.OK, "success");

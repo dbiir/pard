@@ -54,7 +54,7 @@ public class PardExchangeServer
                         {
                             ch.pipeline()
                                     .addLast(new ObjectEncoder(),
-                                            new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                            new ObjectDecoder(100 * 1024 * 1024, ClassResolvers.cacheDisabled(null)),
                                             new ExchangeTaskHandler(executor));
                         }
                     });

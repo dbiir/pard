@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.exchange;
 
+import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -14,6 +15,7 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.CharsetUtil;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * pard
@@ -25,13 +27,23 @@ public class PardFileExchangeClient
     private final String host;
     private final int port;
     private final String path;
+    private final String schema;
+    private final String table;
+    private final String taskId;
+    private final ConcurrentLinkedQueue<PardResultSet> resultSets;
     private EventLoopGroup group;
 
-    public PardFileExchangeClient(String host, int port, String path)
+    public PardFileExchangeClient(String host, int port, String path,
+                                  String schema, String table, String taskId,
+                                  ConcurrentLinkedQueue<PardResultSet> resultSets)
     {
         this.host = host;
         this.port = port;
         this.path = path;
+        this.schema = schema;
+        this.table = table;
+        this.taskId = taskId;
+        this.resultSets = resultSets;
     }
 
     public void run()
@@ -52,7 +64,7 @@ public class PardFileExchangeClient
                                             new LineBasedFrameDecoder(8192),
                                             new StringDecoder(CharsetUtil.UTF_8),
                                             new ChunkedWriteHandler(),
-                                            new ExchangeFileSendHandler(path));
+                                            new ExchangeFileSendHandler(path, schema, table, taskId, resultSets));
                         }});
             ChannelFuture f = bootstrap.connect(new InetSocketAddress(host, port)).sync();
             f.channel().closeFuture().sync();

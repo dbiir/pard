@@ -8,12 +8,14 @@ import cn.edu.ruc.iir.pard.planner.ddl.TableDropPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableShowPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
+import cn.edu.ruc.iir.pard.planner.dml.LoadPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
 import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
 import cn.edu.ruc.iir.pard.sql.tree.DropSchema;
 import cn.edu.ruc.iir.pard.sql.tree.DropTable;
 import cn.edu.ruc.iir.pard.sql.tree.Insert;
+import cn.edu.ruc.iir.pard.sql.tree.Load;
 import cn.edu.ruc.iir.pard.sql.tree.Query;
 import cn.edu.ruc.iir.pard.sql.tree.ShowSchemas;
 import cn.edu.ruc.iir.pard.sql.tree.ShowTables;
@@ -90,6 +92,13 @@ public class PardPlanner
         }
         if (statement instanceof ShowTables) {
             TableShowPlan plan = new TableShowPlan(statement);
+            ErrorMessage errorMessage = plan.semanticAnalysis();
+            if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
+                return plan;
+            }
+        }
+        if (statement instanceof Load) {
+            LoadPlan plan = new LoadPlan(statement);
             ErrorMessage errorMessage = plan.semanticAnalysis();
             if (errorMessage.getErrcode() == ErrorMessage.ErrCode.OK) {
                 return plan;

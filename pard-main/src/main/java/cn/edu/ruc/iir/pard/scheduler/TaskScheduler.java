@@ -254,6 +254,7 @@ public class TaskScheduler
                 QueryTask task = new QueryTask(node.getSite(), planNode);
                 task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
 
             return ImmutableList.copyOf(tasks);
@@ -315,13 +316,9 @@ public class TaskScheduler
             if (plan instanceof LoadPlan) {
                 LoadPlan loadPlan = (LoadPlan) plan;
                 String path = loadPlan.getPath();
+                Map<String, Task> taskMap = new HashMap<>();
+                ConcurrentLinkedQueue<PardResultSet> resultSets = new ConcurrentLinkedQueue<>();
                 // distribute file
-                Map<String, Site> siteMap = siteDao.listNodes();
-                for (Site site : siteMap.values()) {
-                    PardFileExchangeClient exchangeClient = new PardFileExchangeClient(site.getIp(), site.getExchangePort(), path);
-                    exchangeClient.run();
-                }
-                // start tasks to copy
                 for (Task task : tasks) {
                     String site = task.getSite();
                     Site nodeSite = siteDao.listNodes().get(site);
@@ -329,11 +326,25 @@ public class TaskScheduler
                         logger.info("No corresponding node " + site + " found for execution.");
                         continue;
                     }
-                    PardRPCClient client = new PardRPCClient(nodeSite.getIp(), nodeSite.getRpcPort());
-                    int status = client.load((LoadTask) task);
-                    client.shutdown();
-                    if (status <= 0) {
-                        return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
+                    PardFileExchangeClient exchangeClient = new PardFileExchangeClient(
+                                    nodeSite.getIp(),
+                                    nodeSite.getFileExchangePort(),
+                                    path,
+                                    ((LoadPlan) plan).getSchemaName(),
+                                    ((LoadPlan) plan).getTableName(),
+                                    task.getTaskId(),
+                                    resultSets);
+                    exchangeClient.run();
+                    taskMap.put(task.getTaskId(), task);
+                }
+                while (!taskMap.isEmpty()) {
+                    PardResultSet resultSet = resultSets.poll();
+                    if (resultSet == null) {
+                        continue;
+                    }
+                    taskMap.remove(resultSet.getTaskId());
+                    if (resultSet.getStatus() != PardResultSet.ResultStatus.OK) {
+                        return PardResultSet.execErrResultSet;
                     }
                 }
                 return PardResultSet.okResultSet;
@@ -350,11 +361,11 @@ public class TaskScheduler
                 for (Task task : tasks) {
                     String site = task.getSite();
                     String taskId = task.getTaskId();
-                    taskMap.put(taskId, task);
                     Site nodeSite = siteDao.listNodes().get(site);
                     if (nodeSite != null) {
                         PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
                         client.connect(task, blocks);
+                        taskMap.put(taskId, task);
                     }
                 }
                 // wait for all tasks done

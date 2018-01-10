@@ -20,7 +20,7 @@ import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import org.postgresql.copy.CopyManager;
-import org.postgresql.core.BaseConnection;
+import org.postgresql.jdbc.PgConnection;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -447,8 +447,12 @@ public class PostgresConnector
         String table = task.getTable();
         List<String> paths = task.getPaths();
         try {
-            BaseConnection pgCon = (BaseConnection) conn;
-            CopyManager copyManager = new CopyManager(pgCon);
+            PgConnection pgConnection;
+            if (!conn.isWrapperFor(PgConnection.class)) {
+                return PardResultSet.execErrResultSet;
+            }
+            pgConnection = conn.unwrap(PgConnection.class);
+            CopyManager copyManager = new CopyManager(pgConnection);
             for (String path : paths) {
                 logger.info("Copying " + path + " into " + schema + "." + table);
                 String sql = "COPY " + schema + "." + table + " FROM STDIN DELIMITER E'\t'";

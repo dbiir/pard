@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.exchange;
 
+import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -25,12 +26,14 @@ public class PardFileExchangeServer
 {
     private final Logger logger = Logger.getLogger(PardFileExchangeServer.class.getName());
     private final int port;
+    private final PardTaskExecutor executor;
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
 
-    public PardFileExchangeServer(int port)
+    public PardFileExchangeServer(int port, PardTaskExecutor executor)
     {
         this.port = port;
+        this.executor = executor;
     }
 
     @Override
@@ -53,7 +56,7 @@ public class PardFileExchangeServer
                                             new LineBasedFrameDecoder(8192),
                                             new StringDecoder(CharsetUtil.UTF_8),
                                             new ChunkedWriteHandler(),
-                                            new ExchangeFileReceiveHandler());
+                                            new ExchangeFileReceiveHandler(executor));
                         }
                     });
             ChannelFuture f = serverBootstrap.bind(port).sync();

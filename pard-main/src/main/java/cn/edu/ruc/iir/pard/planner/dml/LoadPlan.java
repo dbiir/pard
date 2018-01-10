@@ -52,7 +52,7 @@ public class LoadPlan
         Load load = (Load) getStatment();
         Schema schema = null;
         Table table = null;
-        this.path = load.getPath().toString();
+        this.path = load.getPath().toString().replaceAll("\"|'", "");
         this.tableName = load.getTable().getSuffix();
 
         // check if file exists

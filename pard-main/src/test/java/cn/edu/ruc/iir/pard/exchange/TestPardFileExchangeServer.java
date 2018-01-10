@@ -12,7 +12,7 @@ public class TestPardFileExchangeServer
 
     public static void main(String[] args)
     {
-        PardFileExchangeServer fileExchangeServer = new PardFileExchangeServer(10012);
+        PardFileExchangeServer fileExchangeServer = new PardFileExchangeServer(10012, null);
         fileExchangeServer.run();
     }
 }

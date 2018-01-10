@@ -329,6 +329,7 @@ public class MinimalItemLaw
         int num = que.size() - 1;
         for (int i = 0; i < que.size() - 1; i++) {
             SingleExpr expr = que.poll();
+            boolean merged = false;
             for (int j = 0; j < num; j++) {
                 SingleExpr e = que.poll();
                 List<Expr> m = mergeTwo(expr, e, operator);
@@ -336,6 +337,7 @@ public class MinimalItemLaw
                     que.add(e);
                 }
                 else {
+                    merged = true;
                     Expr cob = m.get(0);
                     if (cob instanceof SingleExpr) {
                         num--;
@@ -351,7 +353,9 @@ public class MinimalItemLaw
                 }
             }
             num--;
-            que.add(expr);
+            if (!merged) {
+                que.add(expr);
+            }
         }
         List<Expr> list = new ArrayList<Expr>();
         que.forEach(list::add);

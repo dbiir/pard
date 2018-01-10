@@ -1,5 +1,8 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
+import cn.edu.ruc.iir.pard.sql.tree.BooleanLiteral;
+import cn.edu.ruc.iir.pard.sql.tree.Expression;
+
 public class FalseExpr
         extends Expr
 {
@@ -48,5 +51,11 @@ public class FalseExpr
             return false;
         }
         return true;
+    }
+
+    @Override
+    public Expression toExpression()
+    {
+        return new BooleanLiteral("False");
     }
 }

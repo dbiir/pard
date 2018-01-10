@@ -1,5 +1,7 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
+import cn.edu.ruc.iir.pard.sql.tree.Expression;
+
 public class ValueItem
         extends Item implements Comparable<ValueItem>
 {
@@ -9,6 +11,7 @@ public class ValueItem
     {
         super();
         this.comp = vi.comp;
+        this.expression = vi.expression;
     }
     public ValueItem(@SuppressWarnings("rawtypes") Comparable comp)
     {
@@ -68,5 +71,16 @@ public class ValueItem
             return false;
         }
         return true;
+    }
+    @Override
+    public Expression toExpression()
+    {
+        //return null; //new DereferenceExpression(base, new Identifier(this.columnName));
+        if (expression != null) {
+            return expression;
+        }
+        else {
+            return Item.parseFromComparable(comp);
+        }
     }
 }

@@ -2,11 +2,16 @@ package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.catalog.GddUtil;
 import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpressionType;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 
 public class SingleExpr
         extends Expr
 {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 2099827759288242050L;
     private Item lvalue;
     private Item rvalue;
     private int compareType;
@@ -23,6 +28,20 @@ public class SingleExpr
         this.lvalue = lvalue;
         this.rvalue = rvalue;
         this.compareType = compareType;
+    }
+    public ComparisonExpressionType getType(int cmpType)
+    {
+        switch (cmpType) {
+            case GddUtil.compareEQUAL: return ComparisonExpressionType.EQUAL;
+            case GddUtil.compareGREAT: return ComparisonExpressionType.GREATER_THAN;
+            case GddUtil.compareGREATEQUAL: return ComparisonExpressionType.GREATER_THAN_OR_EQUAL;
+            case GddUtil.compareLESS: return ComparisonExpressionType.LESS_THAN;
+            case GddUtil.compareLESSEQUAL: return ComparisonExpressionType.LESS_THAN_OR_EQUAL;
+            case GddUtil.compareNOTEQUAL: return ComparisonExpressionType.NOT_EQUAL;
+            default:
+                break;
+        }
+        return null;
     }
     public SingleExpr(Expression expression)
     {
@@ -115,5 +134,11 @@ public class SingleExpr
             return false;
         }
         return true;
+    }
+    @Override
+    public Expression toExpression()
+    {
+        //ComparisonExpressionType ct = null;
+        return new ComparisonExpression(getType(this.compareType), lvalue.toExpression(), rvalue.toExpression());
     }
 }

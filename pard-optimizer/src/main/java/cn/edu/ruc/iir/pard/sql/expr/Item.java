@@ -19,6 +19,7 @@ public abstract class Item
      *
      */
     private static final long serialVersionUID = 1L;
+    protected transient Expression expression;
     public static Item clone(Item item)
     {
         if (item instanceof ValueItem) {
@@ -36,16 +37,47 @@ public abstract class Item
             //System.out.println("base :" + de.getBase().getClass().getName());
             //System.out.println("field:" + de.getField());
             ColumnItem ci = new ColumnItem(de.getBase().toString(), de.getField().toString(), 0);
+            ci.expression = expr;
             return ci;
         }
         else if (expr instanceof Literal) {
             ValueItem value = new ValueItem(parseFromLiteral((Literal) expr));
+            value.expression = expr;
             return value;
         }
         else {
             throw new NullPointerException("cannot parse the class " + expr.getClass().getName());
         }
         //return null;
+    }
+    public static Literal parseFromComparable(Comparable comp)
+    {
+        Object o = comp;
+        if (o == null) {
+            return new NullLiteral();
+        }
+        else if (o.getClass() == Long.class) {
+            return new LongLiteral(o.toString());
+        }
+        else if (o.getClass() == Double.class || o.getClass() == Float.class) {
+            return new DoubleLiteral(o.toString());
+        }
+        else if (o.getClass() == Boolean.class) {
+            return new BooleanLiteral(o.toString());
+        }
+        else if (o.getClass() == String.class) {
+            return new StringLiteral(o.toString());
+        }
+        else {
+            throw new NullPointerException(" cannot handle the literal class " + o.getClass());
+        }
+        /*
+        switch(o.getClass()) {
+            case Long.class:
+            case Double.class:
+            case Boolean.class:
+            case String.class:
+        }*/
     }
     public static Comparable parseFromLiteral(Literal literal)
     {
@@ -78,4 +110,5 @@ public abstract class Item
 
     public abstract int hashCode();
     public abstract boolean equals(Object o);
+    public abstract Expression toExpression();
 }

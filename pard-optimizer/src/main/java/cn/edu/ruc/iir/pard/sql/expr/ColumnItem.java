@@ -1,5 +1,9 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
+import cn.edu.ruc.iir.pard.sql.tree.DereferenceExpression;
+import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.Identifier;
+
 public class ColumnItem
         extends Item
 {
@@ -13,6 +17,7 @@ public class ColumnItem
         this.tableName = ci.tableName;
         this.columnName = ci.columnName;
         this.dataType = ci.dataType;
+        this.expression = ci.expression;
     }
     public ColumnItem(String tableName, String columnName, int dataType)
     {
@@ -85,5 +90,15 @@ public class ColumnItem
             return false;
         }
         return true;
+    }
+    @Override
+    public Expression toExpression()
+    {
+        if (expression != null) {
+            return expression;
+        }
+        else {
+            return new DereferenceExpression(new Identifier(tableName), new Identifier(this.columnName));
+        }
     }
 }

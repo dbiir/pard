@@ -12,7 +12,9 @@ import cn.edu.ruc.iir.pard.sql.tree.NullLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class CompositionExpr
         extends Expr
@@ -138,5 +140,26 @@ public class CompositionExpr
             return false;
         }
         return true;
+    }
+    @Override
+    public Expression toExpression()
+    {
+        Queue<Expression> que = new LinkedList<Expression>();
+        Type t = null;
+        if (this.logicOperator == LogicOperator.AND) {
+            t = Type.AND;
+        }
+        else {
+            t = Type.OR;
+        }
+        for (Expr e : this.getConditions()) {
+            que.add(e.toExpression());
+        }
+        while (que.size() > 1) {
+            Expression lv = que.poll();
+            Expression rv = que.poll();
+            que.add(new LogicalBinaryExpression(t, lv, rv));
+        }
+        return que.poll();
     }
 }

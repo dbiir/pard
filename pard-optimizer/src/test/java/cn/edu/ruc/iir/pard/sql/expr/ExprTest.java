@@ -29,7 +29,7 @@ public class ExprTest
     @Test
     public void pipeline()
     {
-        String sql = "select a,b,c from D,E where D.id=E.id and (d.a=1 or E.b=2 and C.k>3 or not (p.a<5 and p.d>7) and true) and d.c<10 and d.c<5";
+        String sql = "select a,b,c from D,E where D.id=E.id and (d.a=1 or E.b=2 and C.k>3 or not (p.a<5 and p.d>7) and true) and d.c<10 and d.c>11";
         SqlParser parser = new SqlParser();
         Statement stmt = parser.createStatement(sql);
         Query query = (Query) stmt;

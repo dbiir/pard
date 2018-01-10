@@ -79,4 +79,14 @@ public class UnaryExpr
         }
         return true;
     }
+    @Override
+    public Expression toExpression()
+    {
+        if (compareType == LogicOperator.NOTHING) {
+            return expression.toExpression();
+        }
+        else {
+            return new NotExpression(expression.toExpression());
+        }
+    }
 }

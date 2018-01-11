@@ -31,6 +31,7 @@ public class EtcdUtil
 {
     private static EtcdClient client = new EtcdClient();
     private static Logger log = Logger.getLogger(EtcdUtil.class);
+    private static boolean watchStarted = false;
     private static WatchThread etcdSiteWatch = new WatchThread();
     private static WatchThread etcdSchemaWatch = new WatchThread();
     private static WatchThread etcdUserWatch = new WatchThread();
@@ -51,18 +52,27 @@ public class EtcdUtil
     }
     public static void addWatch()
     {
+        if (watchStarted) {
+            return;
+        }
         etcdSiteWatch.setKey("site");
         etcdSchemaWatch.setKey("schema");
         etcdUserWatch.setKey("user");
         etcdSiteWatch.start();
         etcdSchemaWatch.start();
         etcdUserWatch.start();
+        watchStarted = true;
+        log.info("Etcd watch started");
     }
     public static void stopWatch()
     {
+        if (!watchStarted) {
+            return;
+        }
         etcdSiteWatch.stop();
         etcdSchemaWatch.stop();
         etcdUserWatch.stop();
+        watchStarted = false;
     }
     public static EtcdClient getClient()
     {
@@ -110,11 +120,7 @@ public class EtcdUtil
             putIntKV(etcd, "nextSiteId", gdd.getNextSiteId()).get();
             putIntKV(etcd, "nextUserId", gdd.getNextUserId()).get();
         }
-        catch (InterruptedException e1) {
-            e1.printStackTrace();
-            return false;
-        }
-        catch (ExecutionException e1) {
+        catch (InterruptedException | ExecutionException e1) {
             e1.printStackTrace();
             return false;
         }
@@ -148,10 +154,12 @@ public class EtcdUtil
         }
         return true;
     }
+
     public static boolean addSiteFromEtcd()
     {
         return true;
     }
+
     public static GDD loadGddFromEtcd()
     {
         GDD gdd = new GDD();
@@ -166,6 +174,7 @@ public class EtcdUtil
         gdd.setUserMap(userHashMap);
         return gdd;
     }
+
     public static HashMap<String, Site> loadSiteFromEtcd()
     {
         ByteSequence key = ByteSequence.fromString("site");
@@ -190,6 +199,7 @@ public class EtcdUtil
         }
         return siteHashMap;
     }
+
     public static HashMap<String, User> loadUserFromEtcd()
     {
         ByteSequence key = ByteSequence.fromString("user");
@@ -215,6 +225,7 @@ public class EtcdUtil
         }
         return userHashMap;
     }
+
     public static User convertUser(User user)
     {
         JSONObject jsonObject = JSONObject.fromObject(user.getSchemaMap());
@@ -235,6 +246,7 @@ public class EtcdUtil
         user.setTableMap(tableMap);
         return user;
     }
+
     public static HashMap<String, Schema> loadSchemaFromEtcd()
     {
         ByteSequence key = ByteSequence.fromString("schema");

@@ -10,9 +10,6 @@ import java.io.IOException;
 public class PardServlet
         extends HttpServlet
 {
-    /**
-     *
-     */
     private static final long serialVersionUID = 6154102774532361192L;
 
     @Override

@@ -7,12 +7,14 @@ import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableDropPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableShowPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.planner.dml.DeletePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.LoadPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
 import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
+import cn.edu.ruc.iir.pard.sql.tree.Delete;
 import cn.edu.ruc.iir.pard.sql.tree.DropSchema;
 import cn.edu.ruc.iir.pard.sql.tree.DropTable;
 import cn.edu.ruc.iir.pard.sql.tree.Insert;
@@ -48,6 +50,7 @@ public class PardPlanner
         ast2plan.put(ShowSchemas.class, SchemaShowPlan.class);
         ast2plan.put(ShowTables.class, TableShowPlan.class);
         ast2plan.put(Load.class, LoadPlan.class);
+        ast2plan.put(Delete.class, DeletePlan.class);
     }
     public Plan plan(Statement statement)
     {
@@ -62,30 +65,10 @@ public class PardPlanner
             Constructor con = planCls.getConstructor(new Class[]{Statement.class});
             return (Plan) con.newInstance(new Object[]{statement});
         }
-        catch (NoSuchMethodException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch (SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch (InstantiationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch (IllegalAccessException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch (IllegalArgumentException e) {
-            // TODO Auto-generated catch block
+        catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException e) {
             e.printStackTrace();
         }
         catch (InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            //System.out.println(e.getCause().getClass().getName());
-           // throw e.getCause()
             if (e.getCause() instanceof SemanticException) {
                 throw (SemanticException) e.getCause();
             }
@@ -93,7 +76,6 @@ public class PardPlanner
                 e.printStackTrace();
             }
         }
-        System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
         if (statement instanceof Query) {
             // query plan
             QueryPlan plan = new QueryPlan(statement);

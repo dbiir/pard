@@ -67,6 +67,7 @@ public class PardServer
         // start rpc server
         pipeline.addStartupHook(this::startRPCServer);
 
+        // add shutdown hook for calling stop function
         pipeline.addStartupHook(
                 () -> Runtime.getRuntime().addShutdownHook(
                         new Thread(PardServer.this::stop)));
@@ -97,6 +98,12 @@ public class PardServer
         currentSite.setFileExchangePort(configuration.getFileExchangePort());
         currentSite.setServerPort(configuration.getServerPort());
         siteDao.add(currentSite, false);
+    }
+
+    private void deRegisterNode()
+    {
+        SiteDao siteDao = new SiteDao();
+        siteDao.drop(configuration.getNodeName());
     }
 
     private void loadConnector()
@@ -149,6 +156,7 @@ public class PardServer
     private void stop()
     {
         System.out.println("****** Pard shutting down...");
+        deRegisterNode();
         socketListener.stop();
         rpcServer.stop();
         exchangeServer.stop();

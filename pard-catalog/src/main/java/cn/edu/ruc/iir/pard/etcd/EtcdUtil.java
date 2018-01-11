@@ -170,7 +170,7 @@ public class EtcdUtil
     {
         ByteSequence key = ByteSequence.fromString("site");
         CompletableFuture<GetResponse> getFuture = client.getClient().get(key);
-        HashMap<String, Site> siteHashMap = new HashMap<String, Site>();
+        HashMap<String, Site> siteHashMap = new HashMap<>();
         try {
             GetResponse response = getFuture.get();
             List<KeyValue> list = response.getKvs();

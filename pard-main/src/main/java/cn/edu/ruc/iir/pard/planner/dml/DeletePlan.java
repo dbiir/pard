@@ -12,6 +12,9 @@ import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage.ErrCode;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.sql.expr.Expr;
+import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
+import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
 import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.Delete;
 import cn.edu.ruc.iir.pard.sql.tree.DereferenceExpression;
@@ -19,6 +22,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 import cn.edu.ruc.iir.pard.sql.tree.IsNotNullPredicate;
 import cn.edu.ruc.iir.pard.sql.tree.IsNullPredicate;
+import cn.edu.ruc.iir.pard.sql.tree.Literal;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
 /**
@@ -29,13 +33,13 @@ import cn.edu.ruc.iir.pard.sql.tree.Statement;
 public class DeletePlan
         extends Plan
 {
-	 private Map<String, Expression> distributionHints;
+	 private Map<String, Expr> distributionHints;
     public DeletePlan(Statement stmt)
     {
         super(stmt);
     }
     
-    public Map<String, Expression> getDistributionHints()
+    public Map<String, Expr> getDistributionHints()
     {
         return this.distributionHints;
     }
@@ -89,9 +93,15 @@ public class DeletePlan
         {
         	return checkExpressionResult;
         }
+        Expr deleteExpr = Expr.parse(expression);
         for (String key : table.getFragment().keySet()) {
             Fragment f = table.getFragment().get(key);
-            distributionHints.put(f.getSiteName(), expression);
+            Expr fragExpr = Expr.parse(f.getCondition(), tableName);
+            Expr composeExpr = Expr.and(deleteExpr, deleteExpr, LogicOperator.AND);
+            if(!(composeExpr instanceof FalseExpr))
+            {
+                distributionHints.put(f.getSiteName(), composeExpr);
+            }
         }
         
         return null;
@@ -99,6 +109,7 @@ public class DeletePlan
     
     private ErrorMessage checkExpression(Table table, Expression expression)
     {
+    	System.out.println("checkExpression:" + expression.getClass().getName() + ", "+ expression.toString());
     	ErrorMessage result = null;
     	if(expression instanceof ComparisonExpression)
     	{
@@ -126,9 +137,11 @@ public class DeletePlan
     	}else if(expression instanceof DereferenceExpression)
     	{
     		result = checkExpression(table, ((DereferenceExpression)expression).getField());
+    	}else if(expression instanceof Literal)
+    	{
     	}else
     	{
-    		return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery);
+    		return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery,"unsupported expression type!");
     	}
 		return result;
     }

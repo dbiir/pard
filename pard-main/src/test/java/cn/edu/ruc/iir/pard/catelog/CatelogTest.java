@@ -8,7 +8,9 @@ import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.planner.dml.DeletePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
+import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Row;
@@ -96,6 +98,7 @@ public class CatelogTest
         Statement stmt = parser.createStatement(sql);
         System.out.println(stmt);
         InsertPlan iplan = new InsertPlan(stmt);
+        iplan.semanticAnalysis();
         Map<String, List<Row>> map = iplan.getDistributionHints();
         System.out.print("node\t");
         List<Column> clist = iplan.getColList();
@@ -113,6 +116,28 @@ public class CatelogTest
                 System.out.println("");
             }
         }
+    }
+    
+    @Test
+    public void deleteInto()
+    {
+        String sql2 = "use pardtest";
+        Statement useStmt = parser.createStatement(sql2);
+        System.out.println("sql2:" + useStmt);
+        UsePlan plan = new UsePlan(useStmt);
+        ErrorMessage msg = plan.semanticAnalysis();
+        System.out.println(msg);
+        String sql = "delete from emp where eno = 'E0001'";
+        Statement stmt = parser.createStatement(sql);
+        System.out.println("sql:" + sql + stmt);
+        DeletePlan dplan = new DeletePlan(stmt);
+        msg = dplan.semanticAnalysis();
+        System.out.println(msg);
+        Map<String, Expr> map = dplan.getDistributionHints();
+        for (String key : map.keySet()){
+        	System.out.println("fragment:" + key + ", expr:" + map.get(key).toString());
+        }
+        System.out.print("node\t");
     }
     @Test
     public void select()

@@ -18,6 +18,7 @@ public class UnionNode
 
     public UnionNode()
     {
+        this.name = "UNION";
         this.unionChildren = new ArrayList<>();
     }
     public UnionNode(UnionNode node)

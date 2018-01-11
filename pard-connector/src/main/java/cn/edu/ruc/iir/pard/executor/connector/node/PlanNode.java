@@ -15,6 +15,7 @@ public abstract class PlanNode
     private static final long serialVersionUID = -2786495926657736341L;
     private int childrenNum = 0;
     private PlanNode parent;
+    protected String name;
     private PlanNode[] children = new PlanNode[2];
 
     public boolean hasChildren()
@@ -58,6 +59,10 @@ public abstract class PlanNode
     void setParent(PlanNode parent)
     {
         this.parent = parent;
+    }
+    public String getName()
+    {
+        return name;
     }
 
     @Override

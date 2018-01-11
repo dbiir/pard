@@ -23,6 +23,7 @@ public class PardWebServer
         ServletHolder staticHolder = new ServletHolder(new StaticServlet());
         context.addServlet(staticHolder, "*.html");
         context.addServlet(staticHolder, "*.js");
+        context.addServlet(staticHolder, "*.css");
         context.addServlet(staticHolder, "*.jpg");
         context.setResourceBase(".");
         ServletHolder pardHolder = new ServletHolder(new PardServlet());

@@ -182,7 +182,7 @@ public class SemanticAnalysisTest
             JSONObject obj = new JSONObject();
             obj.put("name", "JOIN");
             JSONArray array = new JSONArray();
-            for (PlanNode p : cnode.getUnionChildren()) {
+            for (PlanNode p : cnode.getJoinChildren()) {
                 array.add(toJSON(p));
             }
             obj.put("children", array);

@@ -18,6 +18,7 @@ public class JoinNode
     private Set<String> joinSet;
     public JoinNode()
     {
+        name = "JOIN";
         joinSet = new HashSet<String>();
     }
     public boolean hasChildren()
@@ -29,7 +30,7 @@ public class JoinNode
         this.childrens.add(node);
     }
 
-    public List<PlanNode> getUnionChildren()
+    public List<PlanNode> getJoinChildren()
     {
         return childrens;
     }

@@ -27,7 +27,7 @@ public class StaticServlet
     {
         String str = req.getRequestURI();
         if (str.startsWith("/")) {
-            str = str.substring(1);
+            str = "webapp/" + str.substring(1);
         }
         InputStream in = this.getClass().getClassLoader().getResourceAsStream(str);
         if (in != null) {

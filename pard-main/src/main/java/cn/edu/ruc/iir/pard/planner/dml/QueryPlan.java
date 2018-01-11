@@ -116,7 +116,7 @@ public class QueryPlan
         boolean checkSchema = false;
         Schema schema = null;
         if (fromTable.getName().getPrefix().isPresent()) {
-            schemaName = fromTable.getName().getPrefix().toString();
+            schemaName = fromTable.getName().getPrefix().get().toString();
         }
         String fromTableName = fromTable.getName().getSuffix();
         if (schemaName == null) {
@@ -137,6 +137,12 @@ public class QueryPlan
             }
         }
         List<String> siteList = new ArrayList<String>();
+
+        TableDao tableDao = new TableDao(schema);
+        catalogTable = tableDao.loadByName(fromTableName);
+        if (catalogTable == null) {
+            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.TableNotExists, schemaName + "." + fromTableName);
+        }
         SiteDao sdao = new SiteDao();
         int pos = fromTableName.indexOf("@");
         if (pos > 0) {
@@ -148,12 +154,10 @@ public class QueryPlan
             fromTableName = fromTableName.substring(0, pos);
         }
         else {
-            siteList.addAll(sdao.listNodes().keySet());
-        }
-        TableDao tableDao = new TableDao(schema);
-        catalogTable = tableDao.loadByName(fromTableName);
-        if (catalogTable == null) {
-            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.TableNotExists, schemaName + "." + fromTableName);
+            //siteList.addAll(sdao.listNodes().keySet());
+            for (Fragment frag : catalogTable.getFragment().values()) {
+                siteList.add(frag.getSiteName());
+            }
         }
         for (Column col : catalogTable.getColumns().values()) {
             col2tbl.put(col.getColumnName(), fromTableName);

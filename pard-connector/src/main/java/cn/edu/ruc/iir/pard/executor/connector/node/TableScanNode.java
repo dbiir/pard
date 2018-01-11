@@ -30,6 +30,7 @@ public class TableScanNode
         this.project = null;
         this.filter = Optional.ofNullable(null);
         */
+        this.name = "TABLESCAN";
         this.schema = schema;
         this.table = table;
     }
@@ -43,6 +44,7 @@ public class TableScanNode
         this.project = null;
         this.filter = Optional.ofNullable(null);
         */
+        this.name = "TABLESCAN";
         this.schema = schema;
         this.table = table;
         this.site = site;

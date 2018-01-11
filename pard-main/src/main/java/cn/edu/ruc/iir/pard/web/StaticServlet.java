@@ -11,9 +11,6 @@ import java.io.InputStream;
 public class StaticServlet
         extends HttpServlet
 {
-    /**
-     *
-     */
     private static final long serialVersionUID = 6154102774532361192L;
    // private URL url = null;
     @Override
@@ -23,7 +20,7 @@ public class StaticServlet
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException
     {
         String str = req.getRequestURI();
         if (str.startsWith("/")) {

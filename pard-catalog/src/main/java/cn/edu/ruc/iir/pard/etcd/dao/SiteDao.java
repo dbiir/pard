@@ -61,7 +61,8 @@ public class SiteDao
         GDD gdd = load();
         Map<String, Site> siteMap = gdd.getSiteMap();
         if (siteMap.containsKey(name)) {
-            siteMap.put(name, null);
+//            siteMap.put(name, null);
+            siteMap.remove(name);
         }
         return persistGDD(gdd);
     }

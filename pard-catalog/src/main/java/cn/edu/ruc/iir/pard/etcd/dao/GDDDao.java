@@ -13,22 +13,10 @@ import cn.edu.ruc.iir.pard.etcd.EtcdUtil;
 public class GDDDao
 {
     private static GDD gdd = null;
-    private static boolean watchStart = false;
-
-    private static void initWatch()
-    {
-        EtcdUtil.addWatch();
-        watchStart = true;
-    }
 
     public GDDDao()
     {
-        if (!watchStart) {
-            initWatch();
-            Runtime.getRuntime().addShutdownHook(new Thread(()-> {
-                EtcdUtil.stopWatch();
-                watchStart = false; }));
-        }
+        EtcdUtil.addWatch();
     }
 
     public GDD load()

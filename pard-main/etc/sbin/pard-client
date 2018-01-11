@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ $# != 2 ] ; then
+    echo "pard-client <host> <port>"
+    exit
+fi
+
+cd `dirname $0`
+
+exec java -jar ../bin/pard-client.jar $1 $2

@@ -2,7 +2,6 @@ package cn.edu.ruc.iir.pard.client;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
-//import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 
@@ -71,14 +70,14 @@ public class PardClient
                                 int counter = 0;
                                 List<Row> rows = resultSet.getRows();
                                 for (Row row : rows) {
-                                    //System.out.println(RowConstructor.printRow(row, colTypes));
                                     String temp = RowConstructor.printRow(row, colTypes);
                                     String[] r = temp.substring(0, temp.length() - 1).split(",");
                                     pretty.addRow(r);
                                     counter++;
                                 }
                                 System.out.println(pretty);
-                                System.out.println("selected " + counter + " tuples");
+                                System.out.println("Selected " + counter + " tuples");
+                                System.out.println("Execution time: " + ((double) resultSet.getExecutionTime()) / 1000 + "s");
                             }
                             else {
                                 System.out.println(resultSet.getStatus().toString());

@@ -79,6 +79,7 @@ public class PardQueryHandler
     private PardResultSet executeQuery(String sql)
     {
         logger.info("Accepted query: " + sql);
+        long timerStart = System.currentTimeMillis();
         Job job = jobScheduler.newJob();
         if (job == null) {
             logger.log(Level.WARNING, "Cannot create job for sql: " + sql);
@@ -141,6 +142,8 @@ public class PardQueryHandler
         jobScheduler.updateJob(job.getJobId());
         logger.info("Done executing job[" + job.getJobId() + "], job state: " + job.getJobState());
 
+        long timerStop = System.currentTimeMillis();
+        resultSet.setExecutionTime(timerStop - timerStart);
         return resultSet;
     }
 }

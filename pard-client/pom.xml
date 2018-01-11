@@ -52,7 +52,6 @@
                                     <mainClass>cn.edu.ruc.iir.pard.client.PardClient</mainClass>
                                 </transformer>
                             </transformers>
-                            <outputDirectory>${main.basedir}/pard-server-test/</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

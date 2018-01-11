@@ -9,12 +9,18 @@ import org.eclipse.jetty.webapp.WebAppContext;
 public class PardWebServer
         implements Runnable
 {
+    private final int port;
     private Server jettyServer;
+
+    public PardWebServer(int port)
+    {
+        this.port = port;
+    }
+
     @Override
     public void run()
     {
-        int port = 18080;
-        jettyServer = new Server(port);
+        jettyServer = new Server(this.port);
         WebAppContext context = new WebAppContext();
         context.setContextPath("/");
         //context.setDescriptor("E:/share/test/struts2-blank/WEB-INF/web.xml");
@@ -54,6 +60,6 @@ public class PardWebServer
     }
     public static void main(String[] args)
     {
-        new PardWebServer().run();
+        new PardWebServer(10080).run();
     }
 }

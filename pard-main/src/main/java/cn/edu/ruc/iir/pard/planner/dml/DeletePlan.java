@@ -3,6 +3,7 @@ package cn.edu.ruc.iir.pard.planner.dml;
 import java.util.HashMap;
 import java.util.Map;
 
+import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
@@ -12,6 +13,7 @@ import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage.ErrCode;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.sql.expr.ColumnItem;
 import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
 import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
@@ -89,32 +91,45 @@ public class DeletePlan
         }
         Expression expression = delete.getExpression();
         ErrorMessage checkExpressionResult = checkExpression(table, expression);
-        if(checkExpressionResult != null)
+        if(checkExpressionResult.getErrcode() < 0)
         {
         	return checkExpressionResult;
+        }
+//        System.out.println("table:" + tableName + ", " + table.getTablename());
+
+        Map<String, String> col2tbl = ColumnItem.getCol2TblMap();
+        Table catalogTable = tableDao.loadByName(tableName);
+        if (catalogTable == null) {
+            return ErrorMessage.throwMessage(ErrorMessage.ErrCode.TableNotExists, schemaName + "." + tableName);
+        }
+        for (Column col : catalogTable.getColumns().values()) {
+            col2tbl.put(col.getColumnName(), tableName);
         }
         Expr deleteExpr = Expr.parse(expression);
         for (String key : table.getFragment().keySet()) {
             Fragment f = table.getFragment().get(key);
             Expr fragExpr = Expr.parse(f.getCondition(), tableName);
-            Expr composeExpr = Expr.and(deleteExpr, deleteExpr, LogicOperator.AND);
+            Expr composeExpr = Expr.and(fragExpr, deleteExpr, LogicOperator.AND);
+//            System.out.println("fargment:" + f.getFragmentName() + ", " + f.getSiteName() + 
+//            		", fragExpr:" + fragExpr.toString() + ", deleteExpr:" + deleteExpr.toString()
+//            		+ ", composeExpr:" + composeExpr.toString());
             if(!(composeExpr instanceof FalseExpr))
             {
                 distributionHints.put(f.getSiteName(), composeExpr);
             }
         }
         
-        return null;
+        return ErrorMessage.getOKMessage();
     }
     
     private ErrorMessage checkExpression(Table table, Expression expression)
     {
-    	System.out.println("checkExpression:" + expression.getClass().getName() + ", "+ expression.toString());
-    	ErrorMessage result = null;
+//    	System.out.println("checkExpression:" + expression.getClass().getName() + ", "+ expression.toString());
+    	ErrorMessage result = ErrorMessage.getOKMessage();;
     	if(expression instanceof ComparisonExpression)
     	{
     		result = checkExpression(table, ((ComparisonExpression)expression).getLeft());
-    		if(result == null)
+    		if(result.getErrcode() >= 0)
     		{
     			result = checkExpression(table, ((ComparisonExpression)expression).getRight());
 
@@ -136,6 +151,12 @@ public class DeletePlan
     		}
     	}else if(expression instanceof DereferenceExpression)
     	{
+    		Expression base = ((DereferenceExpression)expression).getBase();
+//    		System.out.println("checkExpression-base:" + base.getClass().getName() + ", "+ base.toString());
+    		if(!(base instanceof Identifier))
+    		{
+    			return ErrorMessage.throwMessage(ErrorMessage.ErrCode.UnSupportedQuery,"unsupported expression type!");
+    		}
     		result = checkExpression(table, ((DereferenceExpression)expression).getField());
     	}else if(expression instanceof Literal)
     	{

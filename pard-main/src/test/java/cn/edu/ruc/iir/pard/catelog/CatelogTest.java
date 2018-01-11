@@ -147,12 +147,12 @@ public class CatelogTest
         UsePlan plan = new UsePlan(useStmt);
         ErrorMessage msg = plan.semanticAnalysis();
         System.out.println(msg);
-        String sql = "delete from emp where eno = 'E0001'";
+        String sql = "delete from emp where eno < 'E0010'";
         Statement stmt = parser.createStatement(sql);
-        System.out.println("sql:" + sql + stmt);
+        System.out.println("sql:" + sql + "," + stmt);
         DeletePlan dplan = new DeletePlan(stmt);
-        msg = dplan.semanticAnalysis();
-        System.out.println(msg);
+//        msg = dplan.semanticAnalysis();
+//        System.out.println(msg);
         Map<String, Expr> map = dplan.getDistributionHints();
         for (String key : map.keySet()){
         	System.out.println("fragment:" + key + ", expr:" + map.get(key).toString());

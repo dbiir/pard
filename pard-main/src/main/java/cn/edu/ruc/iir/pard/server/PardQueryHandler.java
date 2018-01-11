@@ -8,6 +8,7 @@ import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.scheduler.Job;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
 import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
+import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
@@ -103,7 +104,13 @@ public class PardQueryHandler
         jobScheduler.updateJob(job.getJobId());
         logger.info("Created statement for job[" + job.getJobId() + "], job state: " + job.getJobState());
 
-        Plan plan = planner.plan(statement);
+        Plan plan = null;
+        try {
+            plan = planner.plan(statement);
+        }
+        catch (SemanticException e) {
+            logger.log(Level.WARNING, e.getSemanticErrorMessage().toString());
+        }
         if (plan == null) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create plan for sql: " + sql);

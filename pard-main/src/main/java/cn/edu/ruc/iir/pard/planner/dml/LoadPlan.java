@@ -42,12 +42,12 @@ public class LoadPlan
     public LoadPlan(Statement stmt)
     {
         super(stmt);
-        this.distributionHints = new HashMap<>();
     }
 
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        this.distributionHints = new HashMap<>();
         boolean checkSchema = false;
         Load load = (Load) getStatment();
         Schema schema = null;

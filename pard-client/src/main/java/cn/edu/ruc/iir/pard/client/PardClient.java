@@ -162,23 +162,23 @@ public class PardClient
                                 });
                                 //String header = Arrays.toString(colNames.toArray());
                                 Object[] header = colNames.toArray();
+                                String[] tableHeader = new String[header.length];
+                                for (int i = 0; i < tableHeader.length; i++) {
+                                    tableHeader[i] = (String) header[i];
+                                }
+                                PrettyTable pretty = new PrettyTable(tableHeader);
+                                List<Row> rows = new ArrayList<Row>();
 
-                                for (Object s : header) {
-                                    System.out.print("\t" + s + "\t");
-                                    System.out.print("|");
-                                }
-                                System.out.println();
-                                /*
-                                System.out.println(header);
-                                for (int i = 0; i < header.length(); i++) {
-                                    System.out.print("-");
-                                }
-                                */
-                                System.out.print("\n");
-                                List<Row> rows = resultSet.getRows();
-                                for (Row row : rows) {
-                                    System.out.println(RowConstructor.printRow(row, colTypes));
-                                }
+                                RowConstructor rc1 = new RowConstructor();
+                                rc1.appendString(" jafafa    `");
+                                rc1.appendInt(121345);
+                                rc1.appendString("RUCRUCRUCRUCRUCRUC");
+                                rc1.appendFloat(78.2f);
+                                Row row1 = rc1.build();
+                                String temp = rc1.printRow(row1,colTypes);
+                                String [] r1 = temp.substring(0,temp.length()-1).split(",");
+                                pretty.addRow(r1);
+                                System.out.println(pretty);
                             }
                             else {
                                 System.out.println(resultSet.getStatus().toString());
@@ -225,6 +225,7 @@ public class PardClient
         table.addRow("John", "Doe", "johndoe@nothing.com", "+2137999999");
         table.addRow("Jane", "Doe", "janedoe@nothin.com", "+2137999999");
         System.out.println(table);
+
         PardClient pc = new PardClient();
         pc.run();
     }

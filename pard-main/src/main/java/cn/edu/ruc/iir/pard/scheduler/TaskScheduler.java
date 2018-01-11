@@ -14,6 +14,7 @@ import cn.edu.ruc.iir.pard.exchange.PardFileExchangeClient;
 import cn.edu.ruc.iir.pard.executor.connector.Block;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.DeleteTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
@@ -37,6 +38,7 @@ import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.LoadPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.server.PardStartupHook;
+import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Row;
 import com.google.common.collect.ImmutableList;
@@ -224,7 +226,21 @@ public class TaskScheduler
         }
 
         if (plan instanceof DeletePlan) {
-            // todo generate tasks for delete plan
+            logger.info("Task generation for delete plan");
+            DeletePlan deletePlan = (DeletePlan) plan;
+            Map<String, Expr> distributionHints = deletePlan.getDistributionHints();
+            List<Task> tasks = new ArrayList<>();
+            int index = 0;
+            for (String site : distributionHints.keySet()) {
+                DeleteTask task = new DeleteTask(
+                        deletePlan.getSchemaName(),
+                        deletePlan.getTableName(),
+                        distributionHints.get(site).toExpression());
+                task.setTaskId(plan.getJobId() + "-" + index);
+                tasks.add(task);
+                index++;
+            }
+            return ImmutableList.copyOf(tasks);
         }
 
         // query plan
@@ -385,6 +401,42 @@ public class TaskScheduler
                 }
                 return resultSet;
             }
+
+            // delete
+            if (plan instanceof DeletePlan) {
+                Map<String, Task> taskMap = new HashMap<>();
+                ConcurrentLinkedQueue<Block> blocks = new ConcurrentLinkedQueue<>();
+                for (Task task : tasks) {
+                    String site = task.getSite();
+                    Site nodeSite = siteDao.listNodes().get(site);
+                    if (nodeSite == null) {
+                        logger.info("No corresponding node " + site + " found for execution.");
+                        continue;
+                    }
+                    PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+                    client.connect(task, blocks);
+                    taskMap.put(task.getTaskId(), task);
+                }
+                // wait for all tasks done
+                while (!taskMap.isEmpty()) {
+                    Block block = blocks.poll();
+                    if (block == null) {
+                        logger.info("Waiting for more blocks...");
+                        continue;
+                    }
+                    List<cn.edu.ruc.iir.pard.commons.memory.Row> rows = block.getRows();
+                    if (rows.isEmpty()) {
+                        return PardResultSet.execErrResultSet;
+                    }
+                    if (!block.isSequenceHasNext()) {
+                        String taskId = block.getTaskId();
+                        taskMap.remove(taskId);
+                        logger.info("Task " + taskId + " done.");
+                    }
+                }
+                return PardResultSet.okResultSet;
+            }
+
             // rpc task
             else {
                 List<Integer> statusL = new ArrayList<>();

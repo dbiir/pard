@@ -34,6 +34,9 @@ public class DeletePlan
         extends Plan
 {
     private Map<String, Expr> distributionHints;
+    private String schemaName;
+    private String tableName;
+
     public DeletePlan(Statement stmt)
     {
         super(stmt);
@@ -52,8 +55,6 @@ public class DeletePlan
         if (!(statement instanceof Delete)) {
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.ParseError, "delete statement.");
         }
-        String tableName = null;
-        String schemaName = null;
         Schema schema = null;
         Table table = null;
 
@@ -111,6 +112,16 @@ public class DeletePlan
             }
         }
         return ErrorMessage.getOKMessage();
+    }
+
+    public String getSchemaName()
+    {
+        return schemaName;
+    }
+
+    public String getTableName()
+    {
+        return tableName;
     }
 
     private ErrorMessage checkExpression(Table table, Expression expression)

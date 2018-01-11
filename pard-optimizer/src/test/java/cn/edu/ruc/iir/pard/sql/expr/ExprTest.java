@@ -58,6 +58,32 @@ public class ExprTest
             }
         }
     }
+    public static PushDownLaw pdAnd = new PushDownLaw(LogicOperator.AND);
+    public static PushDownLaw pdOr = new PushDownLaw(LogicOperator.OR);
+    public static TrueFalseLaw tfLaw = new TrueFalseLaw();
+    public static MinimalItemLaw milaw = new MinimalItemLaw();
+    @Test
+    public void justTest2()
+    {
+        String sql = "select a,b,c from A,B where( A.a>1 or B.c>5) and (A.p>3 or B.d<4) and A.k=1";
+        SqlParser parser = new SqlParser();
+        Statement stmt = parser.createStatement(sql);
+        //System.out.println(stmt.toString());
+        Query query = (Query) stmt;
+        QueryBody queryBody = query.getQueryBody();
+        QuerySpecification querySpecification = (QuerySpecification) queryBody;
+        Select select = querySpecification.getSelect();
+        Optional<Expression> oexpr = querySpecification.getWhere();
+        if (oexpr.isPresent()) {
+            Expression expr = oexpr.get();
+            //System.out.println(expr.toString());
+            Expr exp = Expr.parse(expr);
+            Expr a1 = Expr.extractTableFilter(exp, "A");
+            System.out.println(a1);
+            Expr b1 = Expr.extractTableFilter(exp, "B");
+            System.out.println(b1);
+        }
+    }
     @Test
     public void justTest()
     {

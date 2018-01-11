@@ -1,7 +1,5 @@
 package cn.edu.ruc.iir.pard.etcd;
 
-//import com.coreos.jetcd.KV;
-
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Condition;
 import cn.edu.ruc.iir.pard.catalog.Fragment;
@@ -35,21 +33,11 @@ public class EtcdUtil
     private static WatchThread etcdSiteWatch = new WatchThread();
     private static WatchThread etcdSchemaWatch = new WatchThread();
     private static WatchThread etcdUserWatch = new WatchThread();
+
     private EtcdUtil()
     {
-        if (client == null) {
-            client = new EtcdClient();
-        }
-        if (etcdSiteWatch == null) {
-            etcdSiteWatch = new WatchThread();
-        }
-        if (etcdSchemaWatch == null) {
-            etcdSchemaWatch = new WatchThread();
-        }
-        if (etcdUserWatch == null) {
-            etcdUserWatch = new WatchThread();
-        }
     }
+
     public static void addWatch()
     {
         if (watchStarted) {
@@ -64,6 +52,7 @@ public class EtcdUtil
         watchStarted = true;
         log.info("Etcd watch started");
     }
+
     public static void stopWatch()
     {
         if (!watchStarted) {
@@ -74,19 +63,20 @@ public class EtcdUtil
         etcdUserWatch.stop();
         watchStarted = false;
     }
+
     public static EtcdClient getClient()
     {
         return client;
     }
+
     private static CompletableFuture<PutResponse> putIntKV(KV etcd, String key, int value)
     {
-        byte[] bv = new byte[4];
-        bv = Lib.bytesFromInt(value);
+        byte[] bv = Lib.bytesFromInt(value);
         ByteSequence bkey = ByteSequence.fromString(key);
         ByteSequence bvalue = ByteSequence.fromBytes(bv);
-        //System.out.println(" put bvalue leng " + bv.length + " value" + value + " " + bv[0] + bv[1] + bv[2] + bv[3]);
         return etcd.put(bkey, bvalue);
     }
+
     private static CompletableFuture<GetResponse> getIntKV(KV etcd, String key)
     {
         ByteSequence bkey = ByteSequence.fromString(key);
@@ -101,7 +91,6 @@ public class EtcdUtil
                 return 0;
             }
             byte[] bvalue = kv.get(0).getValue().getBytes();
-            //System.out.println("get bvalue leng " + bvalue.length + " value" + Lib.bytesToInt(bvalue, 0) + " " + bvalue[0] + bvalue[1] + bvalue[2] + bvalue[3]);
             return Lib.bytesToInt(bvalue, 0);
         }
         catch (InterruptedException | ExecutionException e) {
@@ -155,11 +144,6 @@ public class EtcdUtil
         return true;
     }
 
-    public static boolean addSiteFromEtcd()
-    {
-        return true;
-    }
-
     public static GDD loadGddFromEtcd()
     {
         GDD gdd = new GDD();
@@ -175,7 +159,7 @@ public class EtcdUtil
         return gdd;
     }
 
-    public static HashMap<String, Site> loadSiteFromEtcd()
+    private static HashMap<String, Site> loadSiteFromEtcd()
     {
         ByteSequence key = ByteSequence.fromString("site");
         CompletableFuture<GetResponse> getFuture = client.getClient().get(key);
@@ -200,11 +184,11 @@ public class EtcdUtil
         return siteHashMap;
     }
 
-    public static HashMap<String, User> loadUserFromEtcd()
+    private static HashMap<String, User> loadUserFromEtcd()
     {
         ByteSequence key = ByteSequence.fromString("user");
         CompletableFuture<GetResponse> getFuture = client.getClient().get(key);
-        HashMap<String, User> userHashMap = new HashMap<String, User>();
+        HashMap<String, User> userHashMap = new HashMap<>();
         try {
             GetResponse response = getFuture.get();
             List<KeyValue> list = response.getKvs();
@@ -226,7 +210,7 @@ public class EtcdUtil
         return userHashMap;
     }
 
-    public static User convertUser(User user)
+    private static User convertUser(User user)
     {
         JSONObject jsonObject = JSONObject.fromObject(user.getSchemaMap());
         HashMap<String, Privilege> schemaMap = new HashMap<String, Privilege>();
@@ -247,7 +231,7 @@ public class EtcdUtil
         return user;
     }
 
-    public static HashMap<String, Schema> loadSchemaFromEtcd()
+    private static HashMap<String, Schema> loadSchemaFromEtcd()
     {
         ByteSequence key = ByteSequence.fromString("schema");
         CompletableFuture<GetResponse> getFuture = client.getClient().get(key);
@@ -277,7 +261,8 @@ public class EtcdUtil
         }
         return schemaHashMap;
     }
-    public static Schema convertSchema(Schema schema)
+
+    private static Schema convertSchema(Schema schema)
     {
         List<Table> tableList = schema.getTableList();
         for (Table table : tableList) {
@@ -313,7 +298,8 @@ public class EtcdUtil
         }
         return schema;
     }
-    public static Fragment convertFragment(Fragment fragment)
+
+    private static Fragment convertFragment(Fragment fragment)
     {
         Table table = fragment.getSubTable();
         if (table != null) {
@@ -341,7 +327,8 @@ public class EtcdUtil
         }
         return fragment;
     }
-    public static Statics convertStatic(Statics statics)
+
+    private static Statics convertStatic(Statics statics)
     {
         JSONObject jsonObject = JSONObject.fromObject(statics.getStaticList());
         HashMap<String, Integer> staticList = new HashMap<String, Integer>();
@@ -353,26 +340,32 @@ public class EtcdUtil
         statics.setStaticList(staticList);
         return statics;
     }
+
     public static boolean isSiteChanged()
     {
         return etcdSiteWatch.getFlag();
     }
+
     public static boolean isSchemaChanged()
     {
         return etcdSchemaWatch.getFlag();
     }
+
     public static boolean isUserChanged()
     {
         return etcdUserWatch.getFlag();
     }
+
     public static void setSiteChanged(boolean flag)
     {
         etcdSiteWatch.setFlag(flag);
     }
+
     public static void setSchemaChanged(boolean flag)
     {
         etcdSchemaWatch.setFlag(flag);
     }
+
     public static void setUserChanged(boolean flag)
     {
         etcdUserWatch.setFlag(flag);

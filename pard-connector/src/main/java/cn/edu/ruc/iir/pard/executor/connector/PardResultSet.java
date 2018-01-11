@@ -61,6 +61,7 @@ public class PardResultSet
     private final int capacity;
     private int currentSize = 0;
     private String taskId;
+    private long executionTime;
     private transient ResultSet jdbcResultSet;
     private transient Connection connection;
 
@@ -233,6 +234,16 @@ public class PardResultSet
                 e.printStackTrace();
             }
         }
+    }
+
+    public long getExecutionTime()
+    {
+        return executionTime;
+    }
+
+    public void setExecutionTime(long executionTime)
+    {
+        this.executionTime = executionTime;
     }
 
     @Override

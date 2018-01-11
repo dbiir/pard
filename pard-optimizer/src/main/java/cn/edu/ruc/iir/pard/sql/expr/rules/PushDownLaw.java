@@ -52,8 +52,13 @@ public class PushDownLaw
                 }
             }
             else if (e instanceof CompositionExpr) {
-                e = formatExpr((CompositionExpr) e);
-                add(ret.getConditions(), e);
+                CompositionExpr ce = formatExpr((CompositionExpr) e);
+                if (ce.getConditions().size() > 1) {
+                    add(ret.getConditions(), ce);
+                }
+                else if (ce.getConditions().size() == 1) {
+                    add(ret.getConditions(), ce.getConditions().get(0));
+                }
             }
             else {
                 add(ret.getConditions(), e);

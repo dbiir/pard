@@ -2,10 +2,9 @@ package cn.edu.ruc.iir.pard.client;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
-import cn.edu.ruc.iir.pard.commons.utils.DataType;
+//import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -13,7 +12,6 @@ import java.io.ObjectInputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -36,7 +34,6 @@ public class PardClient
         this.scanner = new Scanner(System.in);
     }
 
-    /*
     public void run()
     {
         System.out.println("Welcome to Pard.");
@@ -52,7 +49,7 @@ public class PardClient
                     for (String q : queries) {
                         outWriter.write(q);
                         outWriter.newLine();
-                        outWriter.fl}ush();
+                        outWriter.flush();
                         Object obj = inputStream.readObject();
                         if (obj instanceof PardResultSet) {
                             PardResultSet resultSet = (PardResultSet) obj;
@@ -65,16 +62,23 @@ public class PardClient
                                     colNames.add(c.getColumnName());
                                     colTypes.add(c.getDataType());
                                 });
-                                String header = Arrays.toString(colNames.toArray());
-                                System.out.println(header);
-                                for (int i = 0; i < header.length(); i++) {
-                                    System.out.print("-");
+                                Object[] header = colNames.toArray();
+                                String[] tableHeader = new String[header.length];
+                                for (int i = 0; i < tableHeader.length; i++) {
+                                    tableHeader[i] = (String) header[i];
                                 }
-                                System.out.print("\n");
+                                PrettyTable pretty = new PrettyTable(tableHeader);
+                                int counter = 0;
                                 List<Row> rows = resultSet.getRows();
                                 for (Row row : rows) {
-                                    System.out.println(RowConstructor.printRow(row, colTypes));
+                                    //System.out.println(RowConstructor.printRow(row, colTypes));
+                                    String temp = RowConstructor.printRow(row, colTypes);
+                                    String[] r = temp.substring(0, temp.length() - 1).split(",");
+                                    pretty.addRow(r);
+                                    counter++;
                                 }
+                                System.out.println(pretty);
+                                System.out.println("selected " + counter + " tuples");
                             }
                             else {
                                 System.out.println(resultSet.getStatus().toString());
@@ -97,7 +101,8 @@ public class PardClient
         System.out.println("Bye Pard");
         System.exit(0);
     }
-*/
+
+    /*
     public PardClient()
     {
         this.inputStream = null;
@@ -105,7 +110,7 @@ public class PardClient
         this.scanner = new Scanner(System.in);
     }
 
-    public void run()
+    public void testrun()
     {
         System.out.println("Welcome to Pard.");
         while (true) {
@@ -146,9 +151,8 @@ public class PardClient
                         columns0.add(col2);
                         columns0.add(col3);
                         prs.setSchema(columns0);
-
                         Object obj = prs;
-
+                        String temp = null;
                         if (obj instanceof PardResultSet) {
                             PardResultSet resultSet = (PardResultSet) obj;
                             if (resultSet.getStatus() == PardResultSet.ResultStatus.OK) {
@@ -160,24 +164,75 @@ public class PardClient
                                     colNames.add(c.getColumnName());
                                     colTypes.add(c.getDataType());
                                 });
-                                //String header = Arrays.toString(colNames.toArray());
                                 Object[] header = colNames.toArray();
                                 String[] tableHeader = new String[header.length];
                                 for (int i = 0; i < tableHeader.length; i++) {
                                     tableHeader[i] = (String) header[i];
                                 }
                                 PrettyTable pretty = new PrettyTable(tableHeader);
-                                List<Row> rows = new ArrayList<Row>();
+                                //List<Row> rows = new ArrayList<Row>();
 
                                 RowConstructor rc1 = new RowConstructor();
-                                rc1.appendString(" jafafa    `");
+                                rc1.appendString("TOMTOMTOM");
                                 rc1.appendInt(121345);
                                 rc1.appendString("RUCRUCRUCRUCRUCRUC");
                                 rc1.appendFloat(78.2f);
                                 Row row1 = rc1.build();
-                                String temp = rc1.printRow(row1,colTypes);
-                                String [] r1 = temp.substring(0,temp.length()-1).split(",");
+                                temp = rc1.printRow(row1, colTypes);
+                                String[] r1 = temp.substring(0, temp.length() - 1).split(",");
+
+                                RowConstructor rc2 = new RowConstructor();
+                                rc2.appendString("TOMTOMTOMTOMTOMTOMTOMTOMTOM");
+                                rc2.appendInt(1213415565);
+                                rc2.appendString("RUCRUCRUCRUCRUCRUCRUCRUCRUCRUCRUCRUC");
+                                rc2.appendFloat(78.248481f);
+                                Row row2 = rc2.build();
+                                temp = rc2.printRow(row2, colTypes);
+                                String[] r2 = temp.substring(0, temp.length() - 1).split(",");
+
+                                RowConstructor rc3 = new RowConstructor();
+                                rc3.appendString("TOM");
+                                rc3.appendInt(1214);
+                                rc3.appendString("RUC");
+                                rc3.appendFloat(78.248481f);
+                                Row row3 = rc3.build();
+                                temp = rc3.printRow(row3, colTypes);
+                                String[] r3 = temp.substring(0, temp.length() - 1).split(",");
+
+                                RowConstructor rc4 = new RowConstructor();
+                                rc4.appendString("T");
+                                rc4.appendInt(121345);
+                                rc4.appendString("R");
+                                rc4.appendFloat(78.2f);
+                                Row row4 = rc4.build();
+                                temp = rc4.printRow(row1, colTypes);
+                                String[] r4 = temp.substring(0, temp.length() - 1).split(",");
+
+                                RowConstructor rc5 = new RowConstructor();
+                                rc5.appendString("OM");
+                                rc5.appendInt(1213415565);
+                                rc5.appendString("UCR");
+                                rc5.appendFloat(78.248481f);
+                                Row row5 = rc5.build();
+                                temp = rc5.printRow(row5, colTypes);
+                                String[] r5 = temp.substring(0, temp.length() - 1).split(",");
+
+                                RowConstructor rc6 = new RowConstructor();
+                                rc6.appendString("OMT");
+                                rc6.appendInt(1214);
+                                rc6.appendString("CRU");
+                                rc6.appendFloat(78.248481f);
+                                Row row6 = rc6.build();
+                                temp = rc6.printRow(row3, colTypes);
+                                String[] r6 = temp.substring(0, temp.length() - 1).split(",");
+
                                 pretty.addRow(r1);
+                                pretty.addRow(r2);
+                                pretty.addRow(r3);
+                                pretty.addRow(r4);
+                                pretty.addRow(r5);
+                                pretty.addRow(r6);
+
                                 System.out.println(pretty);
                             }
                             else {
@@ -202,9 +257,21 @@ public class PardClient
         System.exit(0);
     }
 
+    private static void testPrettyTable()
+    {
+        PrettyTable table = new PrettyTable("Firstname", "Lastname", "Email", "Phone");
+        table.addRow("John", "Doe", "johndoe@nothing.com", "+2137999999");
+        table.addRow("Jane", "Doe", "janedoe@nothin.com", "+2137999999");
+        System.out.println(table);
+        PardClient pc = new PardClient();
+        pc.testrun();
+    }
+
+    */
     public static void main(String[] args)
     {
-        /*
+        //testPrettyTable();
+
         if (args.length != 2) {
             System.out.println("PardClient <host> <port>");
             System.exit(-1);
@@ -212,87 +279,12 @@ public class PardClient
         String host = args[0];
         int port = Integer.parseInt(args[1]);
         System.out.println("Connecting to " + host + ":" + port);
-        try {printstream 初始化
+        try {
             PardClient client = new PardClient(host, port);
             client.run();
         }
         catch (IOException e) {
             e.printStackTrace();
         }
-        */
-
-        PrettyTable table = new PrettyTable("Firstname", "Lastname", "Email", "Phone");
-        table.addRow("John", "Doe", "johndoe@nothing.com", "+2137999999");
-        table.addRow("Jane", "Doe", "janedoe@nothin.com", "+2137999999");
-        System.out.println(table);
-
-        PardClient pc = new PardClient();
-        pc.run();
-    }
-}
-
-class PrettyTable
-{
-    private List<String> headers = new ArrayList<>();
-    private List<List<String>> data = new ArrayList<>();
-
-    public PrettyTable(String... headers)
-    {
-        this.headers.addAll(Arrays.asList(headers));
-    }
-
-    public void addRow(String... row)
-    {
-        data.add(Arrays.asList(row));
-    }
-
-    private int getMaxSize(int column)
-    {
-        int maxSize = headers.get(column).length();
-        for (List<String> row : data) {
-            if (row.get(column).length() > maxSize) {
-                maxSize = row.get(column).length();
-            }
-        }
-        return maxSize;
-    }
-
-    private String formatRow(List<String> row)
-    {
-        StringBuilder result = new StringBuilder();
-        result.append("|");
-        for (int i = 0; i < row.size(); i++) {
-            result.append(StringUtils.center(row.get(i), getMaxSize(i) + 2));
-            result.append("|");
-        }
-        result.append("\n");
-        return result.toString();
-    }
-
-    private String formatRule()
-    {
-        StringBuilder result = new StringBuilder();
-        result.append("+");
-        for (int i = 0; i < headers.size(); i++) {
-            for (int j = 0; j < getMaxSize(i) + 2; j++) {
-                result.append("-");
-            }
-            result.append("+");
-        }
-        result.append("\n");
-        return result.toString();
-    }
-
-    public String toString()
-    {
-        StringBuilder result = new StringBuilder();
-        result.append(formatRule());
-        result.append(formatRow(headers));
-        result.append(formatRule());
-        for (List<String> row : data) {
-            result.append(formatRow(row));
-        }
-        result.append(formatRule());
-        return result.toString();
     }
 }

@@ -41,8 +41,9 @@ public class JoinNode
     public String toString()
     {
         return toStringHelper(this)
-                .add("name", "UNION")
+                .add("name", "JOIN")
                 .add("children", childrens)
+                .add("joinSet", this.joinSet)
                 .toString();
     }
 }

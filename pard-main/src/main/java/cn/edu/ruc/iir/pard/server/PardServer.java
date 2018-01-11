@@ -27,7 +27,7 @@ public class PardServer
     private PardTaskExecutor executor;
     private JobScheduler jobScheduler;
     private TaskScheduler taskScheduler;
-
+    private PardWebServer webServer;
     private PardServer(String configurationPath)
     {
         this.configuration = PardUserConfiguration.INSTANCE();
@@ -73,6 +73,7 @@ public class PardServer
 
         // start socket listener
         pipeline.addStartupHook(this::startSocketListener);
+        pipeline.addStartupHook(this::startWebServer);
 
         try {
             pipeline.startup();
@@ -145,10 +146,15 @@ public class PardServer
     {
         this.taskScheduler = TaskScheduler.INSTANCE();
     }
-
+    private void startWebServer()
+    {
+        this.webServer = new PardWebServer();
+        new Thread(webServer).start();
+    }
     private void stop()
     {
         System.out.println("****** Pard shutting down...");
+        webServer.stop();
         socketListener.stop();
         rpcServer.stop();
         exchangeServer.stop();
@@ -159,7 +165,12 @@ public class PardServer
 
     public static void main(String[] args)
     {
-        PardServer server = new PardServer(args[0]);
-        server.startup();
+        if (args.length == 1 && "jetty".equals(args[0])) {
+            new PardWebServer().run();
+        }
+        else {
+            PardServer server = new PardServer(args[0]);
+            server.startup();
+        }
     }
 }

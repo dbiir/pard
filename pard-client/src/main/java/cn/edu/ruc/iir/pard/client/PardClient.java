@@ -5,9 +5,12 @@ import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
-import javafx.beans.binding.ObjectExpression;
+import org.apache.commons.lang.StringUtils;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +52,7 @@ public class PardClient
                     for (String q : queries) {
                         outWriter.write(q);
                         outWriter.newLine();
-                        outWriter.flush();
+                        outWriter.fl}ush();
                         Object obj = inputStream.readObject();
                         if (obj instanceof PardResultSet) {
                             PardResultSet resultSet = (PardResultSet) obj;
@@ -100,17 +103,6 @@ public class PardClient
         this.inputStream = null;
         this.outWriter = new BufferedWriter(new OutputStreamWriter(System.out));
         this.scanner = new Scanner(System.in);
-    }
-
-    public void writeOut()
-    {
-        try {
-            this.outWriter.write("hello world");
-            this.outWriter.newLine();
-            this.outWriter.flush();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
     }
 
     public void run()
@@ -169,17 +161,13 @@ public class PardClient
                                     colTypes.add(c.getDataType());
                                 });
                                 //String header = Arrays.toString(colNames.toArray());
-                                Object [] header = colNames.toArray();
+                                Object[] header = colNames.toArray();
 
-                                for(Object s: header) {
-
+                                for (Object s : header) {
                                     System.out.print("\t" + s + "\t");
                                     System.out.print("|");
                                 }
                                 System.out.println();
-                                for (int i = 0; i < header.length; ｉ ++) {
-                                    
-                                }
                                 /*
                                 System.out.println(header);
                                 for (int i = 0; i < header.length(); i++) {
@@ -233,19 +221,77 @@ public class PardClient
         }
         */
 
-        test();
+        PrettyTable table = new PrettyTable("Firstname", "Lastname", "Email", "Phone");
+        table.addRow("John", "Doe", "johndoe@nothing.com", "+2137999999");
+        table.addRow("Jane", "Doe", "janedoe@nothin.com", "+2137999999");
+        System.out.println(table);
+        PardClient pc = new PardClient();
+        pc.run();
+    }
+}
 
+class PrettyTable
+{
+    private List<String> headers = new ArrayList<>();
+    private List<List<String>> data = new ArrayList<>();
+
+    public PrettyTable(String... headers)
+    {
+        this.headers.addAll(Arrays.asList(headers));
     }
 
-    private static void test()
+    public void addRow(String... row)
     {
-        try {
-            PardClient pc = new PardClient();
-            //pc.writeOut();
-            pc.run();
+        data.add(Arrays.asList(row));
+    }
+
+    private int getMaxSize(int column)
+    {
+        int maxSize = headers.get(column).length();
+        for (List<String> row : data) {
+            if (row.get(column).length() > maxSize) {
+                maxSize = row.get(column).length();
+            }
         }
-        catch (Exception e) {
-            e.printStackTrace();
+        return maxSize;
+    }
+
+    private String formatRow(List<String> row)
+    {
+        StringBuilder result = new StringBuilder();
+        result.append("|");
+        for (int i = 0; i < row.size(); i++) {
+            result.append(StringUtils.center(row.get(i), getMaxSize(i) + 2));
+            result.append("|");
         }
+        result.append("\n");
+        return result.toString();
+    }
+
+    private String formatRule()
+    {
+        StringBuilder result = new StringBuilder();
+        result.append("+");
+        for (int i = 0; i < headers.size(); i++) {
+            for (int j = 0; j < getMaxSize(i) + 2; j++) {
+                result.append("-");
+            }
+            result.append("+");
+        }
+        result.append("\n");
+        return result.toString();
+    }
+
+    public String toString()
+    {
+        StringBuilder result = new StringBuilder();
+        result.append(formatRule());
+        result.append(formatRow(headers));
+        result.append(formatRule());
+        for (List<String> row : data) {
+            result.append(formatRow(row));
+        }
+        result.append(formatRule());
+        return result.toString();
     }
 }

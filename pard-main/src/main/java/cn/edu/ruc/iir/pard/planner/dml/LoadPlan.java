@@ -167,7 +167,7 @@ public class LoadPlan
             Map<String, List<String>> distRow = null;
             while ((line = reader.readLine()) != null) {
                 if (!isHorizontal) {
-                    distRow = new HashMap<String, List<String>>();
+                    distRow = new HashMap<>();
                     for (String s : siteList) {
                         distRow.put(s, new ArrayList<>());
                     }

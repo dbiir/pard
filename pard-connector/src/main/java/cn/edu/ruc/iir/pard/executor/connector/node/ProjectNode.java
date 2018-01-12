@@ -19,6 +19,7 @@ public class ProjectNode
 
     public ProjectNode(List<Column> columns)
     {
+        this.name = "PROJECT";
         this.columns = columns;
     }
 

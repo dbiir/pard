@@ -14,4 +14,16 @@ public class PardResultSetTest
     {
         PardResultSet resultSet = new PardResultSet();
     }
+
+    @Test
+    public void testEnum()
+    {
+        PardResultSet r = PardResultSet.okResultSet;
+        if (r.getStatus() == PardResultSet.ResultStatus.OK) {
+            System.out.println("Y");
+        }
+        else {
+            System.out.println("N");
+        }
+    }
 }

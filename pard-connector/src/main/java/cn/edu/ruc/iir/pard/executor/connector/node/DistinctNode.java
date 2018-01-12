@@ -19,6 +19,7 @@ public class DistinctNode
 
     public DistinctNode(List<Column> columns)
     {
+        this.name = "DISTINCT";
         this.columns = columns;
     }
 

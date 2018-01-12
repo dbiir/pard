@@ -24,7 +24,7 @@ public class EtcdTest
 {
     public static void main(String[] args)
     {
-        ByteSequence key = ByteSequence.fromString("test");
+        ByteSequence key = ByteSequence.fromString("site");
         EtcdUtil.addWatch(); //initial the thread process
         while (true) {
             try {

@@ -12,6 +12,10 @@ public class OutputNode
 {
     private static final long serialVersionUID = 1547246938332568325L;
 
+    public OutputNode()
+    {
+        name = "OutputNode";
+    }
     @Override
     public String toString()
     {

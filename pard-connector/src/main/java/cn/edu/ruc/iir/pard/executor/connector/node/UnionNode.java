@@ -18,9 +18,15 @@ public class UnionNode
 
     public UnionNode()
     {
+        this.name = "UNION";
         this.unionChildren = new ArrayList<>();
     }
-
+    public UnionNode(UnionNode node)
+    {
+        this();
+        //TODO: consider wether the children node need copying.
+        this.unionChildren.addAll(node.getUnionChildren());
+    }
     @Override
     public boolean hasChildren()
     {

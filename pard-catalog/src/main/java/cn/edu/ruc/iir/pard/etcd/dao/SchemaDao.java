@@ -65,7 +65,8 @@ public class SchemaDao
     {
         GDD gdd = load();
         Map<String, Schema> schemaMap = gdd.getSchemaMap();
-        schemaMap.put(name, null);
+//        schemaMap.put(name, null);
+        schemaMap.remove(name);
         return persistGDD(gdd);
     }
 

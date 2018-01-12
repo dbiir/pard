@@ -15,6 +15,7 @@ public class LimitNode
 
     public LimitNode(int limitNum)
     {
+        name = "LIMIT";
         this.limitNum = limitNum;
     }
 

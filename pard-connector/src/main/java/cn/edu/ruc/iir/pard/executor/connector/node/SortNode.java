@@ -31,6 +31,7 @@ public class SortNode
 
     public SortNode()
     {
+        this.name = "SORT";
         this.columns = new ArrayList<>();
         this.orderings = new ArrayList<>();
     }

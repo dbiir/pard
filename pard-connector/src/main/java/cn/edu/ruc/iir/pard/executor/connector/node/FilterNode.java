@@ -17,6 +17,7 @@ public class FilterNode
 
     public FilterNode(Expression expression)
     {
+        this.name = "FILTER";
         this.expression = expression;
     }
 

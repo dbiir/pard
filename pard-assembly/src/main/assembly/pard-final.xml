@@ -3,15 +3,40 @@
     <id>final</id>
     <formats>
         <format>tar.gz</format>
+        <format>zip</format>
         <format>dir</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>pard-1.0-snapshot</baseDirectory>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}/../pard-server-test</directory>
-            <outputDirectory>/bin</outputDirectory>
+            <directory>${project.basedir}/../pard-main/etc/sbin</directory>
+            <outputDirectory>sbin</outputDirectory>
             <fileMode>0755</fileMode>
             <directoryMode>0755</directoryMode>
         </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/../pard-main/src/main/resources/webapp</directory>
+            <outputDirectory>webapp</outputDirectory>
+        </fileSet>
     </fileSets>
+
+    <files>
+        <file>
+            <source>${project.basedir}/../pard-main/target/pard-server.jar</source>
+            <outputDirectory>bin</outputDirectory>
+        </file>
+        <file>
+            <source>${project.basedir}/../pard-client/target/pard-client.jar</source>
+            <outputDirectory>bin</outputDirectory>
+        </file>
+        <file>
+            <source>${project.basedir}/../pard-main/etc/pard.properties</source>
+            <outputDirectory></outputDirectory>
+        </file>
+        <file>
+            <source>${project.basedir}/../pard-main/etc/jvm.properties</source>
+            <outputDirectory></outputDirectory>
+        </file>
+    </files>
 </assembly>

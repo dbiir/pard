@@ -53,6 +53,7 @@ public class PardRPCClient
             receiving = blockingStub.heartbeat(heartBeatMsg);
         }
         catch (StatusRuntimeException e) {
+            e.printStackTrace();
             receiving = PardProto.HeartBeatMsg.newBuilder().build();
         }
 
@@ -77,6 +78,7 @@ public class PardRPCClient
             receiving = blockingStub.createSchema(schemaMsg);
         }
         catch (StatusRuntimeException e) {
+            e.printStackTrace();
             receiving = PardProto.ResponseStatus.newBuilder()
                     .setStatus(-1)
                     .build();
@@ -98,6 +100,7 @@ public class PardRPCClient
             receiving = blockingStub.dropSchema(schemaMsg);
         }
         catch (StatusRuntimeException e) {
+            e.printStackTrace();
             receiving = PardProto.ResponseStatus.newBuilder()
                     .setStatus(-1)
                     .build();
@@ -129,6 +132,7 @@ public class PardRPCClient
             receiving = blockingStub.createTable(tableMsgBuilder.build());
         }
         catch (StatusRuntimeException e) {
+            e.printStackTrace();
             receiving = PardProto.ResponseStatus.newBuilder()
                     .setStatus(-1)
                     .build();
@@ -151,6 +155,7 @@ public class PardRPCClient
             receiving = blockingStub.dropTable(tableMsg);
         }
         catch (StatusRuntimeException e) {
+            e.printStackTrace();
             receiving = PardProto.ResponseStatus.newBuilder()
                     .setStatus(-1)
                     .build();
@@ -190,6 +195,7 @@ public class PardRPCClient
             receiving = blockingStub.insertInto(insertMsgBuilder.build());
         }
         catch (StatusRuntimeException e) {
+            e.printStackTrace();
             receiving = PardProto.ResponseStatus.newBuilder()
                     .setStatus(-1)
                     .build();
@@ -212,6 +218,7 @@ public class PardRPCClient
             receiving = blockingStub.load(request);
         }
         catch (StatusRuntimeException e) {
+            e.printStackTrace();
             receiving = PardProto.ResponseStatus.newBuilder()
                     .setStatus(-1)
                     .build();

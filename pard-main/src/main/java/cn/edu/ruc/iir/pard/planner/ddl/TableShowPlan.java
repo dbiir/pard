@@ -16,7 +16,7 @@ import cn.edu.ruc.iir.pard.sql.tree.Statement;
 public class TableShowPlan
         extends Plan
 {
-    private String schema = null;
+    private String schema;
 
     public TableShowPlan(Statement stmt)
     {

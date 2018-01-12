@@ -4,6 +4,7 @@ import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
+import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.planner.ConditionComparator;
@@ -117,7 +118,10 @@ public class LoadPlan
             e.printStackTrace();
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.FileIOError);
         }
-
+        Map<String, Integer> cnt = new HashMap<String, Integer>();
+        for (String f : fragments.keySet()) {
+            cnt.put(f, 0);
+        }
         // read into tmpfs
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -125,17 +129,28 @@ public class LoadPlan
             while ((line = reader.readLine()) != null) {
                 String[] values = line.split("\t");
                 for (int i = 0; i < values.length; i++) {
-                    rowValues.put(columnNames[i], values[i]);
+                    if (columns.get(i).getDataType() == DataType.DataTypeInt.CHAR || columns.get(i).getDataType() == DataType.DataTypeInt.VARCHAR || columns.get(i).getDataType() == DataType.DataTypeInt.DATE) {
+                        if (!values[i].startsWith("'") || !values[i].endsWith("'")) {
+                            rowValues.put(columnNames[i], "'" + values[i] + "'");
+                        }
+                    }
+                    else {
+                        //System.out.println("i=" + i + "dataType " + columns.get(i).getDataType());
+                        rowValues.put(columnNames[i], values[i]);
+                    }
                 }
                 for (String f : fragments.keySet()) {
                     Fragment fragment = fragments.get(f);
                     if (ConditionComparator.matchString(fragment.getCondition(), rowValues)) {
                         tmpWriters.get(f).write(String.join("\t", values) + "\n");
+                        cnt.put(f, cnt.get(f) + 1);
                         break;
                     }
                 }
             }
-
+            for (String f : fragments.keySet()) {
+                System.out.println("f " + cnt.get(f));
+            }
             //close
             reader.close();
             for (BufferedWriter writer : tmpWriters.values()) {

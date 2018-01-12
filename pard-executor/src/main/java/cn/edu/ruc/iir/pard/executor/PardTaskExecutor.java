@@ -66,7 +66,7 @@ public class PardTaskExecutor
 
         PardResultSet resultSet = resultSetMap.get(taskId);
         int seq = sequenceIds.get(taskId) + 1;
-        Block block = new Block(schemaMap.get(taskId), 10 * 1024 * 1024, seq, taskId);
+        Block block = new Block(schemaMap.get(taskId), 100 * 1024 * 1024, seq, taskId);
         block.setSequenceHasNext(false);
         sequenceIds.put(taskId, seq);
         Row row;

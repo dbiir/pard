@@ -18,7 +18,6 @@ public class SortNode
     private static final long serialVersionUID = -4043747552892823485L;
     private final List<Column> columns;
     private final List<Integer> orderings;
-
     public List<Column> getColumns()
     {
         return columns;
@@ -35,7 +34,15 @@ public class SortNode
         this.columns = new ArrayList<>();
         this.orderings = new ArrayList<>();
     }
-
+    public SortNode(SortNode sort)
+    {
+        super(sort);
+        this.name = "SORT";
+        this.columns = new ArrayList<>();
+        this.orderings = new ArrayList<>();
+        this.columns.addAll(sort.columns);
+        this.orderings.addAll(sort.orderings);
+    }
     public void addSort(Column column, boolean order)
     {
         if (!columns.contains(column)) {

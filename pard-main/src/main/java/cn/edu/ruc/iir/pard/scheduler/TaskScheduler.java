@@ -22,6 +22,7 @@ import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
+import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
@@ -298,7 +299,7 @@ public class TaskScheduler
                     if (tableScanNode == null) {
                         return null;
                     }
-                    QueryTask task = new QueryTask(tableScanNode.getSite(), planNode);
+                    QueryTask task = new QueryTask(tableScanNode.getSite(), NodeHelper.copyNode(planNode));
                     task.setTaskId(plan.getJobId() + "-" + index);
                     tasks.add(task);
                     index++;

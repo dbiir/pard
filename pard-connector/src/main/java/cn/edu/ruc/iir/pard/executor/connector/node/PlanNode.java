@@ -17,6 +17,15 @@ public abstract class PlanNode
     protected String name;
     private PlanNode[] children = new PlanNode[2];
 
+    public PlanNode()
+    {}
+
+    public PlanNode(PlanNode pd)
+    {
+        this.children[0] = NodeHelper.copyNode(pd.children[0]);
+        this.children[1] = NodeHelper.copyNode(pd.children[1]);
+        childrenNum = pd.childrenNum;
+    }
     public boolean hasChildren()
     {
         return childrenNum > 0;

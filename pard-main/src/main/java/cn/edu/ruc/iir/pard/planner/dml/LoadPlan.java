@@ -217,7 +217,6 @@ public class LoadPlan
                         cnt.put(f, cnt.get(f) + 1);
                     }
                 }
-                break;
             }
 
             for (String f : fragments.keySet()) {

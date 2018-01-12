@@ -70,4 +70,51 @@ public class PrettyTable
         result.append(formatRule());
         return result.toString();
     }
+
+    public int rowSize()
+    {
+        return data.size();
+    }
+
+    public String printHeader()
+    {
+        StringBuilder result = new StringBuilder();
+        result.append(formatRule());
+        result.append(formatRow(headers));
+        result.append(formatRule());
+        return result.toString();
+    }
+
+    public String printEnd()
+    {
+        StringBuilder result = new StringBuilder();
+        result.append(formatRule());
+        return result.toString();
+    }
+
+    public void printLargeDataSets()
+    {
+        System.out.println(printHeader());
+        StringBuilder result = new StringBuilder();
+        int count = 0;
+        for (List<String> row : data) {
+            result.append(formatRow(row));
+            count++;
+            if (count == 5000) {
+                System.out.println(result.toString());
+                result.delete(0, result.length());
+                count = 0;
+            }
+        }
+        System.out.println(printEnd());
+    }
+
+    public void printLargeDataSetsOneByOne()
+    {
+        System.out.println(printHeader());
+        for (List<String> row : data) {
+            System.out.println(formatRow(row));
+        }
+        System.out.println(printEnd());
+    }
 }

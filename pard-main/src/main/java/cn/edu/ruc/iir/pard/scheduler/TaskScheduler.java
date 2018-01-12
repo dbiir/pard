@@ -268,7 +268,10 @@ public class TaskScheduler
                     internalUnionNode.setChildren(childNode, true, false);
                     PlanNode node = childNode;
                     TableScanNode tableScanNode = null;
-                    while (node.hasChildren()) {
+                    if (node instanceof TableScanNode) {
+                        tableScanNode = (TableScanNode) node;
+                    }
+                    while (!(node instanceof TableScanNode) && node.hasChildren()) {
                         if (node.getLeftChild() instanceof TableScanNode) {
                             tableScanNode = (TableScanNode) node.getLeftChild();
                             break;

@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.planner.dml;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.catalog.Fragment;
+import cn.edu.ruc.iir.pard.catalog.GddUtil;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
@@ -63,7 +64,7 @@ public class LoadPlan
 
         // check schema
         if (load.getTable().getPrefix().isPresent()) {
-            this.schemaName = load.getTable().getPrefix().toString();
+            this.schemaName = load.getTable().getPrefix().get().toString();
         }
         else {
             schema = UsePlan.getCurrentSchema();
@@ -100,8 +101,10 @@ public class LoadPlan
         Map<String, BufferedWriter> tmpWriters = new HashMap<>();  // fragmentName -> writer
         Map<String, String> tmpPaths = new HashMap<>();            // fragmentName -> tmp file path
         String[] columnNames = new String[columns.size()];         // array of column names in order
+        Map<String, String> rowValues = new HashMap<>();           // column name -> column value
         for (int i = 0; i < columns.size(); i++) {
-            columnNames[i] = columns.get(i).getColumnName();
+            String cName = columns.get(i).getColumnName();
+            columnNames[i] = cName;
         }
         try {
             for (String fragmentName : fragments.keySet()) {
@@ -115,22 +118,35 @@ public class LoadPlan
             e.printStackTrace();
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.FileIOError);
         }
-
+        //Map<String, Integer> cnt = new HashMap<String, Integer>();
+        //for (String f : fragments.keySet()) {
+            //cnt.put(f, 0);
+        //}
         // read into tmpfs
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line = null;
             while ((line = reader.readLine()) != null) {
                 String[] values = line.split("\t");
+                for (int i = 0; i < values.length; i++) {
+                    if (columns.get(i).getDataType() == GddUtil.datatypeCHAR || columns.get(i).getDataType() == GddUtil.datatypeVARCHAR || columns.get(i).getDataType() == GddUtil.datatypeDATE) {
+                        if (!values[i].startsWith("'") || !values[i].endsWith("'")) {
+                            rowValues.put(columnNames[i], "'" + values[i] + "'");
+                        }
+                    }
+                }
                 for (String f : fragments.keySet()) {
                     Fragment fragment = fragments.get(f);
-                    if (ConditionComparator.matchString(fragment.getCondition(), columnNames, values)) {
+                    if (ConditionComparator.matchString(fragment.getCondition(), rowValues)) {
                         tmpWriters.get(f).write(String.join("\t", values) + "\n");
+                        //cnt.put(f, cnt.get(f) + 1);
                         break;
                     }
                 }
             }
-
+            //for (String f : fragments.keySet()) {
+                //System.out.println("f " + cnt.get(f));
+            //}
             //close
             reader.close();
             for (BufferedWriter writer : tmpWriters.values()) {

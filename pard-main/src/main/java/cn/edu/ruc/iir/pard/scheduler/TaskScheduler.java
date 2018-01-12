@@ -22,6 +22,7 @@ import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
+import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
@@ -104,12 +105,15 @@ public class TaskScheduler
             logger.info("Task generation for schema creation plan");
             List<Task> tasks = new ArrayList<>();
             SchemaCreationPlan schemaCreationPlan = (SchemaCreationPlan) plan;
+            int index = 0;
             for (String site : sites) {
                 CreateSchemaTask task = new CreateSchemaTask(
                         schemaCreationPlan.getSchemaName(),
                         schemaCreationPlan.isNotExists(),
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -119,11 +123,14 @@ public class TaskScheduler
             logger.info("Task generation for schema drop plan");
             List<Task> tasks = new ArrayList<>();
             SchemaDropPlan schemaDropPlan = (SchemaDropPlan) plan;
+            int index = 0;
             for (String site : sites) {
                 DropSchemaTask task = new DropSchemaTask(schemaDropPlan.getSchemaName(),
                         schemaDropPlan.isExists(),
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -140,6 +147,7 @@ public class TaskScheduler
             String tableName = tableCreationPlan.getTableName();
             String schemaName = tableCreationPlan.getSchemaName();
             boolean isNotExists = tableCreationPlan.isNotExists();
+            int index = 0;
             for (String site : partitionMap.keySet()) {
                 List<Column> columns = partitionMap.get(site);
                 CreateTableTask task = new CreateTableTask(
@@ -148,7 +156,9 @@ public class TaskScheduler
                         isNotExists,
                         columns,
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -161,8 +171,12 @@ public class TaskScheduler
             String schemaName = tableDropPlan.getSchemaName();
             String tableName = tableDropPlan.getTableName();
             Set<String> siteNames = tableDropPlan.getDistributionHints().keySet();
+            int index = 0;
             for (String sn : siteNames) {
-                tasks.add(new DropTableTask(schemaName, tableName, sn));
+                Task task = new DropTableTask(schemaName, tableName, sn);
+                task.setTaskId(plan.getJobId() + "-" + index);
+                tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -182,11 +196,11 @@ public class TaskScheduler
             LoadPlan loadPlan = (LoadPlan) plan;
             String schemaName = loadPlan.getSchemaName();
             String tableName = loadPlan.getTableName();
+            Map<String, List<String>> distributionHints = ((LoadPlan) plan).getDistributionHints();
             List<Task> tasks = new ArrayList<>();
-            List<String> paths = ImmutableList.of(loadPlan.getPath());
             int index = 0;
-            for (String site : sites) {
-                Task task = new LoadTask(schemaName, tableName, paths, site);
+            for (String site : distributionHints.keySet()) {
+                Task task = new LoadTask(schemaName, tableName, distributionHints.get(site), site);
                 task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
                 index++;
@@ -202,6 +216,7 @@ public class TaskScheduler
             Map<String, List<Row>> partitionMap = insertPlan.getDistributionHints();
             String tableName = insertPlan.getTableName();
             String schemaName = insertPlan.getSchemaName();
+            int index = 0;
             for (String site : partitionMap.keySet()) {
                 List<Column> columns = insertPlan.getColListMap().get(site);
                 int columnSize = columns.size();
@@ -220,7 +235,9 @@ public class TaskScheduler
                     rowIndex++;
                 }
                 InsertIntoTask task = new InsertIntoTask(schemaName, tableName, columns, rowsStr, site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -235,7 +252,8 @@ public class TaskScheduler
                 DeleteTask task = new DeleteTask(
                         deletePlan.getSchemaName(),
                         deletePlan.getTableName(),
-                        distributionHints.get(site).toExpression());
+                        distributionHints.get(site).toExpression(),
+                        site);
                 task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
                 index++;
@@ -246,34 +264,51 @@ public class TaskScheduler
         // query plan
         if (plan instanceof QueryPlan) {
             logger.info("Task generation for query plan");
-            QueryPlan queryPlan = (QueryPlan) plan;
-            PlanNode planNode = queryPlan.getPlan();
-            PlanNode currentNode = planNode;
-            UnionNode internalUnionNode = null;
-            while (currentNode.hasChildren()) {
-                currentNode = currentNode.getLeftChild();
-                if (currentNode instanceof UnionNode) {
-                    internalUnionNode = (UnionNode) currentNode;
-                    break;
+            try {
+                QueryPlan queryPlan = (QueryPlan) plan;
+                PlanNode planNode = queryPlan.getPlan();
+                PlanNode currentNode = planNode;
+                UnionNode internalUnionNode = null;
+                while (currentNode.hasChildren()) {
+                    currentNode = currentNode.getLeftChild();
+                    if (currentNode instanceof UnionNode) {
+                        internalUnionNode = (UnionNode) currentNode;
+                        break;
+                    }
                 }
+                if (internalUnionNode == null) {
+                    return ImmutableList.of(new QueryTask(planNode));
+                }
+                List<Task> tasks = new ArrayList<>();
+                List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
+                int index = 0;
+                for (PlanNode childNode : unionChildren) {
+                    internalUnionNode.setChildren(childNode, true, false);
+                    PlanNode node = childNode;
+                    TableScanNode tableScanNode = null;
+                    if (node instanceof TableScanNode) {
+                        tableScanNode = (TableScanNode) node;
+                    }
+                    while (!(node instanceof TableScanNode) && node.hasChildren()) {
+                        if (node.getLeftChild() instanceof TableScanNode) {
+                            tableScanNode = (TableScanNode) node.getLeftChild();
+                            break;
+                        }
+                        node = node.getLeftChild();
+                    }
+                    if (tableScanNode == null) {
+                        return null;
+                    }
+                    QueryTask task = new QueryTask(tableScanNode.getSite(), NodeHelper.copyNode(planNode));
+                    task.setTaskId(plan.getJobId() + "-" + index);
+                    tasks.add(task);
+                    index++;
+                }
+                return ImmutableList.copyOf(tasks);
             }
-            if (internalUnionNode == null) {
-                return ImmutableList.of(new QueryTask(planNode));
+            catch (Exception e) {
+                e.printStackTrace();
             }
-            List<Task> tasks = new ArrayList<>();
-            List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
-            int index = 0;
-            for (PlanNode childNode : unionChildren) {
-                internalUnionNode.setChildren(childNode, true, false);
-                // todo hard coded to get site info of task
-                TableScanNode node = (TableScanNode) childNode;
-                QueryTask task = new QueryTask(node.getSite(), planNode);
-                task.setTaskId(plan.getJobId() + "-" + index);
-                tasks.add(task);
-                index++;
-            }
-
-            return ImmutableList.copyOf(tasks);
         }
         return null;
     }
@@ -392,13 +427,14 @@ public class TaskScheduler
                         continue;
                     }
                     resultSet.addBlock(block);
-                    logger.info("Added block " + block.getSequenceId());
+                    logger.info("Added block " + block.getSequenceId() + ", num of rows: " + block.getRows().size());
                     if (!block.isSequenceHasNext()) {
                         String taskId = block.getTaskId();
                         taskMap.remove(taskId);
                         logger.info("Task " + taskId + " done.");
                     }
                 }
+                plan.afterExecution(true);
                 return resultSet;
             }
 
@@ -423,10 +459,6 @@ public class TaskScheduler
                     if (block == null) {
                         logger.info("Waiting for more blocks...");
                         continue;
-                    }
-                    List<cn.edu.ruc.iir.pard.commons.memory.Row> rows = block.getRows();
-                    if (rows.isEmpty()) {
-                        return PardResultSet.execErrResultSet;
                     }
                     if (!block.isSequenceHasNext()) {
                         String taskId = block.getTaskId();

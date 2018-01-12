@@ -21,6 +21,13 @@ public class JoinNode
         name = "JOIN";
         joinSet = new HashSet<String>();
     }
+    public JoinNode(JoinNode node)
+    {
+        super(node);
+        name = "JOIN";
+        joinSet = new HashSet<String>();
+        joinSet.addAll(node.joinSet);
+    }
     public boolean hasChildren()
     {
         return !childrens.isEmpty();

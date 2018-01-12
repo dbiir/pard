@@ -5,7 +5,6 @@ import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
-import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
@@ -29,8 +28,21 @@ public class PardServlet
         extends HttpServlet
 {
     private static final long serialVersionUID = 6154102774532361192L;
-    //public static List<QueryPlan> planList =
+    public static List<QueryPlan> planList = new ArrayList<QueryPlan>();
     int keyGen = 0;
+
+    /**
+     * JUST FOR TEST!!
+     * */
+    public void test() throws ServletException
+    {
+        PardPlanner planner = new PardPlanner();
+        SqlParser parser = new SqlParser();
+        Statement stmt = parser.createStatement("SELECT * FROM pardtest.emp where eno < 'E0010' and eno > 'E0000'");
+        planner.plan(stmt).afterExecution(true);
+        stmt = parser.createStatement("SELECT * FROM pardtest.emp@pard3");
+        planner.plan(stmt).afterExecution(true);
+    }
     public PNode parse(PlanNode pnode)
     {
         PNode pn = new PNode();
@@ -56,50 +68,87 @@ public class PardServlet
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
         keyGen = 0;
-        PardPlanner planner = new PardPlanner();
-        Statement stmt = new SqlParser().createStatement("SELECT * FROM pardtest.emp where eno < 'E0010' and eno > 'E0000'");
-        Plan plan = planner.plan(stmt);
+        resp.setCharacterEncoding("UTF-8");
+        resp.setContentType("text/html;charset=UTF-8");
+        String str = req.getRequestURI();
+        if (str.startsWith("/")) {
+            str = str.substring(1).replace(".pard", "");
+        }
+        if (str.startsWith("list")) {
+            String body = getListBody();
+            resp.getWriter().print(body);
+        }
+        else {
+            int id = Integer.parseInt(str);
+            String body = getBody(planList.get(id));
+            resp.getWriter().print(body);
+        }
+    }
+    public String getListBody() throws IOException
+    {
+        String body = readHtml("webapp/list.html");
+        String re = "<tr><td>[ID]</td><td>[Statement]</td><td><a  href=\"[ID].pard\">View</a></td></tr>";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < planList.size(); i++) {
+            QueryPlan plan = planList.get(i);
+            String t = re;
+            t = t.replace("[ID]", i + "").replace("[ID]", i + "");
+            t = t.replace("[Statement]", plan.getStatment().toString());
+            sb.append(t);
+        }
+        body = body.replace("[[BODY]]", sb.toString());
+        System.out.println("sb " + sb.toString());
+        return body;
+    }
+
+    public String getBody(QueryPlan plan) throws IOException
+    {
         List<PNode> nodeDataArray = new ArrayList<PNode>();
         List<PEdge> linkedDataArray = new ArrayList<PEdge>();
-        if (plan instanceof QueryPlan) {
-            PlanNode node = ((QueryPlan) plan).optimize();
-            Map<PlanNode, PNode> mapping = new HashMap<PlanNode, PNode>();
-            Queue<PlanNode> que = new LinkedList<PlanNode>();
-            que.add(node);
-            PNode pa = parse(node);
-            mapping.put(node, pa);
-            nodeDataArray.add(pa);
-            while (!que.isEmpty()) {
-                PlanNode planNode = que.poll();
-                PNode parent = mapping.get(planNode);
-                List<PlanNode> pnlist = NodeHelper.getChildren(planNode);
-                for (PlanNode pnode : pnlist) {
-                    PNode p = parse(pnode);
-                    mapping.put(pnode, p);
-                    PEdge e = new PEdge();
-                    e.from = parent.getKey();
-                    e.to = p.getKey();
-                    nodeDataArray.add(p);
-                    linkedDataArray.add(e);
-                    que.add(pnode);
-                }
+        PlanNode node = ((QueryPlan) plan).optimize();
+        Map<PlanNode, PNode> mapping = new HashMap<PlanNode, PNode>();
+        Queue<PlanNode> que = new LinkedList<PlanNode>();
+        que.add(node);
+        PNode pa = parse(node);
+        pa.locx = 0;
+        pa.locy = 60;
+        mapping.put(node, pa);
+        nodeDataArray.add(pa);
+        while (!que.isEmpty()) {
+            PlanNode planNode = que.poll();
+            PNode parent = mapping.get(planNode);
+            List<PlanNode> pnlist = NodeHelper.getChildren(planNode);
+            int xoffset = 0;
+            for (PlanNode pnode : pnlist) {
+                PNode p = parse(pnode);
+                p.locx = parent.locx + xoffset * 320;
+                xoffset++;
+                p.locy = parent.locy + 150;
+                mapping.put(pnode, p);
+                PEdge e = new PEdge();
+                e.from = parent.getKey();
+                e.to = p.getKey();
+                nodeDataArray.add(p);
+                linkedDataArray.add(e);
+                que.add(pnode);
             }
-            JSONObject json = new JSONObject();
-            json.put("class", "go.GraphLinksModel");
-            JSONObject pos = new JSONObject();
-            pos.put("position", "-5 -5");
-            json.put("modelData", pos);
-            json.put("nodeDataArray", nodeDataArray);
-            json.put("linkDataArray", linkedDataArray);
-            System.out.println(json.toString());
-            String body = readHtml("webapp/_demo.html");
-            String f1 = "<textarea id=\"mySavedModel\" style=\"width:100%;height:300px\">";
-            int pos1 = body.indexOf(f1) + f1.length();
-            int pos2 = body.indexOf("</textarea>");
-            String re = body.substring(pos1, pos2);
-            body = body.replace(re, json.toString(1));
-            resp.getWriter().write(body);
         }
+        JSONObject json = new JSONObject();
+        json.put("class", "go.GraphLinksModel");
+        JSONObject pos = new JSONObject();
+        pos.put("position", "-100 -5");
+        json.put("modelData", pos);
+        json.put("nodeDataArray", nodeDataArray);
+        json.put("linkDataArray", linkedDataArray);
+        System.out.println(json.toString());
+        String body = readHtml("webapp/_demo.html");
+        //System.out.println(body);
+        String f1 = "<textarea id=\"mySavedModel\" style=\"width:100%;height:300px\">";
+        int pos1 = body.indexOf(f1) + f1.length();
+        int pos2 = body.indexOf("</textarea>");
+        String re = body.substring(pos1, pos2);
+        body = body.replace(re, json.toString(1));
+        return body;
     }
     public String readHtml(String str) throws IOException
     {

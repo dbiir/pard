@@ -50,10 +50,12 @@ public class PNode
     }
     public String getLoc()
     {
-        return loc;
+        return locx + " " + locy;
     }
     public void setLoc(String loc)
     {
         this.loc = loc;
     }
+    int locx;
+    int locy;
 }

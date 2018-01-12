@@ -6,6 +6,7 @@ import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.InputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.JoinNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
@@ -122,7 +123,10 @@ public class SemanticAnalysisTest
         config.setIgnoreDefaultExcludes(false); //设置默认忽略
         config.setExcludes(new String[]{"parent", "statment"});
         if (plan instanceof QueryPlan) {
-            System.out.println(toJSON(((QueryPlan) plan).optimize()).toString(1));
+            PlanNode node = ((QueryPlan) plan).optimize();
+           //System.out.println(toJSON().toString(1));
+            System.out.println(node.toString());
+            System.out.println(NodeHelper.copyNode(node).toString());
         }
         //ErrorMessage errorMessage = plan.semanticAnalysis();
         /*

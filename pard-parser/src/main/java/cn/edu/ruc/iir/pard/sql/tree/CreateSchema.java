@@ -14,6 +14,7 @@ import static java.util.Objects.requireNonNull;
 public final class CreateSchema
         extends Statement
 {
+    private static final long serialVersionUID = -5795732084505036333L;
     private final QualifiedName schemaName;
     private final boolean notExists;
 

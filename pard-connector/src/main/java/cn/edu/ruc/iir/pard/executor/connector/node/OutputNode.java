@@ -16,6 +16,11 @@ public class OutputNode
     {
         name = "OutputNode";
     }
+    public OutputNode(OutputNode node)
+    {
+        super(node);
+        name = "OutputNode";
+    }
     @Override
     public String toString()
     {

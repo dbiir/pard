@@ -21,6 +21,14 @@ public class TableScanNode
     private ProjectNode project;
     private Optional<FilterNode> filter;
     */
+    public TableScanNode(TableScanNode node)
+    {
+        super(node);
+        this.name = "TABLESCAN";
+        this.schema = node.schema;
+        this.table = node.table;
+        this.site = node.site;
+    }
     public TableScanNode(String schema, String table)
     {
         /*

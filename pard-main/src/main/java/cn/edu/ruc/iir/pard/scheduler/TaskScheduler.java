@@ -365,8 +365,6 @@ public class TaskScheduler
         else {
             // load
             if (plan instanceof LoadPlan) {
-                LoadPlan loadPlan = (LoadPlan) plan;
-                String path = loadPlan.getPath();
                 Map<String, Task> taskMap = new HashMap<>();
                 ConcurrentLinkedQueue<PardResultSet> resultSets = new ConcurrentLinkedQueue<>();
                 // distribute file
@@ -377,10 +375,16 @@ public class TaskScheduler
                         logger.info("No corresponding node " + site + " found for execution.");
                         continue;
                     }
+                    LoadTask loadTask = (LoadTask) task;
+                    List<String> loadPaths = loadTask.getPaths();
+                    if (loadPaths.isEmpty()) {
+                        logger.info("No path found for execution");
+                        continue;
+                    }
                     PardFileExchangeClient exchangeClient = new PardFileExchangeClient(
                                     nodeSite.getIp(),
                                     nodeSite.getFileExchangePort(),
-                                    path,
+                            loadPaths.get(0),
                                     ((LoadPlan) plan).getSchemaName(),
                                     ((LoadPlan) plan).getTableName(),
                                     task.getTaskId(),

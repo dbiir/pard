@@ -76,6 +76,7 @@ public class PardTaskExecutor
                 break;
             }
         }
+        logger.info("Result block num: " + block.getRows().size());
         if (!block.isSequenceHasNext()) {
             resultSetMap.remove(taskId);
             schemaMap.remove(taskId);

@@ -19,7 +19,7 @@ public class TestQueryHandler
         JobScheduler scheduler = JobScheduler.INSTANCE();
         TaskScheduler taskScheduler = TaskScheduler.INSTANCE();
         PardQueryHandler handler = new PardQueryHandler(null, scheduler, taskScheduler);
-        String sql = "select * from ewsddsds.EMP";
+        String sql = "delete from ewsddsds.EMP where eno<'E0002'";
         PardResultSet resultSet = handler.executeQuery(sql);
         System.out.println(resultSet);
     }

@@ -104,12 +104,15 @@ public class TaskScheduler
             logger.info("Task generation for schema creation plan");
             List<Task> tasks = new ArrayList<>();
             SchemaCreationPlan schemaCreationPlan = (SchemaCreationPlan) plan;
+            int index = 0;
             for (String site : sites) {
                 CreateSchemaTask task = new CreateSchemaTask(
                         schemaCreationPlan.getSchemaName(),
                         schemaCreationPlan.isNotExists(),
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -119,11 +122,14 @@ public class TaskScheduler
             logger.info("Task generation for schema drop plan");
             List<Task> tasks = new ArrayList<>();
             SchemaDropPlan schemaDropPlan = (SchemaDropPlan) plan;
+            int index = 0;
             for (String site : sites) {
                 DropSchemaTask task = new DropSchemaTask(schemaDropPlan.getSchemaName(),
                         schemaDropPlan.isExists(),
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -140,6 +146,7 @@ public class TaskScheduler
             String tableName = tableCreationPlan.getTableName();
             String schemaName = tableCreationPlan.getSchemaName();
             boolean isNotExists = tableCreationPlan.isNotExists();
+            int index = 0;
             for (String site : partitionMap.keySet()) {
                 List<Column> columns = partitionMap.get(site);
                 CreateTableTask task = new CreateTableTask(
@@ -148,7 +155,9 @@ public class TaskScheduler
                         isNotExists,
                         columns,
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -161,8 +170,12 @@ public class TaskScheduler
             String schemaName = tableDropPlan.getSchemaName();
             String tableName = tableDropPlan.getTableName();
             Set<String> siteNames = tableDropPlan.getDistributionHints().keySet();
+            int index = 0;
             for (String sn : siteNames) {
-                tasks.add(new DropTableTask(schemaName, tableName, sn));
+                Task task = new DropTableTask(schemaName, tableName, sn);
+                task.setTaskId(plan.getJobId() + "-" + index);
+                tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -202,6 +215,7 @@ public class TaskScheduler
             Map<String, List<Row>> partitionMap = insertPlan.getDistributionHints();
             String tableName = insertPlan.getTableName();
             String schemaName = insertPlan.getSchemaName();
+            int index = 0;
             for (String site : partitionMap.keySet()) {
                 List<Column> columns = insertPlan.getColListMap().get(site);
                 int columnSize = columns.size();
@@ -220,7 +234,9 @@ public class TaskScheduler
                     rowIndex++;
                 }
                 InsertIntoTask task = new InsertIntoTask(schemaName, tableName, columns, rowsStr, site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -235,7 +251,8 @@ public class TaskScheduler
                 DeleteTask task = new DeleteTask(
                         deletePlan.getSchemaName(),
                         deletePlan.getTableName(),
-                        distributionHints.get(site).toExpression());
+                        distributionHints.get(site).toExpression(),
+                        site);
                 task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
                 index++;
@@ -409,7 +426,7 @@ public class TaskScheduler
                         continue;
                     }
                     resultSet.addBlock(block);
-                    logger.info("Added block " + block.getSequenceId());
+                    logger.info("Added block " + block.getSequenceId() + ", num of rows: " + block.getRows().size());
                     if (!block.isSequenceHasNext()) {
                         String taskId = block.getTaskId();
                         taskMap.remove(taskId);

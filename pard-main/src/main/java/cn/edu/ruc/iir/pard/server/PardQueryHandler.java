@@ -45,12 +45,12 @@ public class PardQueryHandler
         this.socket = socket;
         this.jobScheduler = jobScheduler;
         this.taskScheduler = taskScheduler;
-//        try {
-//            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-//        }
-//        catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

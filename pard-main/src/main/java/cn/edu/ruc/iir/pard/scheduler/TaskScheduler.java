@@ -196,11 +196,11 @@ public class TaskScheduler
             LoadPlan loadPlan = (LoadPlan) plan;
             String schemaName = loadPlan.getSchemaName();
             String tableName = loadPlan.getTableName();
+            Map<String, List<String>> distributionHints = ((LoadPlan) plan).getDistributionHints();
             List<Task> tasks = new ArrayList<>();
-            List<String> paths = ImmutableList.of(loadPlan.getPath());
             int index = 0;
-            for (String site : sites) {
-                Task task = new LoadTask(schemaName, tableName, paths, site);
+            for (String site : distributionHints.keySet()) {
+                Task task = new LoadTask(schemaName, tableName, distributionHints.get(site), site);
                 task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
                 index++;

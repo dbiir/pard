@@ -63,7 +63,7 @@ public class LoadPlan
 
         // check schema
         if (load.getTable().getPrefix().isPresent()) {
-            this.schemaName = load.getTable().getPrefix().toString();
+            this.schemaName = load.getTable().getPrefix().get().toString();
         }
         else {
             schema = UsePlan.getCurrentSchema();

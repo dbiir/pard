@@ -93,8 +93,12 @@ public class RowConstructor
                 sb.append(byteBuffer.getFloat()).append(", ");
                 continue;
             }
+            if (dataType == DataType.DOUBLE.getType()) {
+                sb.append(byteBuffer.getDouble()).append(", ");
+            }
             // todo add more types
         }
-        return sb.toString();
+        String rowStr = sb.toString();
+        return rowStr.substring(0, rowStr.length() - 2);
     }
 }

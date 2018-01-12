@@ -30,8 +30,11 @@ public class PardServlet
     private static final long serialVersionUID = 6154102774532361192L;
     public static List<QueryPlan> planList = new ArrayList<QueryPlan>();
     int keyGen = 0;
-    @Override
-    public void init() throws ServletException
+
+    /**
+     * JUST FOR TEST!!
+     * */
+    public void test() throws ServletException
     {
         PardPlanner planner = new PardPlanner();
         SqlParser parser = new SqlParser();

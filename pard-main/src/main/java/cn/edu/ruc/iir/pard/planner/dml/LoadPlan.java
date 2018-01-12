@@ -96,6 +96,7 @@ public class LoadPlan
         List<Column> columns = new ArrayList<>();
         for (String key : table.getColumns().keySet()) {
             columns.add(table.getColumns().get(key));
+            //System.out.println("add column " + key);
         }
         columns.sort(Comparator.comparingInt(Column::getId));
 
@@ -148,15 +149,17 @@ public class LoadPlan
                 colListMap.put(frag.getSiteName(), new ArrayList<>());
                 String siteName = frag.getSiteName();
                 for (Condition cond : frag.getCondition()) {
+                    //System.out.println("site " + siteName + " col " + cond.getColumnName() + table.getColumns().get(cond.getColumnName()).getId());
                     col2site.get(cond.getColumnName()).add(siteName);
                 }
             }
-            for (String key : table.getColumns().keySet()) {
+            for (int i = 0; i < columnNames.length; i++) {
                 //colLists.add(table.getColumns().get(key));
-                Column col = table.getColumns().get(key);
+                Column col = table.getColumns().get(columnNames[i]);
                 List<String> sites = col2site.get(col.getColumnName());
                 for (String site : sites) {
                     colListMap.get(site).add(col);
+                    //System.out.println("site " + site + " has col " + col.getColumnName());
                 }
             }
         }
@@ -184,8 +187,9 @@ public class LoadPlan
                         rowValues.put(columnNames[i], values[i]);
                     }
                     if (!isHorizontal) {
-                        for (String site : col2site.get(columnNames[i])) {
+                        for (String site : col2site.get(columns.get(i).getColumnName())) {
                             distRow.get(site).add(values[i]);
+                            //System.out.println("add " + values[i] + " i= " + i + " to site " + site + " columnNames[i]=" + columnNames[i]);
                         }
                     }
                 }
@@ -208,10 +212,13 @@ public class LoadPlan
                         for (int i = 0; i < list.size(); i++) {
                             str[i] = list.get(i);
                         }
-                        tmpWriters.get(f).write(String.join("\t", values) + "\n");
+                        tmpWriters.get(f).write(String.join("\t", str) + "\n");
+                        //System.out.println(join("\t", values));
+                        //System.out.println(f + "\t" + String.join("\t", str));
                         cnt.put(f, cnt.get(f) + 1);
                     }
                 }
+                break;
             }
 
             for (String f : fragments.keySet()) {
@@ -249,7 +256,17 @@ public class LoadPlan
 
         return ErrorMessage.getOKMessage();
     }
-
+    public static String join(String d, String[] value)
+    {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < value.length; i++) {
+            sb.append(value[i]);
+            if (i != value.length - 1) {
+                sb.append(d);
+            }
+        }
+        return sb.toString();
+    }
     public String getPath()
     {
         return path;

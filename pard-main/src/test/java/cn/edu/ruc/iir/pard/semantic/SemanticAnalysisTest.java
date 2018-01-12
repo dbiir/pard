@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.semantic;
 
+import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.executor.connector.node.AggregationNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
@@ -92,15 +93,17 @@ public class SemanticAnalysisTest
     public void testVP()
     {
         String sql2 = "use pardtest";
+        TableDao tdao = new TableDao("pardtest");
+        tdao.dropAll();
         Statement useStmt = parser.createStatement(sql2);
         Plan plan = new UsePlan(useStmt);
         plan.semanticAnalysis();
         String sql =
-                "CREATE TABLE orders_range\n" +
-                "(id INT PRIMARY KEY, name VARCHAR(30)) ON pard1,\n" +
-                "(id INT PRIMARY KEY, order_date DATE) on pard2";
+                "create table Customer"
+                + "(id int primary key,name char(25)) on pard0,(id int primary key,rank int) on pard1";
         Statement statement = parser.createStatement(sql);
         TableCreationPlan ct = new TableCreationPlan(statement);
+        ct.afterExecution(true);
         ErrorMessage msg = ct.semanticAnalysis();
         System.out.println(JSONObject.fromObject(ct.getTable()).toString(1));
         System.out.println(msg);

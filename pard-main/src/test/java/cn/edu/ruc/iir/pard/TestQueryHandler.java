@@ -19,7 +19,7 @@ public class TestQueryHandler
         JobScheduler scheduler = JobScheduler.INSTANCE();
         TaskScheduler taskScheduler = TaskScheduler.INSTANCE();
         PardQueryHandler handler = new PardQueryHandler(null, scheduler, taskScheduler);
-        String sql = "load \"a\" into ewsddsds.emp";
+        String sql = "insert into book.customer(id, name, rank) values(300001, 'J. Stephenson', 3)";
         PardResultSet resultSet = handler.executeQuery(sql);
         System.out.println(resultSet);
     }

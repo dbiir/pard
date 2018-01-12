@@ -1,7 +1,9 @@
 package cn.edu.ruc.iir.pard.planner.dml;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.Condition;
 import cn.edu.ruc.iir.pard.catalog.Fragment;
+import cn.edu.ruc.iir.pard.catalog.GddUtil;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
@@ -122,11 +124,54 @@ public class LoadPlan
         for (String f : fragments.keySet()) {
             cnt.put(f, 0);
         }
+        //check horizontal or vertical
+        Map<String, List<String>> col2site = new HashMap<String, List<String>>();
+        List<String> siteList = new ArrayList<String>();
+        table.getFragment().values().forEach(x->siteList.add(x.getSiteName()));
+        Map<String, List<Column>> colListMap = new HashMap<>();
+        boolean isHorizontal = true;
+        if (table.getFragment().values().iterator().next().getFragmentType() == GddUtil.fragementHORIZONTIAL) {
+            isHorizontal = true;
+            for (String site : siteList) {
+                colListMap.put(site, new ArrayList<>());
+            }
+            for (Column col : table.getColumns().values()) {
+                col2site.put(col.getColumnName(), siteList);
+            }
+        }
+        else {
+            isHorizontal = false;
+            for (Column col : table.getColumns().values()) {
+                col2site.put(col.getColumnName(), new ArrayList<>());
+            }
+            for (Fragment frag : table.getFragment().values()) {
+                colListMap.put(frag.getSiteName(), new ArrayList<>());
+                String siteName = frag.getSiteName();
+                for (Condition cond : frag.getCondition()) {
+                    col2site.get(cond.getColumnName()).add(siteName);
+                }
+            }
+            for (String key : table.getColumns().keySet()) {
+                //colLists.add(table.getColumns().get(key));
+                Column col = table.getColumns().get(key);
+                List<String> sites = col2site.get(col.getColumnName());
+                for (String site : sites) {
+                    colListMap.get(site).add(col);
+                }
+            }
+        }
         // read into tmpfs
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line = null;
+            Map<String, List<String>> distRow = null;
             while ((line = reader.readLine()) != null) {
+                if (!isHorizontal) {
+                    distRow = new HashMap<String, List<String>>();
+                    for (String s : siteList) {
+                        distRow.put(s, new ArrayList<>());
+                    }
+                }
                 String[] values = line.split("\t");
                 for (int i = 0; i < values.length; i++) {
                     if (columns.get(i).getDataType() == DataType.DataTypeInt.CHAR || columns.get(i).getDataType() == DataType.DataTypeInt.VARCHAR || columns.get(i).getDataType() == DataType.DataTypeInt.DATE) {
@@ -138,18 +183,39 @@ public class LoadPlan
                         //System.out.println("i=" + i + "dataType " + columns.get(i).getDataType());
                         rowValues.put(columnNames[i], values[i]);
                     }
+                    if (!isHorizontal) {
+                        for (String site : col2site.get(columnNames[i])) {
+                            distRow.get(site).add(values[i]);
+                        }
+                    }
                 }
-                for (String f : fragments.keySet()) {
-                    Fragment fragment = fragments.get(f);
-                    if (ConditionComparator.matchString(fragment.getCondition(), rowValues)) {
+                if (isHorizontal) {
+                    for (String f : fragments.keySet()) {
+                        Fragment fragment = fragments.get(f);
+                        if (ConditionComparator.matchString(fragment.getCondition(), rowValues)) {
+                            tmpWriters.get(f).write(String.join("\t", values) + "\n");
+                            cnt.put(f, cnt.get(f) + 1);
+                            break;
+                        }
+                    }
+                }
+                else {
+                    for (String f : fragments.keySet()) {
+                        Fragment fragment = fragments.get(f);
+                        String siteName = fragment.getSiteName();
+                        List<String> list = distRow.get(siteName);
+                        String[] str = new String[list.size()];
+                        for (int i = 0; i < list.size(); i++) {
+                            str[i] = list.get(i);
+                        }
                         tmpWriters.get(f).write(String.join("\t", values) + "\n");
                         cnt.put(f, cnt.get(f) + 1);
-                        break;
                     }
                 }
             }
+
             for (String f : fragments.keySet()) {
-                System.out.println("f " + cnt.get(f));
+                System.out.println(f + "f " + cnt.get(f));
             }
             //close
             reader.close();

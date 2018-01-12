@@ -10,8 +10,16 @@ public class LoadPlanTest
     public void semanticAnalysis()
     {
         SqlParser parser = new SqlParser();
-        String str = "load \"/home/hagen/emp.tsv\" into pardtest.emp";
+        String str = "load \"/home/hagen/下载/eval_db/customer.tsv\" into book.customer";
         Statement stmt = parser.createStatement(str);
         LoadPlan plan = new LoadPlan(stmt);
+    }
+    @Test
+    public void semanticAnalysis2()
+    {
+        SqlParser parser = new SqlParser();
+        String str = "insert into book.customer(id, name, rank) values(300001, 'J. Stephenson', 3)";
+        Statement stmt = parser.createStatement(str);
+        InsertPlan plan = new InsertPlan(stmt);
     }
 }

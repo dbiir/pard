@@ -35,6 +35,7 @@ import java.util.List;
 public class SemanticAnalysisTest
 {
     private SqlParser parser = new SqlParser();
+
     @Test
     public void analysis()
     {
@@ -57,6 +58,16 @@ public class SemanticAnalysisTest
             }
         }
         System.out.println(statement.toString());
+    }
+
+    @Test
+    public void testInsertPlan()
+    {
+        String sql = "INSERT INTO ewsddsds.EMP(eno, ename, title) VALUES('E0001', 'J. Doe', 'Elect. Eng.')";
+        Statement stmt = parser.createStatement(sql);
+        PardPlanner planner = new PardPlanner();
+        Plan plan = planner.plan(stmt);
+        System.out.println(plan);
     }
 
     private PlanNode parseOrderBy(PlanNode node, OrderBy orderBy)

@@ -452,41 +452,41 @@ public class TaskScheduler
                     if (task instanceof CreateSchemaTask) {
                         logger.info("Calling schema creation");
                         int status = client.createSchema((CreateSchemaTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                     // drop schema task
                     if (task instanceof DropSchemaTask) {
                         logger.info("Calling schema drop");
                         int status = client.dropSchema((DropSchemaTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                     // create table task
                     if (task instanceof CreateTableTask) {
                         logger.info("Calling table creation");
                         int status = client.createTable((CreateTableTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                     // drop table task
                     if (task instanceof DropTableTask) {
                         logger.info("Calling task drop");
                         int status = client.dropTable((DropTableTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                     // insert task
                     if (task instanceof InsertIntoTask) {
                         logger.info("Calling insert");
                         int status = client.insertInto((InsertIntoTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                 }
                 for (int status : statusL) {
                     if (status <= 0) {
-                        logger.info("Check task execution status. Wrong status" + status + " found.");
+                        logger.info("Check task execution status. Wrong status " + status + " found.");
                         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
                     }
                 }

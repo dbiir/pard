@@ -94,6 +94,9 @@ public class InsertPlan
         boolean isHorizontal = true;
         if (table.getFragment().values().iterator().next().getFragmentType() == GddUtil.fragementHORIZONTIAL) {
             isHorizontal = true;
+            for (String site : siteList) {
+                colListMap.put(site, new ArrayList<>());
+            }
             for (Column col : table.getColumns().values()) {
                 col2site.put(col.getColumnName(), siteList);
             }
@@ -182,7 +185,10 @@ public class InsertPlan
                 }
             }
             for (String key : distRow.keySet()) {
-                distributionHints.get(key).add(distRow.get(key));
+                Row rowTmp = distRow.get(key);
+                if (rowTmp != null && !rowTmp.getItems().isEmpty()) {
+                    distributionHints.get(key).add(rowTmp);
+                }
             }
             if (isHorizontal) {
                 for (String key : table.getFragment().keySet()) {

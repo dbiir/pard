@@ -1,0 +1,50 @@
+\documentclass{ctexart}
+ \usepackage{enumerate}
+ 
+
+\begin{document}
+ 
+\tableofcontents
+ 
+ 
+\section{系统概述}
+\subsection{任务回顾}
+我们要实现一个分布式数据库系统，即通过网络将多个不同的局部数据库系统连接起
+来，使得用户可以通过分布式数据库管理系统达到透明性管理的目的。
+在我们具体的实例中，我们通过网络将 3 个不同站点的4个局部数据库连接起来，并可以通
+过分布式数据库管理系统（Client）进行数据库创建，数据分片、分配、导入及 SQL 操作等
+管理，支持水平划分、垂直划分。
+
+
+\subsection{运行环境}
+Java8 以上， MYSQL5 以上，postGRESQL
+
+\subsection{开发环境}
+ Git + Intellij IDEA + Java8 + Maven3.3.9+
+ 
+ Compilation Without Running Unit Tests:\\
+ mvn clean package -DskipTests or mvn clean compile -DskipTests
+ 
+ Compilation With Running Unit Tests:\\
+ mvn clean package or mvn clean compile
+ 
+ Tips:
+ \begin{enumerate}[1]
+ 	\item Compile locally to ensure everything is ok before pushing to Github.
+ 	\item Pay attention to CheckStyle. Make sure your code style satisfies the code style rules.
+ \end{enumerate}
+ 
+ 
+ 
+\section{总体设计}
+
+
+\subsection{时间安排}
+\begin{figure}
+\end{figure}
+
+\section{各模块详细设计}
+
+\section{任务分工及小结}
+ 
+\end{document}

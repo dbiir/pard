@@ -240,10 +240,10 @@ public class QueryPlan
             //currentNode = filterNode;
         }
         // scan
-        UnionNode node = horizonLocalization(tableDao, siteList, fromTableName, hasAllColumn);
-        currentNode.setChildren(node, true, true);
-        currentNode = node;
-        logger.info("Parsed query plan: " + node.toString());
+        UnionNode unionNode = horizonLocalization(tableDao, siteList, fromTableName, hasAllColumn);
+        currentNode.setChildren(unionNode, true, true);
+        currentNode = unionNode;
+        logger.info("Parsed query plan: " + this.node.toString());
         //col2tblMap.remove();
         return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
     }

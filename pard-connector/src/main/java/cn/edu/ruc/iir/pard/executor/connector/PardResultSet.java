@@ -62,8 +62,8 @@ public class PardResultSet
     private int currentSize = 0;
     private String taskId;
     private long executionTime;
-    private transient ResultSet jdbcResultSet;
-    private transient Connection connection;
+    private transient ResultSet jdbcResultSet = null;
+    private transient Connection connection = null;
 
     public PardResultSet()
     {
@@ -181,7 +181,9 @@ public class PardResultSet
         if (currentRows.size() == 0) {
             // no more result, close connection
             try {
-                connection.close();
+                if (connection != null) {
+                    connection.close();
+                }
             }
             catch (SQLException e) {
                 e.printStackTrace();

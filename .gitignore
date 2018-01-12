@@ -38,4 +38,6 @@ target/
 test-output
 
 # local test
-pard-server-test/
+pard-main/etc/distribute.sh
+pard-main/etc/pid
+pard-main/etc/test.sql

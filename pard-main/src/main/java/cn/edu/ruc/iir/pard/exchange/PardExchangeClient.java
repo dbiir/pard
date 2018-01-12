@@ -16,7 +16,7 @@ import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * pard
@@ -35,7 +35,7 @@ public class PardExchangeClient
         this.port = port;
     }
 
-    public void connect(Task task, ConcurrentLinkedQueue<Block> blocks)
+    public void connect(Task task, BlockingQueue<Block> blocks)
     {
         this.group = new NioEventLoopGroup();
         try {
@@ -50,7 +50,7 @@ public class PardExchangeClient
                         {
                             ch.pipeline()
                                     .addLast(new ObjectEncoder(),
-                                            new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                            new ObjectDecoder(100 * 1024 * 1024, ClassResolvers.cacheDisabled(null)),
                                             new ExchangeBlockHandler(task, blocks));
                         }});
             ChannelFuture f = bootstrap.connect(new InetSocketAddress(host, port)).sync();

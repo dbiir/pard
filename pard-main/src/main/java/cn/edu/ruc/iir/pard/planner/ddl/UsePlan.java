@@ -15,9 +15,9 @@ public class UsePlan
     {
         super(stmt);
     }
-    protected boolean alreadyDone = false;
-    private String schemaName = null;
-    private static Use stmt = null;
+    protected boolean alreadyDone;
+    private String schemaName;
+    private Use stmt;
     private static SchemaDao dao = new SchemaDao();
     private static ThreadLocal<String> currentSchema = new ThreadLocal<String>();
     public static Schema getCurrentSchema()
@@ -48,7 +48,7 @@ public class UsePlan
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.ParseError, "Create Schema Statement");
         }
         stmt = (Use) statement;
-        schemaName = stmt.getSchema().toString();
+        schemaName = stmt.getSchema().getValue();
         Schema schema = dao.loadByName(schemaName);
         if (schema == null) {
             return ErrorMessage.throwMessage(ErrCode.SchemaNotExsits, schemaName);

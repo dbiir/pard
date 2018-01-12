@@ -1,12 +1,14 @@
 package cn.edu.ruc.iir.pard.planner.dml;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.JoinNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
@@ -18,6 +20,11 @@ import cn.edu.ruc.iir.pard.planner.EarlyStopPlan;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
+import cn.edu.ruc.iir.pard.sql.expr.ColumnItem;
+import cn.edu.ruc.iir.pard.sql.expr.Expr;
+import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
+import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
+import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.tree.AllColumns;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
@@ -31,10 +38,13 @@ import cn.edu.ruc.iir.pard.sql.tree.SingleColumn;
 import cn.edu.ruc.iir.pard.sql.tree.SortItem;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import cn.edu.ruc.iir.pard.sql.tree.Table;
+import cn.edu.ruc.iir.pard.web.PardServlet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -45,15 +55,19 @@ import java.util.logging.Logger;
 public class QueryPlan
         extends Plan implements EarlyStopPlan
 {
-    private final Logger logger = Logger.getLogger(QueryPlan.class.getName());
-    private final PlanNode node = new OutputNode();
-    private boolean alreadyDone = false;
-
+    private Logger logger = Logger.getLogger(QueryPlan.class.getName());
+    private PlanNode node;
+    private boolean alreadyDone;
+    private Optional<LimitNode> limit;
+    private Optional<SortNode> sort;
+    private Optional<DistinctNode> distinct;
+    private ProjectNode project;
+    private Optional<FilterNode> filter;
+    private UnionNode union;
     public QueryPlan(Statement stmt)
     {
         super(stmt);
     }
-
     public PlanNode getPlan()
     {
         return node;
@@ -62,8 +76,18 @@ public class QueryPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        logger = Logger.getLogger(QueryPlan.class.getName());
+        node = new OutputNode();
+        ColumnItem.clearCol2TblMap();
+        Map<String, String> col2tbl = ColumnItem.getCol2TblMap();
+        this.limit = Optional.ofNullable(null);
+        this.sort = Optional.ofNullable(null);
+        this.distinct = Optional.ofNullable(null);
+        this.project = null;
+        this.filter = Optional.ofNullable(null);
+        this.union = null;
         PlanNode currentNode = this.node;
-
+        System.out.println("currentNode" + currentNode);
         // get real objects
         Query query = (Query) this.getStatment();
         QueryBody queryBody = query.getQueryBody();
@@ -93,7 +117,7 @@ public class QueryPlan
         boolean checkSchema = false;
         Schema schema = null;
         if (fromTable.getName().getPrefix().isPresent()) {
-            schemaName = fromTable.getName().getPrefix().toString();
+            schemaName = fromTable.getName().getPrefix().get().toString();
         }
         String fromTableName = fromTable.getName().getSuffix();
         if (schemaName == null) {
@@ -113,10 +137,34 @@ public class QueryPlan
                 return ErrorMessage.throwMessage(ErrorMessage.ErrCode.SchemaNotExsits, schemaName);
             }
         }
+        List<String> siteList = new ArrayList<String>();
+        SiteDao sdao = new SiteDao();
         TableDao tableDao = new TableDao(schema);
+        int pos = fromTableName.indexOf("@");
+        boolean needLoad = false;
+        if (pos > 0) {
+            String site = fromTableName.substring(pos + 1);
+            if (sdao.loadByName(site) == null) {
+                return ErrorMessage.throwMessage(ErrorMessage.ErrCode.SiteNotExist, site);
+            }
+            siteList.add(site);
+            fromTableName = fromTableName.substring(0, pos);
+        }
+        else {
+            //siteList.addAll(sdao.listNodes().keySet());
+            needLoad = true;
+        }
         catalogTable = tableDao.loadByName(fromTableName);
         if (catalogTable == null) {
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.TableNotExists, schemaName + "." + fromTableName);
+        }
+        if (needLoad) {
+            for (Fragment frag : catalogTable.getFragment().values()) {
+                siteList.add(frag.getSiteName());
+            }
+        }
+        for (Column col : catalogTable.getColumns().values()) {
+            col2tbl.put(col.getColumnName(), fromTableName);
         }
         // construct operator tree
         // limit
@@ -129,6 +177,7 @@ public class QueryPlan
                 return ErrorMessage.throwMessage(ErrorMessage.ErrCode.LimitIsNotANumber);
             }
             LimitNode limitNode = new LimitNode(limitVal);
+            limit = Optional.of(limitNode);
             currentNode.setChildren(limitNode, true, true);
             currentNode = limitNode;
         }
@@ -146,14 +195,17 @@ public class QueryPlan
                 }
             }
             currentNode.setChildren(sortNode, true, true);
+            sort = Optional.of(sortNode);
             currentNode = sortNode;
         }
         // distinct and project
+        boolean hasAllColumn = false;
         List<SelectItem> selectItems = select.getSelectItems();
         List<Column> columns = new ArrayList<>();
         for (SelectItem selectItem : selectItems) {
             if (selectItem instanceof AllColumns) {
                 columns.clear();
+                hasAllColumn = true;
                 columns.addAll(catalogTable.getColumns().values());
                 break;
             }
@@ -170,39 +222,86 @@ public class QueryPlan
         }
         if (select.isDistinct()) {
             DistinctNode distinctNode = new DistinctNode(columns);
+            distinct = Optional.of(distinctNode);
             currentNode.setChildren(distinctNode, true, true);
             currentNode = distinctNode;
         }
         ProjectNode projectNode = new ProjectNode(columns);
         currentNode.setChildren(projectNode, true, true);
+        project = projectNode;
         currentNode = projectNode;
 
         // filter
         if (querySpecification.getWhere().isPresent()) {
             Expression filterExpr = querySpecification.getWhere().get();
             FilterNode filterNode = new FilterNode(filterExpr);
-            currentNode.setChildren(filterNode, true, true);
-            currentNode = filterNode;
+            filter = Optional.of(filterNode);
+            //currentNode.setChildren(filterNode, true, true);
+            //currentNode = filterNode;
         }
-
         // scan
-        UnionNode unionNode = new UnionNode();
+        UnionNode unionNode = horizonLocalization(tableDao, siteList, fromTableName, hasAllColumn);
         currentNode.setChildren(unionNode, true, true);
-        //TODO: check for sites that really need query execution.
-        SiteDao siteDao = new SiteDao();
-        for (String site : siteDao.listNodes().keySet()) {
-            TableScanNode scanNode = new TableScanNode(schemaName, fromTableName, site);
-            unionNode.addUnionChild(scanNode);
-        }
-
-        logger.info("Parsed query plan: " + node.toString());
-
+        currentNode = unionNode;
+        logger.info("Parsed query plan: " + this.node.toString());
+        //col2tblMap.remove();
         return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
     }
-
-    public void optimize()
+    public JoinNode verticalLocalization(TableDao tdao, List<String> siteList, String fromTableName, boolean projectColumn)
     {
-        // todo add optimization rules
+        //TODO: join localization
+        return null;
+    }
+    public UnionNode horizonLocalization(TableDao tdao, List<String> siteList, String fromTableName, boolean projectColumn)
+    {
+        UnionNode unionNode = new UnionNode();
+        cn.edu.ruc.iir.pard.catalog.Table catalogTable = tdao.loadByName(fromTableName);
+        //union = unionNode;
+        for (Fragment frag : catalogTable.getFragment().values()) {
+            if (!siteList.contains(frag.getSiteName())) {
+                continue;
+            }
+            Expr expr = Expr.parse(frag.getCondition(), fromTableName);
+            PlanNode childrenNode = new TableScanNode(tdao.getSchemaName(), fromTableName, frag.getSiteName());
+            if (filter.isPresent()) {
+                //TODO: 从expr2中选择自己的
+                Expr expr2 = Expr.parse(filter.get().getExpression());
+                Expr merge = Expr.and(expr, expr2, LogicOperator.AND);
+                if (merge instanceof TrueExpr) {
+                    // do nothing.
+                }
+                else if (merge instanceof FalseExpr) {
+                    continue;
+                }
+                else {
+                    //merge = Expr.and(expr, expr2, LogicOperator.OR);
+                    FilterNode childrenFilter = new FilterNode(merge.toExpression());
+                    childrenFilter.setChildren(childrenNode, true, true);
+                    childrenNode = childrenFilter;
+                }
+            }
+            if (project != null && !projectColumn) {
+                //TODO: 选择自己表里元素下推
+                ProjectNode pnode = new ProjectNode(project.getColumns());
+                pnode.setChildren(childrenNode, true, true);
+                childrenNode = pnode;
+            }
+            if (distinct.isPresent()) {
+              //TODO: 选择自己表里元素distinct
+                DistinctNode dnode = new DistinctNode(distinct.get().getColumns());
+                dnode.setChildren(childrenNode, true, true);
+                childrenNode = dnode;
+            }
+            unionNode.addUnionChild(childrenNode);
+        }
+        if (unionNode.getUnionChildren().isEmpty()) {
+            //this.alreadyDone = true;
+        }
+        return unionNode;
+    }
+    public PlanNode optimize()
+    {
+        return node;
     }
 
     @Override
@@ -214,5 +313,11 @@ public class QueryPlan
     public HashMap<String, PlanNode> getDistributionHints()
     {
         return new HashMap<>();
+    }
+    @Override
+    public boolean afterExecution(boolean executeSuccess)
+    {
+        PardServlet.planList.add(this);
+        return true;
     }
 }

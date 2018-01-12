@@ -42,6 +42,7 @@ public class PushDownLaw
     public static CompositionExpr formatExpr(CompositionExpr expr)
     {
         CompositionExpr exprs = new CompositionExpr(expr);
+        //System.out.println("before format:" + exprs.toString());
         CompositionExpr ret = new CompositionExpr(exprs.getLogicOperator());
         for (Expr e : exprs.getConditions()) {
             if (e instanceof CompositionExpr && ((CompositionExpr) e).getLogicOperator() == expr.getLogicOperator()) {
@@ -51,13 +52,19 @@ public class PushDownLaw
                 }
             }
             else if (e instanceof CompositionExpr) {
-                e = formatExpr((CompositionExpr) e);
-                add(ret.getConditions(), e);
+                CompositionExpr ce = formatExpr((CompositionExpr) e);
+                if (ce.getConditions().size() > 1) {
+                    add(ret.getConditions(), ce);
+                }
+                else if (ce.getConditions().size() == 1) {
+                    add(ret.getConditions(), ce.getConditions().get(0));
+                }
             }
             else {
                 add(ret.getConditions(), e);
             }
         }
+        //System.out.println("after format:" + ret.toString());
         return ret;
     }
     public void printLog(CompositionExpr e, LogicOperator op)

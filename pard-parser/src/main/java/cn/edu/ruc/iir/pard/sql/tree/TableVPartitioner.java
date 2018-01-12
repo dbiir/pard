@@ -82,4 +82,9 @@ public final class TableVPartitioner
                 .add("node", nodeId == null ? "" : nodeId)
                 .toString();
     }
+
+    public String getNodeId()
+    {
+        return nodeId;
+    }
 }

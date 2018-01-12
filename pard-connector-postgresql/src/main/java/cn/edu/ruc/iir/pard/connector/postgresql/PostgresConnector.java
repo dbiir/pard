@@ -3,9 +3,11 @@ package cn.edu.ruc.iir.pard.connector.postgresql;
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
+import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.DeleteTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
@@ -92,6 +94,9 @@ public class PostgresConnector
             if (task instanceof LoadTask) {
                 return executeLoad(conn, (LoadTask) task);
             }
+            if (task instanceof DeleteTask) {
+                return executeDelete(conn, (DeleteTask) task);
+            }
         }
         catch (SQLException e) {
             logger.info("GET CONNECTION FAILED");
@@ -117,7 +122,6 @@ public class PostgresConnector
             logger.info("Connector: " + createSchemaSQL);
             if (status == 0) {
                 logger.info("CREATE SCHEMA SUCCESSFULLY");
-                conn.close();
                 return PardResultSet.okResultSet;
             }
         }
@@ -156,7 +160,6 @@ public class PostgresConnector
             int status = statement.executeUpdate(createTableSQL.toString());
             if (status == 0) {
                 logger.info("CREATE TABLE SUCCESSFULLY");
-                conn.close();
                 return PardResultSet.okResultSet;
             }
         }
@@ -185,7 +188,6 @@ public class PostgresConnector
             logger.info("Connector: " + dropSchemaSQL);
             if (status == 0) {
                 logger.info("DROP SCHEMA SUCCESSFULLY");
-                conn.close();
                 return PardResultSet.okResultSet;
             }
         }
@@ -219,7 +221,6 @@ public class PostgresConnector
             int status = statement.executeUpdate(dropTableSQL);
             if (status == 0) {
                 logger.info("DROP TABLE SUCCESSFULLY");
-                conn.close();
                 return PardResultSet.okResultSet;
             }
         }
@@ -456,14 +457,47 @@ public class PostgresConnector
             for (String path : paths) {
                 logger.info("Copying " + path + " into " + schema + "." + table);
                 String sql = "COPY " + schema + "." + table + " FROM STDIN DELIMITER E'\t'";
+                logger.info("Postgres connector: " + sql);
                 File file = new File(path);
                 InputStream inputStream = new FileInputStream(file);
                 copyManager.copyIn(sql, inputStream);
                 file.deleteOnExit();
             }
-            return PardResultSet.okResultSet;
+            PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK);
+            RowConstructor rowConstructor = new RowConstructor();
+            rowConstructor.appendString(PardResultSet.ResultStatus.OK.toString());
+            resultSet.add(rowConstructor.build());
+            return resultSet;
         }
         catch (SQLException | IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return PardResultSet.execErrResultSet;
+    }
+
+    private PardResultSet executeDelete(Connection conn, DeleteTask task)
+    {
+        String schema = task.getSchema();
+        String table = task.getTable();
+        try {
+            Statement statement = conn.createStatement();
+            StringBuilder sb = new StringBuilder("DELETE FROM ");
+            sb.append(schema).append(".").append(table);
+            sb.append(" WHERE ");
+            sb.append(task.getExpression().toString());
+            logger.info("Postgres connector: " + sb.toString());
+            statement.executeUpdate(sb.toString());
+            return PardResultSet.okResultSet;
+        }
+        catch (SQLException e) {
             e.printStackTrace();
         }
         finally {

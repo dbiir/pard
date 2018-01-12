@@ -5,7 +5,7 @@ import cn.edu.ruc.iir.pard.executor.connector.Task;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,10 +18,10 @@ public class ExchangeBlockHandler
         extends ChannelInboundHandlerAdapter
 {
     private final Task task;
-    private final ConcurrentLinkedQueue<Block> blocks;
+    private final BlockingQueue<Block> blocks;
     private final Logger logger = Logger.getLogger(ExchangeBlockHandler.class.getName());
 
-    public ExchangeBlockHandler(Task task, ConcurrentLinkedQueue<Block> blocks)
+    public ExchangeBlockHandler(Task task, BlockingQueue<Block> blocks)
     {
         this.task = task;
         this.blocks = blocks;

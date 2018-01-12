@@ -17,9 +17,15 @@ public class FilterNode
 
     public FilterNode(Expression expression)
     {
+        this.name = "FILTER";
         this.expression = expression;
     }
-
+    public FilterNode(FilterNode node)
+    {
+        super(node);
+        this.name = "FILTER";
+        this.expression = node.expression;
+    }
     public Expression getExpression()
     {
         return expression;

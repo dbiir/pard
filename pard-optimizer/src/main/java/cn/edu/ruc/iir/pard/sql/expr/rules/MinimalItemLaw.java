@@ -151,6 +151,9 @@ public class MinimalItemLaw
     }
     public List<Expr> mergeTwo(SingleExpr expr1, SingleExpr expr2, LogicOperator opt)
     {
+        //System.out.println("m1 " + expr1.toString());
+        //System.out.println("m2 " + expr2.toString());
+        //System.out.println();
         List<Expr> expr = new ArrayList<Expr>();
         ValueItem rv1 = (ValueItem) expr1.getRvalue();
         ValueItem rv2 = (ValueItem) expr2.getRvalue();
@@ -164,12 +167,43 @@ public class MinimalItemLaw
                 return parseSameOptOrMerge(expr1, expr2, expr);
             }
         }
+        else if ((cmpMask1 | cmpMask2) == GE || (cmpMask1 | cmpMask2) == LE) {
+            //同号和同方向的已经处理完成
+            //进入该分支的是一边是大于小于，一边是等于的分支
+            SingleExpr eqexpr = null;
+            SingleExpr nexpr = null;
+            ValueItem eqve = null;
+            ValueItem neve = null;
+            if (cmpMask1 == EQ) {
+                eqexpr = expr1;
+                nexpr = expr2;
+            }
+            else {
+                eqexpr = expr2;
+                nexpr = expr1;
+            }
+            eqve = (ValueItem) eqexpr.getRvalue();
+            neve = (ValueItem) nexpr.getRvalue();
+            boolean flag = TrueFalseLaw.cmp(nexpr.getCompareType(), eqve, neve);
+            //TODO:
+            if (flag) {
+                if (opt == LogicOperator.AND) {
+                    expr.add(eqexpr);
+                    return expr;
+                }
+                else {
+                    expr.add(nexpr);
+                    return expr;
+                }
+            }
+        }
         else if (rv1.equals(rv2) && ((cmpMask1 & NE) | (cmpMask2 & NE)) == NE) {
             if (opt == LogicOperator.AND) {
                 if (cmpMask1 == NE || cmpMask2 == NE) {
                     SingleExpr notNE = null;
                     int cmpMask = 0;
                     if (cmpMask1 == NE && cmpMask2 == NE) {
+                        //dead code
                         expr.add(expr1);
                         return expr;
                     }
@@ -212,6 +246,7 @@ public class MinimalItemLaw
                     SingleExpr notNE = null;
                     int cmpMask = 0;
                     if (cmpMask1 == NE && cmpMask2 == NE) {
+                        //dead code
                         expr.add(expr1);
                         return expr;
                     }
@@ -232,7 +267,7 @@ public class MinimalItemLaw
                         return expr;
                     }
                 }
-                else if (((cmpMask1 | cmpMask2) & EQ) != EQ) {
+                else if (((cmpMask1 | cmpMask2) & EQ) == EQ) {
                     expr.add(new TrueExpr());
                 }
                 else {
@@ -367,7 +402,7 @@ public class MinimalItemLaw
         if (expr instanceof CompositionExpr) {
             CompositionExpr ce = (CompositionExpr) expr;
             CompositionExpr ret = new CompositionExpr(ce.getLogicOperator());
-            Map<Expr, Boolean> merged = new HashMap<Expr, Boolean>();
+            //Map<Expr, Boolean> merged = new HashMap<Expr, Boolean>();
             List<SingleExpr> singleExpr = new ArrayList<SingleExpr>();
             List<CompositionExpr> compExpr = new ArrayList<CompositionExpr>();
             List<Expr> others = new ArrayList<Expr>();
@@ -402,6 +437,11 @@ public class MinimalItemLaw
                     ret.getConditions().add(s);
                 }
             }
+            //for (ColumnItem ci : colmap.keySet()) {
+                //System.out.println(ci);
+           // }
+            //System.out.println();
+            //System.out.println();
             for (List<SingleExpr> group : colmap.values()) {
                 if (group.size() <= 1) {
                     ret.getConditions().addAll(group);

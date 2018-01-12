@@ -20,6 +20,12 @@
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-main</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -52,7 +58,6 @@
                                     <mainClass>cn.edu.ruc.iir.pard.client.PardClient</mainClass>
                                 </transformer>
                             </transformers>
-                            <outputDirectory>${main.basedir}/pard-server-test/</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>

@@ -62,6 +62,11 @@ public final class PardUserConfiguration
         return Integer.parseInt(getProperty("pard.server.port"));
     }
 
+    public int getWebPort()
+    {
+        return Integer.parseInt(getProperty("pard.web.port"));
+    }
+
     public int getExchangePort()
     {
         return Integer.parseInt(getProperty("pard.exchange.port"));

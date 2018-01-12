@@ -13,7 +13,7 @@ import cn.edu.ruc.iir.pard.sql.tree.LongLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.NullLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
-import java.util.Arrays;
+//import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -22,16 +22,17 @@ public class ConditionComparator
     private ConditionComparator()
     {}
 
-    public static boolean matchString(List<Condition> conditions, String[] names, String[] values)
+    public static boolean matchString(List<Condition> conditions, Map<String, String> value)
     {
         for (Condition cond : conditions) {
             Comparable condCmp = parseFromString(cond.getDataType(), cond.getValue());
-            int vIndex = Arrays.binarySearch(names, cond.getColumnName());
-            if (vIndex < 0 || vIndex >= values.length) {
+//            int vIndex = Arrays.binarySearch(names, cond.getColumnName());
+//            if (vIndex < 0 || vIndex >= values.length) {
                 // column not found
-                continue;
-            }
-            String str = values[vIndex];
+//                continue;
+//            }
+//            String str = values[vIndex];
+            String str = value.get(cond.getColumnName());
             if (str == null) {
                 throw new SemanticException(ErrCode.MissingPartitionColumnsWhenInsert, cond.getColumnName());
             }

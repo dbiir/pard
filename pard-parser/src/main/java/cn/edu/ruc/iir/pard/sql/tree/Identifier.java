@@ -17,6 +17,7 @@ public final class Identifier
         extends Expression
 {
     private static final Pattern NAME_PATTERN = Pattern.compile("[a-zA-Z_]([a-zA-Z0-9_:@])*");
+    private static final long serialVersionUID = 7099655458789595639L;
 
     private final String value;
     private final boolean delimited;

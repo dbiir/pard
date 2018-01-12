@@ -246,34 +246,48 @@ public class TaskScheduler
         // query plan
         if (plan instanceof QueryPlan) {
             logger.info("Task generation for query plan");
-            QueryPlan queryPlan = (QueryPlan) plan;
-            PlanNode planNode = queryPlan.getPlan();
-            PlanNode currentNode = planNode;
-            UnionNode internalUnionNode = null;
-            while (currentNode.hasChildren()) {
-                currentNode = currentNode.getLeftChild();
-                if (currentNode instanceof UnionNode) {
-                    internalUnionNode = (UnionNode) currentNode;
-                    break;
+            try {
+                QueryPlan queryPlan = (QueryPlan) plan;
+                PlanNode planNode = queryPlan.getPlan();
+                PlanNode currentNode = planNode;
+                UnionNode internalUnionNode = null;
+                while (currentNode.hasChildren()) {
+                    currentNode = currentNode.getLeftChild();
+                    if (currentNode instanceof UnionNode) {
+                        internalUnionNode = (UnionNode) currentNode;
+                        break;
+                    }
                 }
+                if (internalUnionNode == null) {
+                    return ImmutableList.of(new QueryTask(planNode));
+                }
+                List<Task> tasks = new ArrayList<>();
+                List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
+                int index = 0;
+                for (PlanNode childNode : unionChildren) {
+                    internalUnionNode.setChildren(childNode, true, false);
+                    PlanNode node = childNode;
+                    TableScanNode tableScanNode = null;
+                    while (node.hasChildren()) {
+                        if (node.getLeftChild() instanceof TableScanNode) {
+                            tableScanNode = (TableScanNode) node.getLeftChild();
+                            break;
+                        }
+                        node = node.getLeftChild();
+                    }
+                    if (tableScanNode == null) {
+                        return null;
+                    }
+                    QueryTask task = new QueryTask(tableScanNode.getSite(), planNode);
+                    task.setTaskId(plan.getJobId() + "-" + index);
+                    tasks.add(task);
+                    index++;
+                }
+                return ImmutableList.copyOf(tasks);
             }
-            if (internalUnionNode == null) {
-                return ImmutableList.of(new QueryTask(planNode));
+            catch (Exception e) {
+                e.printStackTrace();
             }
-            List<Task> tasks = new ArrayList<>();
-            List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
-            int index = 0;
-            for (PlanNode childNode : unionChildren) {
-                internalUnionNode.setChildren(childNode, true, false);
-                // todo hard coded to get site info of task
-                TableScanNode node = (TableScanNode) childNode;
-                QueryTask task = new QueryTask(node.getSite(), planNode);
-                task.setTaskId(plan.getJobId() + "-" + index);
-                tasks.add(task);
-                index++;
-            }
-
-            return ImmutableList.copyOf(tasks);
         }
         return null;
     }

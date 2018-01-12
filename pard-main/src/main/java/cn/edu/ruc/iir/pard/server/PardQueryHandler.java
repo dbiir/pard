@@ -45,12 +45,12 @@ public class PardQueryHandler
         this.socket = socket;
         this.jobScheduler = jobScheduler;
         this.taskScheduler = taskScheduler;
-        try {
-            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override
@@ -76,7 +76,7 @@ public class PardQueryHandler
         }
     }
 
-    private PardResultSet executeQuery(String sql)
+    public PardResultSet executeQuery(String sql)
     {
         logger.info("Accepted query: " + sql);
         long timerStart = System.currentTimeMillis();

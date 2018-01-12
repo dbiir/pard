@@ -49,7 +49,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -365,8 +369,6 @@ public class TaskScheduler
         else {
             // load
             if (plan instanceof LoadPlan) {
-                LoadPlan loadPlan = (LoadPlan) plan;
-                String path = loadPlan.getPath();
                 Map<String, Task> taskMap = new HashMap<>();
                 ConcurrentLinkedQueue<PardResultSet> resultSets = new ConcurrentLinkedQueue<>();
                 // distribute file
@@ -375,12 +377,18 @@ public class TaskScheduler
                     Site nodeSite = siteDao.listNodes().get(site);
                     if (nodeSite == null) {
                         logger.info("No corresponding node " + site + " found for execution.");
-                        continue;
+                        return PardResultSet.execErrResultSet;
+                    }
+                    LoadTask loadTask = (LoadTask) task;
+                    List<String> loadPaths = loadTask.getPaths();
+                    if (loadPaths.isEmpty()) {
+                        logger.info("No path found for execution");
+                        return PardResultSet.execErrResultSet;
                     }
                     PardFileExchangeClient exchangeClient = new PardFileExchangeClient(
                                     nodeSite.getIp(),
                                     nodeSite.getFileExchangePort(),
-                                    path,
+                            loadPaths.get(0),
                                     ((LoadPlan) plan).getSchemaName(),
                                     ((LoadPlan) plan).getTableName(),
                                     task.getTaskId(),
@@ -408,20 +416,28 @@ public class TaskScheduler
                 logger.info("Executing query tasks for job[" + job.getJobId() + "]");
                 PardResultSet resultSet = new PardResultSet();
                 Map<String, Task> taskMap = new HashMap<>();
-                ConcurrentLinkedQueue<Block> blocks = new ConcurrentLinkedQueue<>();
+                BlockingQueue<Block> blocks = new LinkedBlockingQueue<>();
                 for (Task task : tasks) {
                     String site = task.getSite();
                     String taskId = task.getTaskId();
                     Site nodeSite = siteDao.listNodes().get(site);
-                    if (nodeSite != null) {
-                        PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
-                        client.connect(task, blocks);
-                        taskMap.put(taskId, task);
+                    if (nodeSite == null) {
+                        logger.log(Level.SEVERE, "Node " + site + " is not active. Please check.");
+                        return PardResultSet.execErrResultSet;
                     }
+                    PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+                    client.connect(task, blocks);
+                    taskMap.put(taskId, task);
                 }
                 // wait for all tasks done
                 while (!taskMap.isEmpty()) {
-                    Block block = blocks.poll();
+                    Block block = null;
+                    try {
+                        block = blocks.poll(8000, TimeUnit.MILLISECONDS);
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     if (block == null) {
                         logger.info("Waiting for more blocks...");
                         continue;
@@ -441,13 +457,13 @@ public class TaskScheduler
             // delete
             if (plan instanceof DeletePlan) {
                 Map<String, Task> taskMap = new HashMap<>();
-                ConcurrentLinkedQueue<Block> blocks = new ConcurrentLinkedQueue<>();
+                BlockingQueue<Block> blocks = new LinkedBlockingDeque<>(100);
                 for (Task task : tasks) {
                     String site = task.getSite();
                     Site nodeSite = siteDao.listNodes().get(site);
                     if (nodeSite == null) {
                         logger.info("No corresponding node " + site + " found for execution.");
-                        continue;
+                        return PardResultSet.execErrResultSet;
                     }
                     PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
                     client.connect(task, blocks);
@@ -455,7 +471,13 @@ public class TaskScheduler
                 }
                 // wait for all tasks done
                 while (!taskMap.isEmpty()) {
-                    Block block = blocks.poll();
+                    Block block = null;
+                    try {
+                        block = blocks.poll(8000, TimeUnit.MILLISECONDS);
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     if (block == null) {
                         logger.info("Waiting for more blocks...");
                         continue;
@@ -477,7 +499,7 @@ public class TaskScheduler
                     Site nodeSite = siteDao.listNodes().get(site);
                     if (nodeSite == null) {
                         logger.info("No corresponding node " + site + " found for execution.");
-                        continue;
+                        return PardResultSet.execErrResultSet;
                     }
                     PardRPCClient client = new PardRPCClient(nodeSite.getIp(), nodeSite.getRpcPort());
                     // create schema task

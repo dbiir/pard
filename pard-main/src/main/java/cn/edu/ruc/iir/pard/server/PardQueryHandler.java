@@ -140,9 +140,9 @@ public class PardQueryHandler
             logger.log(Level.WARNING, "Failed to execute job for sql: " + sql);
         }
         jobScheduler.updateJob(job.getJobId());
-        logger.info("Done executing job[" + job.getJobId() + "], job state: " + job.getJobState());
 
         long timerStop = System.currentTimeMillis();
+        logger.info("Done executing job[" + job.getJobId() + "], job state: " + job.getJobState() + ", execution time: " + ((double) (timerStop - timerStart)) / 1000 + "s");
         resultSet.setExecutionTime(timerStop - timerStart);
         return resultSet;
     }

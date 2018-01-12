@@ -170,7 +170,7 @@ public class LoadPlan
             Map<String, List<String>> distRow = null;
             while ((line = reader.readLine()) != null) {
                 if (!isHorizontal) {
-                    distRow = new HashMap<String, List<String>>();
+                    distRow = new HashMap<>();
                     for (String s : siteList) {
                         distRow.put(s, new ArrayList<>());
                     }
@@ -213,8 +213,7 @@ public class LoadPlan
                             str[i] = list.get(i);
                         }
                         tmpWriters.get(f).write(String.join("\t", str) + "\n");
-                        //System.out.println(join("\t", values));
-                        //System.out.println(f + "\t" + String.join("\t", str));
+                        //System.out.println(String.join("\t", str));
                         cnt.put(f, cnt.get(f) + 1);
                     }
                 }

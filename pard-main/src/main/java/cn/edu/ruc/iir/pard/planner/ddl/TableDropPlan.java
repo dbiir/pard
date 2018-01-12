@@ -1,9 +1,9 @@
 package cn.edu.ruc.iir.pard.planner.ddl;
 
+import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
-import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.sql.tree.DropTable;
@@ -70,10 +70,15 @@ public class TableDropPlan
         }
 
         // add all sites
-        SiteDao siteDao = new SiteDao();
-        for (String site : siteDao.listNodes().keySet()) {
-            distributionHints.put(site, "");
+        Map<String, Fragment> fragmentMap = t.getFragment();
+        for (String f : fragmentMap.keySet()) {
+            Fragment fragment = fragmentMap.get(f);
+            distributionHints.put(fragment.getSiteName(), "");
         }
+//        SiteDao siteDao = new SiteDao();
+//        for (String site : siteDao.listNodes().keySet()) {
+//            distributionHints.put(site, "");
+//        }
 
         return ErrorMessage.getOKMessage();
     }

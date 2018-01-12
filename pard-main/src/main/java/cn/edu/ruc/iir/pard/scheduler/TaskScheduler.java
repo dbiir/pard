@@ -459,10 +459,6 @@ public class TaskScheduler
                         logger.info("Waiting for more blocks...");
                         continue;
                     }
-                    List<cn.edu.ruc.iir.pard.commons.memory.Row> rows = block.getRows();
-                    if (rows.isEmpty()) {
-                        return PardResultSet.execErrResultSet;
-                    }
                     if (!block.isSequenceHasNext()) {
                         String taskId = block.getTaskId();
                         taskMap.remove(taskId);

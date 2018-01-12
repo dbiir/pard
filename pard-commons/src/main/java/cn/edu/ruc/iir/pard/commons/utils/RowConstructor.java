@@ -64,7 +64,7 @@ public class RowConstructor
         for (int i = 0; i < offsets.length; i++) {
             int dataType = dataTypes.get(i);
             if (dataType == DataType.INT.getType()) {
-                sb.append(byteBuffer.getInt()).append(", ");
+                sb.append(byteBuffer.getInt()).append("\t");
                 continue;
             }
             if (dataType == DataType.CHAR.getType() || dataType == DataType.VARCHAR.getType()) {
@@ -78,7 +78,7 @@ public class RowConstructor
                 byte[] temp = new byte[len];
                 byteBuffer.get(temp);
                 try {
-                    sb.append(new String(temp, "UTF-8").trim()).append(", ");
+                    sb.append(new String(temp, "UTF-8").trim()).append("\t");
                 }
                 catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
@@ -86,19 +86,19 @@ public class RowConstructor
                 continue;
             }
             if (dataType == DataType.BIGINT.getType()) {
-                sb.append(byteBuffer.getLong()).append(", ");
+                sb.append(byteBuffer.getLong()).append("\t");
                 continue;
             }
             if (dataType == DataType.FLOAT.getType()) {
-                sb.append(byteBuffer.getFloat()).append(", ");
+                sb.append(byteBuffer.getFloat()).append("\t");
                 continue;
             }
             if (dataType == DataType.DOUBLE.getType()) {
-                sb.append(byteBuffer.getDouble()).append(", ");
+                sb.append(byteBuffer.getDouble()).append("\t");
             }
             // todo add more types
         }
         String rowStr = sb.toString();
-        return rowStr.substring(0, rowStr.length() - 2);
+        return rowStr.trim();
     }
 }

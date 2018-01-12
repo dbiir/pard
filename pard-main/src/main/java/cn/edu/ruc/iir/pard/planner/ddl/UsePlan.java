@@ -48,7 +48,7 @@ public class UsePlan
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.ParseError, "Create Schema Statement");
         }
         stmt = (Use) statement;
-        schemaName = stmt.getSchema().toString();
+        schemaName = stmt.getSchema().getValue();
         Schema schema = dao.loadByName(schemaName);
         if (schema == null) {
             return ErrorMessage.throwMessage(ErrCode.SchemaNotExsits, schemaName);

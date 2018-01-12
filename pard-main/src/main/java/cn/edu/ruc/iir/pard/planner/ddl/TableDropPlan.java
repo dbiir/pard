@@ -30,12 +30,12 @@ public class TableDropPlan
     public TableDropPlan(Statement stmt)
     {
         super(stmt);
-        this.distributionHints = new HashMap<>();
     }
 
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        this.distributionHints = new HashMap<>();
         Statement statement = getStatment();
         if (!(statement instanceof DropTable)) {
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.ParseError, "Drop Table Statement");
@@ -44,7 +44,7 @@ public class TableDropPlan
         QualifiedName name = dropTableStmt.getTableName();
 
         if (name.getPrefix().isPresent()) {
-            schemaName = name.getPrefix().toString();
+            schemaName = name.getPrefix().get().toString();
         }
         else {
             Schema schema = UsePlan.getCurrentSchema();

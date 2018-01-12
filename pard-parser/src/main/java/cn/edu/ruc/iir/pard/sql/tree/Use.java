@@ -12,6 +12,7 @@ import java.util.List;
 public final class Use
         extends Statement
 {
+    private static final long serialVersionUID = -5787911487055102574L;
     private final Identifier schema;
 
     public Use(Identifier schema)

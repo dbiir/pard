@@ -71,7 +71,7 @@ public class PardClient
                                 List<Row> rows = resultSet.getRows();
                                 for (Row row : rows) {
                                     String temp = RowConstructor.printRow(row, colTypes);
-                                    String[] r = temp.substring(0, temp.length() - 1).split(",");
+                                    String[] r = temp.split("\t");
                                     pretty.addRow(r);
                                     counter++;
                                 }
@@ -265,12 +265,9 @@ public class PardClient
         PardClient pc = new PardClient();
         pc.testrun();
     }
-
     */
     public static void main(String[] args)
     {
-        //testPrettyTable();
-
         if (args.length != 2) {
             System.out.println("PardClient <host> <port>");
             System.exit(-1);

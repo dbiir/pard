@@ -138,6 +138,14 @@ public class CatelogTest
         }
     }
     @Test
+    public void insert2()
+    {
+        String sql = "INSERT INTO ewsddsds.EMP(eno, ename, title) VALUES('E0001', 'J. Doe', 'Elect. Eng.')";
+        Statement stmt = parser.createStatement(sql);
+        System.out.println(stmt);
+        InsertPlan iplan = new InsertPlan(stmt);
+    }
+    @Test
     public void deleteInto()
     {
         String sql2 = "use pardtest";

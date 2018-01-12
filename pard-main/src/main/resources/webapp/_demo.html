@@ -16,13 +16,13 @@
   <div style="width:100%; white-space:nowrap;">
     <!--  控件 -->
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:110px">
-      <div id="myPaletteDiv" style="border: solid 1px black; height: 420px"></div>
+      <div id="myPaletteDiv" style="border: solid 1px black; height: 1820px"></div>
     </span>
 
     <!--  设计面板 -->
     
     <span style="display: inline-block; vertical-align: top; padding: 5px; width:80%">
-      <div id="myFlowDesignerDiv" style="border: solid 1px black; height: 420px"></div>
+      <div id="myFlowDesignerDiv" style="border: solid 1px black; height: 1820px"></div>
     </span>
   </div>
 
@@ -112,11 +112,11 @@
      * 保存设计图中的数据
      */
     var saveDesigner = function(){
-//      var errMsg = myDesigner.checkData();
-//      if(errMsg){
-//          layer.msg(errMsg);
-//          return;
-//      }
+     var errMsg = myDesigner.checkData();
+      if(errMsg){
+          layer.msg(errMsg);
+          return;
+      }
       areaFlow.value = myDesigner.getFlowData();
     };
 

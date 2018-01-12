@@ -399,6 +399,7 @@ public class TaskScheduler
                         logger.info("Task " + taskId + " done.");
                     }
                 }
+                plan.afterExecution(true);
                 return resultSet;
             }
 

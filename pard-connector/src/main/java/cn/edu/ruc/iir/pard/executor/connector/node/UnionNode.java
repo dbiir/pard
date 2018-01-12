@@ -23,9 +23,12 @@ public class UnionNode
     }
     public UnionNode(UnionNode node)
     {
-        this();
-        //TODO: consider wether the children node need copying.
-        this.unionChildren.addAll(node.getUnionChildren());
+        super(node);
+        this.name = "UNION";
+        this.unionChildren = new ArrayList<>();
+        for (PlanNode subnode : node.getUnionChildren()) {
+            unionChildren.add(NodeHelper.copyNode(subnode));
+        }
     }
     @Override
     public boolean hasChildren()

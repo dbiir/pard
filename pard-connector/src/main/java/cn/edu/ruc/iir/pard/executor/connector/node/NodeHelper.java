@@ -14,6 +14,43 @@ public class NodeHelper
     private NodeHelper()
     {
     }
+    public static PlanNode copyNode(PlanNode node)
+    {
+        if (node == null) {
+            return null;
+        }
+        if (node instanceof TableScanNode) {
+            return new TableScanNode((TableScanNode) node);
+        }
+        else if (node instanceof UnionNode) {
+            return new UnionNode((UnionNode) node);
+        }
+        else if (node instanceof SortNode) {
+            return new SortNode((SortNode) node);
+        }
+        else if (node instanceof ProjectNode) {
+            return new ProjectNode((ProjectNode) node);
+        }
+        else if (node instanceof OutputNode) {
+            return new OutputNode((OutputNode) node);
+        }
+        else if (node instanceof LimitNode) {
+            return new LimitNode((LimitNode) node);
+        }
+        else if (node instanceof JoinNode) {
+            return new JoinNode((JoinNode) node);
+        }
+        else if (node instanceof FilterNode) {
+            return new FilterNode((FilterNode) node);
+        }
+        else if (node instanceof DistinctNode) {
+            return new DistinctNode((DistinctNode) node);
+        }
+        else if (node instanceof AggregationNode) {
+            return new AggregationNode((AggregationNode) node);
+        }
+        return null;
+    }
     public static String parseColumns(List<Column> list)
     {
         StringBuilder sb = new StringBuilder("[");

@@ -457,6 +457,7 @@ public class PostgresConnector
             for (String path : paths) {
                 logger.info("Copying " + path + " into " + schema + "." + table);
                 String sql = "COPY " + schema + "." + table + " FROM STDIN DELIMITER E'\t'";
+                logger.info("Postgres connector: " + sql);
                 File file = new File(path);
                 InputStream inputStream = new FileInputStream(file);
                 copyManager.copyIn(sql, inputStream);
@@ -492,6 +493,7 @@ public class PostgresConnector
             sb.append(schema).append(".").append(table);
             sb.append(" WHERE ");
             sb.append(task.getExpression().toString());
+            logger.info("Postgres connector: " + sb.toString());
             statement.executeUpdate(sb.toString());
             return PardResultSet.okResultSet;
         }

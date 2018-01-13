@@ -18,18 +18,26 @@ public class JoinNode
     private Set<String> joinSet;
     public JoinNode()
     {
+        name = "JOIN";
         joinSet = new HashSet<String>();
+    }
+    public JoinNode(JoinNode node)
+    {
+        super(node);
+        name = "JOIN";
+        joinSet = new HashSet<String>();
+        joinSet.addAll(node.joinSet);
     }
     public boolean hasChildren()
     {
         return !childrens.isEmpty();
     }
-    public void addUnionChild(PlanNode node)
+    public void addJoinChild(PlanNode node)
     {
         this.childrens.add(node);
     }
 
-    public List<PlanNode> getUnionChildren()
+    public List<PlanNode> getJoinChildren()
     {
         return childrens;
     }
@@ -41,8 +49,9 @@ public class JoinNode
     public String toString()
     {
         return toStringHelper(this)
-                .add("name", "UNION")
+                .add("name", "JOIN")
                 .add("children", childrens)
+                .add("joinSet", this.joinSet)
                 .toString();
     }
 }

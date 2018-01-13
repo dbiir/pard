@@ -1,0 +1,51 @@
+#!/bin/bash
+
+if [ $# != 1 ] ; then
+    echo "pard-server <run/start/stop>"
+    exit
+fi
+
+cd `dirname $0`
+
+# run in foreground
+if [ $1 == "run" ] ; then
+    if [ -e ../pid ] ; then
+        echo "Pard already started. Please stop it first."
+    else
+        exec java -jar ../bin/pard-server.jar ../pard.properties
+    fi
+    exit
+fi
+
+# run in background
+if [ $1 == "start" ] ; then
+    if [ -e ../pid ] ; then
+        echo "Pard already started. Please stop it first."
+    else
+        nohup java -jar ../bin/pard-server.jar ../pard.properties &
+        pid=$!
+        echo ${pid} > ../pid
+        echo "Pard is running in background as" ${pid}
+    fi
+    exit
+fi
+
+# stop
+if [ $1 == "stop" ]
+then
+    if [ -e ../pid ] && [ -r ../pid ] ; then
+        # read pid
+        pid=$(head -n 1 ../pid)
+        # kill process
+        kill -9 ${pid}
+        # remove file
+        rm ../pid
+        echo "Pard at" ${pid} "is killed."
+    else
+        echo "Pard is not started yet."
+    fi
+    exit
+fi
+
+echo "pard-server <run/start/stop>"
+exit

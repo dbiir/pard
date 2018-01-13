@@ -27,6 +27,7 @@ import cn.edu.ruc.iir.pard.sql.tree.TableHRangePartitioner;
 import cn.edu.ruc.iir.pard.sql.tree.TableVPartitioner;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class TableCreationPlan
     private Table table;
     private boolean isNotExists;
     private TableDao tableDao;
-    private Map<ColumnDefinition, Column> vpmap;
+    private Map<String, Column> vpmap;
     public TableCreationPlan(Statement stmt)
     {
         super(stmt);
@@ -80,7 +81,7 @@ public class TableCreationPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
-        vpmap = new HashMap<ColumnDefinition, Column>();
+        vpmap = new HashMap<String, Column>();
         //colListMap = new HashMap<String, List<Column>>();
         colList = new ArrayList<Column>();
         distributionHints = new HashMap<>();
@@ -130,8 +131,10 @@ public class TableCreationPlan
         for (TableVPartitioner v : vp) {
             for (TableElement e : v.getElements()) {
                 if (e instanceof ColumnDefinition) {
-                    list.add((ColumnDefinition) e);
-                    //vpmap.put((ColumnDefinition) e, new ArrayList<>());
+                    ColumnDefinition cd = (ColumnDefinition) e;
+                    if (!list.contains(cd)) {
+                        list.add((ColumnDefinition) e);
+                    }
                 }
                 else {
                     return ErrorMessage.throwMessage(ErrCode.NotaColumnDefinition, e.toString());
@@ -144,7 +147,7 @@ public class TableCreationPlan
             //List<Column> cols = vpmap.get(cd);
             String type = cd.getType();
             String colName = cd.getName().toString();
-            //System.out.println("type:" + type + " colName: " + colName);
+
             DataType dt = DataType.getDataType(type);
             if (dt == null) {
                 return ErrorMessage.throwMessage(ErrCode.ColumnDataTypeNotExists, colName, type);
@@ -155,9 +158,13 @@ public class TableCreationPlan
             column.setDataType(dt.getType());
             column.setLen(dt.getLength());
             column.setKey(cd.isPrimary() ? 1 : 0);
-            vpmap.put(cd, column);
-            colList.add(column);
-            table.getColumns().put(column.getColumnName(), column);
+            //System.out.println("type:" + type + " colName: " + colName + " col id " + column.getId());
+            if (table.getColumns().get(colName) == null) {
+                vpmap.put(cd.getName().toString(), column);
+                //System.out.println("put " + cd.getName().toString() + " to vp");
+                colList.add(column);
+                table.getColumns().put(column.getColumnName(), column);
+            }
         }
 
         // check partition
@@ -209,10 +216,14 @@ public class TableCreationPlan
             for (TableElement e : v.getElements()) {
                 if (e instanceof ColumnDefinition) {
                     ColumnDefinition cd = (ColumnDefinition) e;
-                    vpColList.add(vpmap.get(cd));
+                    vpColList.add(vpmap.get(cd.getName().toString()));
+                    if (vpmap.get(cd.getName().toString()) == null) {
+                        System.out.println(cd.getName().toString() + " not found.");
+                    }
                     frag.getCondition().add(new Condition(cd.getName().getValue(), 0, "0", cd.getType().hashCode()));
                 }
             }
+            vpColList.sort(Comparator.comparingInt(Column::getId));
             table.getFragment().put(frag.getFragmentName(), frag);
             distributionHints.put(siteName, vpColList);
         }

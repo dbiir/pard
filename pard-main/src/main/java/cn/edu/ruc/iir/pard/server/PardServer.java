@@ -3,6 +3,7 @@ package cn.edu.ruc.iir.pard.server;
 import cn.edu.ruc.iir.pard.catalog.Site;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
 import cn.edu.ruc.iir.pard.connector.postgresql.PostgresConnector;
+import cn.edu.ruc.iir.pard.etcd.EtcdUtil;
 import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
 import cn.edu.ruc.iir.pard.exchange.PardExchangeServer;
 import cn.edu.ruc.iir.pard.exchange.PardFileExchangeServer;
@@ -27,6 +28,7 @@ public class PardServer
     private PardTaskExecutor executor;
     private JobScheduler jobScheduler;
     private TaskScheduler taskScheduler;
+    private PardWebServer webServer;
 
     private PardServer(String configurationPath)
     {
@@ -45,6 +47,9 @@ public class PardServer
 
         // load connector
         pipeline.addStartupHook(this::loadConnector);
+
+        // load GDD
+        pipeline.addStartupHook(this::loadGDD);
 
         // load executor
         pipeline.addStartupHook(this::loadExecutor);
@@ -74,6 +79,9 @@ public class PardServer
 
         // start socket listener
         pipeline.addStartupHook(this::startSocketListener);
+
+        // start web server
+        pipeline.addStartupHook(this::startWebServer);
 
         try {
             pipeline.startup();
@@ -111,6 +119,11 @@ public class PardServer
         this.connector = PostgresConnector.INSTANCE();
     }
 
+    private void loadGDD()
+    {
+        EtcdUtil.addWatch();
+    }
+
     private void loadExecutor()
     {
         this.executor = PardTaskExecutor.INSTANCE();
@@ -125,7 +138,6 @@ public class PardServer
 
     private void startExchangeServer()
     {
-//        this.exchangeServer = new PardSocketExchangeServer(configuration.getExchangePort(), executor);
         this.exchangeServer = new PardExchangeServer(configuration.getExchangePort(), executor);
         new Thread(exchangeServer).start();
     }
@@ -152,16 +164,22 @@ public class PardServer
     {
         this.taskScheduler = TaskScheduler.INSTANCE();
     }
-
+    private void startWebServer()
+    {
+        this.webServer = new PardWebServer(configuration.getWebPort());
+        new Thread(webServer).start();
+    }
     private void stop()
     {
         System.out.println("****** Pard shutting down...");
+        webServer.stop();
         deRegisterNode();
         socketListener.stop();
         rpcServer.stop();
         exchangeServer.stop();
         fileExchangeServer.stop();
         connector.close();
+        EtcdUtil.stopWatch();
         System.out.println("****** Pard is down");
     }
 

@@ -58,7 +58,7 @@ public class PardRPCService
             responseStatusBuilder.setStatus(1);
         }
         else {
-            responseStatusBuilder.setStatus(-1);
+            responseStatusBuilder.setStatus(0);
         }
         responseStatusStreamObserver.onNext(responseStatusBuilder.build());
         responseStatusStreamObserver.onCompleted();

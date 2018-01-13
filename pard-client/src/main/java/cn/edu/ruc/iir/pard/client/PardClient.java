@@ -2,7 +2,6 @@ package cn.edu.ruc.iir.pard.client;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
-//import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 
@@ -71,17 +70,25 @@ public class PardClient
                                 int counter = 0;
                                 List<Row> rows = resultSet.getRows();
                                 for (Row row : rows) {
-                                    //System.out.println(RowConstructor.printRow(row, colTypes));
                                     String temp = RowConstructor.printRow(row, colTypes);
-                                    String[] r = temp.substring(0, temp.length() - 1).split(",");
+                                    String[] r = temp.split("\t");
                                     pretty.addRow(r);
                                     counter++;
                                 }
-                                System.out.println(pretty);
-                                System.out.println("selected " + counter + " tuples");
+                                //System.out.println(pretty);
+                                //pretty.printLargeDataSets();
+                                pretty.printLargeDataSetsOneByOne();
+                                System.out.println("Selected " + counter + " tuples");
+                                System.out.println("Execution time: " + ((double) resultSet.getExecutionTime()) / 1000 + "s");
+                                if (resultSet.getSemanticErrmsg() != null) {
+                                    System.err.println("Semantic Status:" + resultSet.getSemanticErrmsg());
+                                }
                             }
                             else {
-                                System.out.println(resultSet.getStatus().toString());
+                                System.err.println(resultSet.getStatus().toString());
+                                if (resultSet.getSemanticErrmsg() != null) {
+                                    System.err.println(resultSet.getSemanticErrmsg());
+                                }
                             }
                         }
                         else {
@@ -109,7 +116,6 @@ public class PardClient
         this.outWriter = new BufferedWriter(new OutputStreamWriter(System.out));
         this.scanner = new Scanner(System.in);
     }
-
     public void testrun()
     {
         System.out.println("Welcome to Pard.");
@@ -128,7 +134,6 @@ public class PardClient
                         outWriter.flush();
                         //Object obj = inputStream.readObject();
                         PardResultSet prs = new PardResultSet(PardResultSet.ResultStatus.OK);
-
                         List<Column> columns0 = new ArrayList<>();
                         Column col0 = new Column();
                         col0.setDataType(DataType.CHAR.getType());
@@ -171,7 +176,6 @@ public class PardClient
                                 }
                                 PrettyTable pretty = new PrettyTable(tableHeader);
                                 //List<Row> rows = new ArrayList<Row>();
-
                                 RowConstructor rc1 = new RowConstructor();
                                 rc1.appendString("TOMTOMTOM");
                                 rc1.appendInt(121345);
@@ -179,8 +183,7 @@ public class PardClient
                                 rc1.appendFloat(78.2f);
                                 Row row1 = rc1.build();
                                 temp = rc1.printRow(row1, colTypes);
-                                String[] r1 = temp.substring(0, temp.length() - 1).split(",");
-
+                                String[] r1 = temp.substring(0, temp.length() - 1).split("\t");
                                 RowConstructor rc2 = new RowConstructor();
                                 rc2.appendString("TOMTOMTOMTOMTOMTOMTOMTOMTOM");
                                 rc2.appendInt(1213415565);
@@ -188,8 +191,7 @@ public class PardClient
                                 rc2.appendFloat(78.248481f);
                                 Row row2 = rc2.build();
                                 temp = rc2.printRow(row2, colTypes);
-                                String[] r2 = temp.substring(0, temp.length() - 1).split(",");
-
+                                String[] r2 = temp.substring(0, temp.length() - 1).split("\t");
                                 RowConstructor rc3 = new RowConstructor();
                                 rc3.appendString("TOM");
                                 rc3.appendInt(1214);
@@ -197,8 +199,7 @@ public class PardClient
                                 rc3.appendFloat(78.248481f);
                                 Row row3 = rc3.build();
                                 temp = rc3.printRow(row3, colTypes);
-                                String[] r3 = temp.substring(0, temp.length() - 1).split(",");
-
+                                String[] r3 = temp.substring(0, temp.length() - 1).split("\t");
                                 RowConstructor rc4 = new RowConstructor();
                                 rc4.appendString("T");
                                 rc4.appendInt(121345);
@@ -206,8 +207,7 @@ public class PardClient
                                 rc4.appendFloat(78.2f);
                                 Row row4 = rc4.build();
                                 temp = rc4.printRow(row1, colTypes);
-                                String[] r4 = temp.substring(0, temp.length() - 1).split(",");
-
+                                String[] r4 = temp.substring(0, temp.length() - 1).split("\t");
                                 RowConstructor rc5 = new RowConstructor();
                                 rc5.appendString("OM");
                                 rc5.appendInt(1213415565);
@@ -215,8 +215,7 @@ public class PardClient
                                 rc5.appendFloat(78.248481f);
                                 Row row5 = rc5.build();
                                 temp = rc5.printRow(row5, colTypes);
-                                String[] r5 = temp.substring(0, temp.length() - 1).split(",");
-
+                                String[] r5 = temp.substring(0, temp.length() - 1).split("\t");
                                 RowConstructor rc6 = new RowConstructor();
                                 rc6.appendString("OMT");
                                 rc6.appendInt(1214);
@@ -224,8 +223,7 @@ public class PardClient
                                 rc6.appendFloat(78.248481f);
                                 Row row6 = rc6.build();
                                 temp = rc6.printRow(row3, colTypes);
-                                String[] r6 = temp.substring(0, temp.length() - 1).split(",");
-
+                                String[] r6 = temp.substring(0, temp.length() - 1).split("\t");
                                 pretty.addRow(r1);
                                 pretty.addRow(r2);
                                 pretty.addRow(r3);
@@ -233,7 +231,24 @@ public class PardClient
                                 pretty.addRow(r5);
                                 pretty.addRow(r6);
 
-                                System.out.println(pretty);
+                                for (int i = 0; i < 20000; i++) {
+                                    RowConstructor rc7 = new RowConstructor();
+                                    rc7.appendString("hebe");
+                                    rc7.appendInt(7899);
+                                    rc7.appendString("irc");
+                                    rc7.appendFloat(784.5f);
+                                    Row row7 = rc7.build();
+                                    temp = rc7.printRow(row7, colTypes);
+                                    String[] r7 = temp.substring(0, temp.length() - 1).split("\t");
+                                    pretty.addRow(r7);
+                                }
+                                long st = System.currentTimeMillis();
+                                //System.out.println(pretty);
+                                //pretty.printLargeDataSets();
+                                pretty.printLargeDataSetsOneByOne();
+                                long et = System.currentTimeMillis();
+                                System.out.println("TIME " + (et - st));
+                                System.out.println(pretty.rowSize());
                             }
                             else {
                                 System.out.println(resultSet.getStatus().toString());
@@ -256,7 +271,6 @@ public class PardClient
         System.out.println("Bye Pard");
         System.exit(0);
     }
-
     private static void testPrettyTable()
     {
         PrettyTable table = new PrettyTable("Firstname", "Lastname", "Email", "Phone");

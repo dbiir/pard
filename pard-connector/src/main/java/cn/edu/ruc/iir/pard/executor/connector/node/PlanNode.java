@@ -14,9 +14,18 @@ public abstract class PlanNode
 {
     private static final long serialVersionUID = -2786495926657736341L;
     private int childrenNum = 0;
-    private PlanNode parent;
+    protected String name;
     private PlanNode[] children = new PlanNode[2];
 
+    public PlanNode()
+    {}
+
+    public PlanNode(PlanNode pd)
+    {
+        this.children[0] = NodeHelper.copyNode(pd.children[0]);
+        this.children[1] = NodeHelper.copyNode(pd.children[1]);
+        childrenNum = pd.childrenNum;
+    }
     public boolean hasChildren()
     {
         return childrenNum > 0;
@@ -42,22 +51,15 @@ public abstract class PlanNode
         }
         if (left) {
             children[0] = planNode;
-            planNode.setParent(this);
         }
         else {
             children[1] = planNode;
-            planNode.setParent(this);
         }
     }
 
-    public PlanNode getParent()
+    public String getName()
     {
-        return parent;
-    }
-
-    void setParent(PlanNode parent)
-    {
-        this.parent = parent;
+        return name;
     }
 
     @Override

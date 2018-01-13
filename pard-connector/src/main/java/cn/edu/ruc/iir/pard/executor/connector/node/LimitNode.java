@@ -15,9 +15,15 @@ public class LimitNode
 
     public LimitNode(int limitNum)
     {
+        name = "LIMIT";
         this.limitNum = limitNum;
     }
-
+    public LimitNode(LimitNode node)
+    {
+        super(node);
+        name = "LIMIT";
+        this.limitNum = node.limitNum;
+    }
     public int getLimitNum()
     {
         return limitNum;

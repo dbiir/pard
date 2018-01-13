@@ -21,6 +21,14 @@ public class TableScanNode
     private ProjectNode project;
     private Optional<FilterNode> filter;
     */
+    public TableScanNode(TableScanNode node)
+    {
+        super(node);
+        this.name = "TABLESCAN";
+        this.schema = node.schema;
+        this.table = node.table;
+        this.site = node.site;
+    }
     public TableScanNode(String schema, String table)
     {
         /*
@@ -30,6 +38,7 @@ public class TableScanNode
         this.project = null;
         this.filter = Optional.ofNullable(null);
         */
+        this.name = "TABLESCAN";
         this.schema = schema;
         this.table = table;
     }
@@ -43,6 +52,7 @@ public class TableScanNode
         this.project = null;
         this.filter = Optional.ofNullable(null);
         */
+        this.name = "TABLESCAN";
         this.schema = schema;
         this.table = table;
         this.site = site;

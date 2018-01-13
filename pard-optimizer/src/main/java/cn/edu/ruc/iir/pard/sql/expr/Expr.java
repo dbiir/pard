@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.catalog.Condition;
-import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
 import cn.edu.ruc.iir.pard.sql.expr.rules.MinimalItemLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.PushDownLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.TrueFalseLaw;
@@ -12,7 +11,10 @@ import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
 import cn.edu.ruc.iir.pard.sql.tree.NotExpression;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public abstract class Expr
         implements Serializable
@@ -74,11 +76,117 @@ public abstract class Expr
             throw new NullPointerException("cannot clone the class " + expr.getClass().getName());
         }
     }
+    private static List<Expr> extractList(Expr expr, String tableName, boolean rec)
+    {
+        List<Expr> list = new ArrayList<>();
+        if (expr instanceof CompositionExpr) {
+            CompositionExpr comp = (CompositionExpr) expr;
+            for (Expr e : comp.getConditions()) {
+                if (e instanceof SingleExpr) {
+                    SingleExpr se = (SingleExpr) e;
+                    if (se.getLvalue() instanceof ColumnItem && se.getRvalue() instanceof ValueItem) {
+                        ColumnItem ci = (ColumnItem) se.getLvalue();
+                        if (tableName != null && tableName.equals(ci.getTableName())) {
+                            list.add(se);
+                        }
+                        else {
+                            //System.out.println("cmp " + tableName + " " + ci.toString() + " False");
+                        }
+                    }
+                }
+                else if (rec) {
+                    list.addAll(extractList(e, tableName, false));
+                }
+            }
+        }
+        else if (expr instanceof SingleExpr) {
+            SingleExpr se = (SingleExpr) expr;
+            if (se.getLvalue() instanceof ColumnItem && se.getRvalue() instanceof ValueItem) {
+                ColumnItem ci = (ColumnItem) se.getLvalue();
+                if (tableName != null && tableName.equals(ci.getTableName())) {
+                    list.add(se);
+                }
+            }
+        }
+        return list;
+    }
+    public static List<String> extractTableColumn(Expr expr, String tableName)
+    {
+        Expr extractOr = pdAnd.apply(expr);
+        Queue<Expr> traverse = new LinkedList<Expr>();
+        Queue<SingleExpr> output = new LinkedList<SingleExpr>();
+        List<String> out = new ArrayList<String>();
+        traverse.add(extractOr);
+        while (!traverse.isEmpty()) {
+            Expr pop = traverse.poll();
+            if (pop instanceof CompositionExpr) {
+                traverse.addAll(((CompositionExpr) pop).getConditions());
+            }
+            else if (pop instanceof UnaryExpr) {
+                traverse.add(((UnaryExpr) pop).getExpression());
+            }
+            else {
+                output.add((SingleExpr) pop);
+            }
+        }
+        while (!output.isEmpty()) {
+            SingleExpr se = output.poll();
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv instanceof ColumnItem && tableName.equals(((ColumnItem) lv).getTableName())) {
+                out.add(((ColumnItem) lv).getColumnName());
+            }
+            if (rv instanceof ColumnItem && tableName.equals(((ColumnItem) rv).getTableName())) {
+                out.add(((ColumnItem) rv).getColumnName());
+            }
+        }
+        return out;
+    }
+    public static Expr extractTableFilter(Expr expr, String tableName)
+    {
+        Expr extractOr = pdAnd.apply(expr);
+        //System.out.println("or:" + extractOr);
+        Expr extractAnd = pdOr.apply(extractOr);
+        //System.out.println("and" + extractAnd);
+        CompositionExpr and = new CompositionExpr(LogicOperator.AND);
+        CompositionExpr or = new CompositionExpr(LogicOperator.OR);
+        //and.getConditions().addAll(extractList(extractAnd, tableName, false));
+        //or.getConditions().addAll(extractList(extractOr, tableName, true));
+        for (Expr sube : extractList(extractAnd, tableName, false)) {
+            PushDownLaw.add(and.getConditions(), sube);
+        }
+        for (Expr sube : extractList(extractOr, tableName, true)) {
+            PushDownLaw.add(or.getConditions(), sube);
+        }
+        if (and.getConditions().size() > 0) {
+            if (or.getConditions().size() > 0) {
+                and.getConditions().add(or);
+            }
+            return and; //optimize(and, LogicOperator.);
+        }
+        else if (or.getConditions().size() > 0) {
+            return or;
+        }
+        return new TrueExpr();
+    }
     public static Expr parse(Condition cond, String tableName)
     {
         ColumnItem ci = new ColumnItem(tableName, cond.getColumnName(), cond.getDataType());
         ValueItem vi = new ValueItem(ConditionComparator.parseFromString(cond.getDataType(), cond.getValue()));
         return new SingleExpr(ci, vi, cond.getCompareType());
+    }
+    public static Expr optimize(Expr e1, LogicOperator opt)
+    {
+        Expr and = null;
+        if (opt == LogicOperator.AND) {
+            and = pdAnd.apply(e1);
+        }
+        else {
+            and = pdOr.apply(e1);
+        }
+        and = milaw.apply(and);
+        and = tfLaw.apply(and);
+        return and;
     }
     public static Expr and(Expr e1, Expr e2, LogicOperator opt)
     {
@@ -86,15 +194,7 @@ public abstract class Expr
         comp.getConditions().add(e1);
         comp.getConditions().add(e2);
         comp = PushDownLaw.formatExpr(comp);
-        Expr and = null;
-        if (opt == LogicOperator.AND) {
-            and = pdAnd.apply(comp);
-        }
-        else {
-            and = pdOr.apply(comp);
-        }
-        and = milaw.apply(and);
-        and = tfLaw.apply(and);
+        Expr and = optimize(comp, opt);
         return and;
     }
     public static Expr parse(List<Condition> conditions, String tableName)

@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.sql.tree;
 
-import com.google.common.collect.ImmutableList;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,6 +14,7 @@ import static java.util.Objects.requireNonNull;
 public final class Row
         extends Expression
 {
+    private static final long serialVersionUID = -2352021238915447393L;
     private final List<Expression> items;
 
     public Row(List<Expression> items)
@@ -26,7 +26,8 @@ public final class Row
     {
         super(location);
         requireNonNull(items, "items is null");
-        this.items = ImmutableList.copyOf(items);
+        this.items = new ArrayList<>();
+        this.items.addAll(items);
     }
 
     public List<Expression> getItems()

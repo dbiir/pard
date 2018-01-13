@@ -38,6 +38,7 @@ import cn.edu.ruc.iir.pard.sql.tree.SingleColumn;
 import cn.edu.ruc.iir.pard.sql.tree.SortItem;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import cn.edu.ruc.iir.pard.sql.tree.Table;
+import cn.edu.ruc.iir.pard.web.PardServlet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -116,7 +117,7 @@ public class QueryPlan
         boolean checkSchema = false;
         Schema schema = null;
         if (fromTable.getName().getPrefix().isPresent()) {
-            schemaName = fromTable.getName().getPrefix().toString();
+            schemaName = fromTable.getName().getPrefix().get().toString();
         }
         String fromTableName = fromTable.getName().getSuffix();
         if (schemaName == null) {
@@ -138,7 +139,9 @@ public class QueryPlan
         }
         List<String> siteList = new ArrayList<String>();
         SiteDao sdao = new SiteDao();
+        TableDao tableDao = new TableDao(schema);
         int pos = fromTableName.indexOf("@");
+        boolean needLoad = false;
         if (pos > 0) {
             String site = fromTableName.substring(pos + 1);
             if (sdao.loadByName(site) == null) {
@@ -148,12 +151,17 @@ public class QueryPlan
             fromTableName = fromTableName.substring(0, pos);
         }
         else {
-            siteList.addAll(sdao.listNodes().keySet());
+            //siteList.addAll(sdao.listNodes().keySet());
+            needLoad = true;
         }
-        TableDao tableDao = new TableDao(schema);
         catalogTable = tableDao.loadByName(fromTableName);
         if (catalogTable == null) {
             return ErrorMessage.throwMessage(ErrorMessage.ErrCode.TableNotExists, schemaName + "." + fromTableName);
+        }
+        if (needLoad) {
+            for (Fragment frag : catalogTable.getFragment().values()) {
+                siteList.add(frag.getSiteName());
+            }
         }
         for (Column col : catalogTable.getColumns().values()) {
             col2tbl.put(col.getColumnName(), fromTableName);
@@ -232,10 +240,10 @@ public class QueryPlan
             //currentNode = filterNode;
         }
         // scan
-        UnionNode node = horizonLocalization(tableDao, siteList, fromTableName, hasAllColumn);
-        currentNode.setChildren(node, true, true);
-        currentNode = node;
-        logger.info("Parsed query plan: " + node.toString());
+        UnionNode unionNode = horizonLocalization(tableDao, siteList, fromTableName, hasAllColumn);
+        currentNode.setChildren(unionNode, true, true);
+        currentNode = unionNode;
+        logger.info("Parsed query plan: " + this.node.toString());
         //col2tblMap.remove();
         return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
     }
@@ -305,5 +313,11 @@ public class QueryPlan
     public HashMap<String, PlanNode> getDistributionHints()
     {
         return new HashMap<>();
+    }
+    @Override
+    public boolean afterExecution(boolean executeSuccess)
+    {
+        PardServlet.planList.add(this);
+        return true;
     }
 }

@@ -22,6 +22,7 @@ import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
+import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
@@ -48,7 +49,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -104,12 +109,15 @@ public class TaskScheduler
             logger.info("Task generation for schema creation plan");
             List<Task> tasks = new ArrayList<>();
             SchemaCreationPlan schemaCreationPlan = (SchemaCreationPlan) plan;
+            int index = 0;
             for (String site : sites) {
                 CreateSchemaTask task = new CreateSchemaTask(
                         schemaCreationPlan.getSchemaName(),
                         schemaCreationPlan.isNotExists(),
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -119,11 +127,14 @@ public class TaskScheduler
             logger.info("Task generation for schema drop plan");
             List<Task> tasks = new ArrayList<>();
             SchemaDropPlan schemaDropPlan = (SchemaDropPlan) plan;
+            int index = 0;
             for (String site : sites) {
                 DropSchemaTask task = new DropSchemaTask(schemaDropPlan.getSchemaName(),
                         schemaDropPlan.isExists(),
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -140,6 +151,7 @@ public class TaskScheduler
             String tableName = tableCreationPlan.getTableName();
             String schemaName = tableCreationPlan.getSchemaName();
             boolean isNotExists = tableCreationPlan.isNotExists();
+            int index = 0;
             for (String site : partitionMap.keySet()) {
                 List<Column> columns = partitionMap.get(site);
                 CreateTableTask task = new CreateTableTask(
@@ -148,7 +160,9 @@ public class TaskScheduler
                         isNotExists,
                         columns,
                         site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -161,8 +175,12 @@ public class TaskScheduler
             String schemaName = tableDropPlan.getSchemaName();
             String tableName = tableDropPlan.getTableName();
             Set<String> siteNames = tableDropPlan.getDistributionHints().keySet();
+            int index = 0;
             for (String sn : siteNames) {
-                tasks.add(new DropTableTask(schemaName, tableName, sn));
+                Task task = new DropTableTask(schemaName, tableName, sn);
+                task.setTaskId(plan.getJobId() + "-" + index);
+                tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -182,11 +200,11 @@ public class TaskScheduler
             LoadPlan loadPlan = (LoadPlan) plan;
             String schemaName = loadPlan.getSchemaName();
             String tableName = loadPlan.getTableName();
+            Map<String, List<String>> distributionHints = ((LoadPlan) plan).getDistributionHints();
             List<Task> tasks = new ArrayList<>();
-            List<String> paths = ImmutableList.of(loadPlan.getPath());
             int index = 0;
-            for (String site : sites) {
-                Task task = new LoadTask(schemaName, tableName, paths, site);
+            for (String site : distributionHints.keySet()) {
+                Task task = new LoadTask(schemaName, tableName, distributionHints.get(site), site);
                 task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
                 index++;
@@ -202,6 +220,7 @@ public class TaskScheduler
             Map<String, List<Row>> partitionMap = insertPlan.getDistributionHints();
             String tableName = insertPlan.getTableName();
             String schemaName = insertPlan.getSchemaName();
+            int index = 0;
             for (String site : partitionMap.keySet()) {
                 List<Column> columns = insertPlan.getColListMap().get(site);
                 int columnSize = columns.size();
@@ -220,7 +239,9 @@ public class TaskScheduler
                     rowIndex++;
                 }
                 InsertIntoTask task = new InsertIntoTask(schemaName, tableName, columns, rowsStr, site);
+                task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
+                index++;
             }
             return ImmutableList.copyOf(tasks);
         }
@@ -235,7 +256,8 @@ public class TaskScheduler
                 DeleteTask task = new DeleteTask(
                         deletePlan.getSchemaName(),
                         deletePlan.getTableName(),
-                        distributionHints.get(site).toExpression());
+                        distributionHints.get(site).toExpression(),
+                        site);
                 task.setTaskId(plan.getJobId() + "-" + index);
                 tasks.add(task);
                 index++;
@@ -246,34 +268,51 @@ public class TaskScheduler
         // query plan
         if (plan instanceof QueryPlan) {
             logger.info("Task generation for query plan");
-            QueryPlan queryPlan = (QueryPlan) plan;
-            PlanNode planNode = queryPlan.getPlan();
-            PlanNode currentNode = planNode;
-            UnionNode internalUnionNode = null;
-            while (currentNode.hasChildren()) {
-                currentNode = currentNode.getLeftChild();
-                if (currentNode instanceof UnionNode) {
-                    internalUnionNode = (UnionNode) currentNode;
-                    break;
+            try {
+                QueryPlan queryPlan = (QueryPlan) plan;
+                PlanNode planNode = queryPlan.getPlan();
+                PlanNode currentNode = planNode;
+                UnionNode internalUnionNode = null;
+                while (currentNode.hasChildren()) {
+                    currentNode = currentNode.getLeftChild();
+                    if (currentNode instanceof UnionNode) {
+                        internalUnionNode = (UnionNode) currentNode;
+                        break;
+                    }
                 }
+                if (internalUnionNode == null) {
+                    return ImmutableList.of(new QueryTask(planNode));
+                }
+                List<Task> tasks = new ArrayList<>();
+                List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
+                int index = 0;
+                for (PlanNode childNode : unionChildren) {
+                    internalUnionNode.setChildren(childNode, true, false);
+                    PlanNode node = childNode;
+                    TableScanNode tableScanNode = null;
+                    if (node instanceof TableScanNode) {
+                        tableScanNode = (TableScanNode) node;
+                    }
+                    while (!(node instanceof TableScanNode) && node.hasChildren()) {
+                        if (node.getLeftChild() instanceof TableScanNode) {
+                            tableScanNode = (TableScanNode) node.getLeftChild();
+                            break;
+                        }
+                        node = node.getLeftChild();
+                    }
+                    if (tableScanNode == null) {
+                        return null;
+                    }
+                    QueryTask task = new QueryTask(tableScanNode.getSite(), NodeHelper.copyNode(planNode));
+                    task.setTaskId(plan.getJobId() + "-" + index);
+                    tasks.add(task);
+                    index++;
+                }
+                return ImmutableList.copyOf(tasks);
             }
-            if (internalUnionNode == null) {
-                return ImmutableList.of(new QueryTask(planNode));
+            catch (Exception e) {
+                e.printStackTrace();
             }
-            List<Task> tasks = new ArrayList<>();
-            List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
-            int index = 0;
-            for (PlanNode childNode : unionChildren) {
-                internalUnionNode.setChildren(childNode, true, false);
-                // todo hard coded to get site info of task
-                TableScanNode node = (TableScanNode) childNode;
-                QueryTask task = new QueryTask(node.getSite(), planNode);
-                task.setTaskId(plan.getJobId() + "-" + index);
-                tasks.add(task);
-                index++;
-            }
-
-            return ImmutableList.copyOf(tasks);
         }
         return null;
     }
@@ -330,8 +369,6 @@ public class TaskScheduler
         else {
             // load
             if (plan instanceof LoadPlan) {
-                LoadPlan loadPlan = (LoadPlan) plan;
-                String path = loadPlan.getPath();
                 Map<String, Task> taskMap = new HashMap<>();
                 ConcurrentLinkedQueue<PardResultSet> resultSets = new ConcurrentLinkedQueue<>();
                 // distribute file
@@ -340,12 +377,18 @@ public class TaskScheduler
                     Site nodeSite = siteDao.listNodes().get(site);
                     if (nodeSite == null) {
                         logger.info("No corresponding node " + site + " found for execution.");
-                        continue;
+                        return PardResultSet.execErrResultSet;
+                    }
+                    LoadTask loadTask = (LoadTask) task;
+                    List<String> loadPaths = loadTask.getPaths();
+                    if (loadPaths.isEmpty()) {
+                        logger.info("No path found for execution");
+                        return PardResultSet.execErrResultSet;
                     }
                     PardFileExchangeClient exchangeClient = new PardFileExchangeClient(
                                     nodeSite.getIp(),
                                     nodeSite.getFileExchangePort(),
-                                    path,
+                            loadPaths.get(0),
                                     ((LoadPlan) plan).getSchemaName(),
                                     ((LoadPlan) plan).getTableName(),
                                     task.getTaskId(),
@@ -373,45 +416,54 @@ public class TaskScheduler
                 logger.info("Executing query tasks for job[" + job.getJobId() + "]");
                 PardResultSet resultSet = new PardResultSet();
                 Map<String, Task> taskMap = new HashMap<>();
-                ConcurrentLinkedQueue<Block> blocks = new ConcurrentLinkedQueue<>();
+                BlockingQueue<Block> blocks = new LinkedBlockingQueue<>();
                 for (Task task : tasks) {
                     String site = task.getSite();
                     String taskId = task.getTaskId();
                     Site nodeSite = siteDao.listNodes().get(site);
-                    if (nodeSite != null) {
-                        PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
-                        client.connect(task, blocks);
-                        taskMap.put(taskId, task);
+                    if (nodeSite == null) {
+                        logger.log(Level.SEVERE, "Node " + site + " is not active. Please check.");
+                        return PardResultSet.execErrResultSet;
                     }
+                    PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+                    client.connect(task, blocks);
+                    taskMap.put(taskId, task);
                 }
                 // wait for all tasks done
                 while (!taskMap.isEmpty()) {
-                    Block block = blocks.poll();
+                    Block block = null;
+                    try {
+                        block = blocks.poll(8000, TimeUnit.MILLISECONDS);
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     if (block == null) {
                         logger.info("Waiting for more blocks...");
                         continue;
                     }
                     resultSet.addBlock(block);
-                    logger.info("Added block " + block.getSequenceId());
+                    logger.info("Added block " + block.getSequenceId() + ", num of rows: " + block.getRows().size());
                     if (!block.isSequenceHasNext()) {
                         String taskId = block.getTaskId();
                         taskMap.remove(taskId);
                         logger.info("Task " + taskId + " done.");
                     }
                 }
+                plan.afterExecution(true);
                 return resultSet;
             }
 
             // delete
             if (plan instanceof DeletePlan) {
                 Map<String, Task> taskMap = new HashMap<>();
-                ConcurrentLinkedQueue<Block> blocks = new ConcurrentLinkedQueue<>();
+                BlockingQueue<Block> blocks = new LinkedBlockingDeque<>(100);
                 for (Task task : tasks) {
                     String site = task.getSite();
                     Site nodeSite = siteDao.listNodes().get(site);
                     if (nodeSite == null) {
                         logger.info("No corresponding node " + site + " found for execution.");
-                        continue;
+                        return PardResultSet.execErrResultSet;
                     }
                     PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
                     client.connect(task, blocks);
@@ -419,14 +471,16 @@ public class TaskScheduler
                 }
                 // wait for all tasks done
                 while (!taskMap.isEmpty()) {
-                    Block block = blocks.poll();
+                    Block block = null;
+                    try {
+                        block = blocks.poll(8000, TimeUnit.MILLISECONDS);
+                    }
+                    catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     if (block == null) {
                         logger.info("Waiting for more blocks...");
                         continue;
-                    }
-                    List<cn.edu.ruc.iir.pard.commons.memory.Row> rows = block.getRows();
-                    if (rows.isEmpty()) {
-                        return PardResultSet.execErrResultSet;
                     }
                     if (!block.isSequenceHasNext()) {
                         String taskId = block.getTaskId();
@@ -445,48 +499,48 @@ public class TaskScheduler
                     Site nodeSite = siteDao.listNodes().get(site);
                     if (nodeSite == null) {
                         logger.info("No corresponding node " + site + " found for execution.");
-                        continue;
+                        return PardResultSet.execErrResultSet;
                     }
                     PardRPCClient client = new PardRPCClient(nodeSite.getIp(), nodeSite.getRpcPort());
                     // create schema task
                     if (task instanceof CreateSchemaTask) {
                         logger.info("Calling schema creation");
                         int status = client.createSchema((CreateSchemaTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                     // drop schema task
                     if (task instanceof DropSchemaTask) {
                         logger.info("Calling schema drop");
                         int status = client.dropSchema((DropSchemaTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                     // create table task
                     if (task instanceof CreateTableTask) {
                         logger.info("Calling table creation");
                         int status = client.createTable((CreateTableTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                     // drop table task
                     if (task instanceof DropTableTask) {
                         logger.info("Calling task drop");
                         int status = client.dropTable((DropTableTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                     // insert task
                     if (task instanceof InsertIntoTask) {
                         logger.info("Calling insert");
                         int status = client.insertInto((InsertIntoTask) task);
-                        client.shutdown();
                         statusL.add(status);
+                        client.shutdown();
                     }
                 }
                 for (int status : statusL) {
                     if (status <= 0) {
-                        logger.info("Check task execution status. Wrong status" + status + " found.");
+                        logger.info("Check task execution status. Wrong status " + status + " found.");
                         return new PardResultSet(PardResultSet.ResultStatus.EXECUTING_ERR);
                     }
                 }

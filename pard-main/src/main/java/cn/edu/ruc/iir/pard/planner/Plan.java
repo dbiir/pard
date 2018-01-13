@@ -12,15 +12,25 @@ public abstract class Plan
 {
     private Statement statement;
     private String jobId;
-
+    private ErrorMessage msg;
     public Plan(Statement stmt)
     {
         statement = stmt;
-        ErrorMessage msg = this.semanticAnalysis();
+        msg = this.semanticAnalysis();
         if (msg.getErrcode() < 0) {
             System.err.println(msg.toString());
             throw new SemanticException(msg);
         }
+    }
+
+    public ErrorMessage getMsg()
+    {
+        return msg;
+    }
+
+    public void setMsg(ErrorMessage msg)
+    {
+        this.msg = msg;
     }
 
     public Statement getStatment()

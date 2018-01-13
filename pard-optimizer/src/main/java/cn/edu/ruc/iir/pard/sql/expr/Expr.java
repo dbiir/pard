@@ -110,6 +110,7 @@ public abstract class Expr
         }
         return list;
     }
+    // 可能有重复值
     public static List<String> extractTableColumn(Expr expr, String tableName)
     {
         Expr extractOr = pdAnd.apply(expr);
@@ -141,6 +142,81 @@ public abstract class Expr
             }
         }
         return out;
+    }
+    public static List<SingleExpr> extractTableJoinExpr(Expr expr)
+    {
+        Expr extractOr = pdOr.apply(expr);
+        Queue<Expr> traverse = new LinkedList<Expr>();
+        Queue<SingleExpr> output = new LinkedList<SingleExpr>();
+        List<SingleExpr> out = new ArrayList<SingleExpr>();
+        traverse.add(extractOr);
+        while (!traverse.isEmpty()) {
+            Expr pop = traverse.poll();
+            if (pop instanceof CompositionExpr) {
+                traverse.addAll(((CompositionExpr) pop).getConditions());
+            }
+            else if (pop instanceof UnaryExpr) {
+                traverse.add(((UnaryExpr) pop).getExpression());
+            }
+            else {
+                output.add((SingleExpr) pop);
+            }
+        }
+        while (!output.isEmpty()) {
+            SingleExpr se = output.poll();
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv instanceof ColumnItem && rv instanceof ColumnItem) {
+                out.add(se);
+            }
+        }
+        return out;
+    }
+    //TODO: 从extractTableFilter的结果里提取垂直分片的信息。OK
+    // 以及提取多表连接的条件
+    // 以及 运用表连接条件和分片信息对表达式进一步化简
+    public static Expr extractTableColumnFilter(Expr expr, List<String> projectList)
+    {
+        expr = pdOr.apply(expr);
+        //只考虑两种情况，expr为SingleExpr和expr为 and的compositionExpr
+        CompositionExpr and = new CompositionExpr(LogicOperator.AND);
+        if (expr instanceof SingleExpr) {
+            SingleExpr e = (SingleExpr) expr;
+            ColumnItem ci = null;
+            if (e.getLvalue() instanceof ColumnItem) {
+                ci = (ColumnItem) e.getLvalue();
+            }
+            else {
+                return new TrueExpr();
+            }
+            if (projectList.contains(ci.getColumnName())) {
+                return expr;
+            }
+        }
+        else {
+            if (expr instanceof CompositionExpr && ((CompositionExpr) expr).getLogicOperator() == LogicOperator.AND) {
+                CompositionExpr ce = (CompositionExpr) expr;
+                for (Expr sub : ce.getConditions()) {
+                    if (sub instanceof SingleExpr) {
+                        SingleExpr e = (SingleExpr) sub;
+                        ColumnItem ci = null;
+                        if (e.getLvalue() instanceof ColumnItem) {
+                            ci = (ColumnItem) e.getLvalue();
+                        }
+                        if (projectList.contains(ci.getColumnName())) {
+                            and.getConditions().add(sub);
+                        }
+                    }
+                }
+                if (and.getConditions().size() == 1) {
+                    return and.getConditions().get(0);
+                }
+                else if (and.getConditions().size() > 1) {
+                    return and;
+                }
+            }
+        }
+        return new TrueExpr();
     }
     public static Expr extractTableFilter(Expr expr, String tableName)
     {

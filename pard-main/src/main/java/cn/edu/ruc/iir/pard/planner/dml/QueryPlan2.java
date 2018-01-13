@@ -474,6 +474,7 @@ public class QueryPlan2
                 continue;
             }
             List<Column> projectColumn = new ArrayList<Column>();
+            List<String> strColumn = new ArrayList<String>();
             for (Condition cond : frag.getCondition()) {
                 Integer cnt = cntCol.get(cond.getColumnName());
                 if (cnt == null) {
@@ -484,6 +485,7 @@ public class QueryPlan2
                 Column col = catalogTable.getColumns().get(cond.getColumnName());
                 if (tblCol.contains(col.getColumnName())) {
                     projectColumn.add(col);
+                    strColumn.add(col.getColumnName());
                 }
             }
             if (projectColumn.isEmpty()) {
@@ -496,6 +498,14 @@ public class QueryPlan2
             root = proj;
             if (filter.isPresent()) {
                 // TODO : 垂直投影filter下推
+                Expr filterExpr = Expr.parse(filter.get().getExpression());
+                filterExpr = Expr.extractTableFilter(filterExpr, fromTableName);
+                filterExpr = Expr.extractTableColumnFilter(filterExpr, strColumn);
+                if (!(filterExpr instanceof TrueExpr)) {
+                    FilterNode subFilter = new FilterNode(filterExpr.toExpression());
+                    childrenNode.setChildren(subFilter, true, true);
+                    childrenNode = subFilter;
+                }
             }
             TableScanNode scan = new TableScanNode(tbl2schema.get(fromTableName), fromTableName, frag.getSiteName());
             childrenNode.setChildren(scan, true, true);
@@ -511,7 +521,32 @@ public class QueryPlan2
             }
         }
         joinNode.getJoinSet().add(mCol);
-        return joinNode;
+        return formatVerticalJoin(joinNode);
+    }
+    public JoinNode formatVerticalJoin(JoinNode node)
+    {
+        JoinNode join = new JoinNode();
+        join.getJoinSet().addAll(node.getJoinSet());
+        for (PlanNode p : node.getJoinChildren()) {
+            if (p instanceof ProjectNode) {
+                ProjectNode pn = (ProjectNode) p;
+                boolean contains = true;
+                for (Column c : pn.getColumns()) {
+                    if (!join.getJoinSet().contains(c.getColumnName())) {
+                        contains = false;
+                        break;
+                    }
+                }
+                if (contains) {
+                    continue;
+                }
+            }
+            join.addJoinChild(p);
+        }
+        if (join.getJoinChildren().isEmpty() && !node.getJoinChildren().isEmpty()) {
+            join.getJoinChildren().add(node.getJoinChildren().get(0));
+        }
+        return join;
     }
     public List<String> extractColumnNameFromFilter(cn.edu.ruc.iir.pard.catalog.Table table)
     {
@@ -565,9 +600,16 @@ public class QueryPlan2
                     childrenNode = childrenFilter;
                 }
             }
-            if (project != null && !selectPushDown) {
+            if (project != null) {
                 //TODO: 选择自己表里元素下推
-                ProjectNode pnode = new ProjectNode(project.getColumns());
+                List<String> ownList = extractColumnNameFromProjection(catalogTable);
+                List<Column> singleTableProjection = new ArrayList<Column>();
+                for (Column col : project.getColumns()) {
+                    if (ownList.contains(col.getColumnName())) {
+                        singleTableProjection.add(col);
+                    }
+                }
+                ProjectNode pnode = new ProjectNode(singleTableProjection);
                 pnode.setChildren(childrenNode, true, true);
                 childrenNode = pnode;
             }

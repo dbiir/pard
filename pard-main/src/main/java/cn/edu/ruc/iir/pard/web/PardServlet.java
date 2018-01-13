@@ -46,7 +46,9 @@ public class PardServlet
         UsePlan.setCurrentSchema("book");
         stmt = parser.createStatement("select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000");
         plan(stmt).afterExecution(true);
-        stmt = parser.createStatement("select * from Customer");
+        stmt = parser.createStatement("select * from Customer where id<3 and rank >1");
+        plan(stmt).afterExecution(true);
+        stmt = parser.createStatement("select id,rank from Customer where id<3 and rank >1");
         plan(stmt).afterExecution(true);
     }
     public QueryPlan plan(Statement stmt)

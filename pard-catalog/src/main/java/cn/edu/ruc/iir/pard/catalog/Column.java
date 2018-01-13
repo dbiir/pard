@@ -86,4 +86,57 @@ public class Column
     {
         this.key = key;
     }
+
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((columnName == null) ? 0 : columnName.hashCode());
+        result = prime * result + dataType;
+        result = prime * result + id;
+        result = prime * result + index;
+        result = prime * result + key;
+        result = prime * result + len;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Column other = (Column) obj;
+        if (columnName == null) {
+            if (other.columnName != null) {
+                return false;
+            }
+        }
+        else if (!columnName.equals(other.columnName)) {
+            return false;
+        }
+        if (dataType != other.dataType) {
+            return false;
+        }
+        if (id != other.id) {
+            return false;
+        }
+        if (index != other.index) {
+            return false;
+        }
+        if (key != other.key) {
+            return false;
+        }
+        if (len != other.len) {
+            return false;
+        }
+        return true;
+    }
 }

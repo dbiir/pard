@@ -12,7 +12,9 @@ import cn.edu.ruc.iir.pard.sql.tree.NotExpression;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public abstract class Expr
         implements Serializable
@@ -107,6 +109,38 @@ public abstract class Expr
             }
         }
         return list;
+    }
+    public static List<String> extractTableColumn(Expr expr, String tableName)
+    {
+        Expr extractOr = pdAnd.apply(expr);
+        Queue<Expr> traverse = new LinkedList<Expr>();
+        Queue<SingleExpr> output = new LinkedList<SingleExpr>();
+        List<String> out = new ArrayList<String>();
+        traverse.add(extractOr);
+        while (!traverse.isEmpty()) {
+            Expr pop = traverse.poll();
+            if (pop instanceof CompositionExpr) {
+                traverse.addAll(((CompositionExpr) pop).getConditions());
+            }
+            else if (pop instanceof UnaryExpr) {
+                traverse.add(((UnaryExpr) pop).getExpression());
+            }
+            else {
+                output.add((SingleExpr) pop);
+            }
+        }
+        while (!output.isEmpty()) {
+            SingleExpr se = output.poll();
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv instanceof ColumnItem && tableName.equals(((ColumnItem) lv).getTableName())) {
+                out.add(((ColumnItem) lv).getColumnName());
+            }
+            if (rv instanceof ColumnItem && tableName.equals(((ColumnItem) rv).getTableName())) {
+                out.add(((ColumnItem) rv).getColumnName());
+            }
+        }
+        return out;
     }
     public static Expr extractTableFilter(Expr expr, String tableName)
     {

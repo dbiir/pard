@@ -80,9 +80,15 @@ public class PardClient
                                 pretty.printLargeDataSetsOneByOne();
                                 System.out.println("Selected " + counter + " tuples");
                                 System.out.println("Execution time: " + ((double) resultSet.getExecutionTime()) / 1000 + "s");
+                                if (resultSet.getSemanticErrmsg() != null) {
+                                    System.err.println("Semantic Status:" + resultSet.getSemanticErrmsg());
+                                }
                             }
                             else {
-                                System.out.println(resultSet.getStatus().toString());
+                                System.err.println(resultSet.getStatus().toString());
+                                if (resultSet.getSemanticErrmsg() != null) {
+                                    System.err.println(resultSet.getSemanticErrmsg());
+                                }
                             }
                         }
                         else {

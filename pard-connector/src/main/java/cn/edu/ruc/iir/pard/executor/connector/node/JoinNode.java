@@ -32,7 +32,7 @@ public class JoinNode
     {
         return !childrens.isEmpty();
     }
-    public void addUnionChild(PlanNode node)
+    public void addJoinChild(PlanNode node)
     {
         this.childrens.add(node);
     }

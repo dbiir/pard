@@ -4,8 +4,9 @@ import cn.edu.ruc.iir.pard.executor.connector.node.InputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
-import cn.edu.ruc.iir.pard.planner.PardPlanner;
+import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
+import cn.edu.ruc.iir.pard.planner.dml.QueryPlan2;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import net.sf.json.JSONObject;
@@ -36,12 +37,23 @@ public class PardServlet
      * */
     public void test() throws ServletException
     {
-        PardPlanner planner = new PardPlanner();
+        //PardPlanner planner = new PardPlanner();
         SqlParser parser = new SqlParser();
         Statement stmt = parser.createStatement("SELECT * FROM pardtest.emp where eno < 'E0010' and eno > 'E0000'");
-        planner.plan(stmt).afterExecution(true);
+        plan(stmt).afterExecution(true);
         stmt = parser.createStatement("SELECT * FROM pardtest.emp@pard3");
-        planner.plan(stmt).afterExecution(true);
+        plan(stmt).afterExecution(true);
+        UsePlan.setCurrentSchema("book");
+        stmt = parser.createStatement("select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000");
+        plan(stmt).afterExecution(true);
+        stmt = parser.createStatement("select * from Customer");
+        plan(stmt).afterExecution(true);
+    }
+    public QueryPlan plan(Statement stmt)
+    {
+        QueryPlan plan = new QueryPlan2(stmt);
+        //plan.afterExecution(true);
+        return plan;
     }
     public PNode parse(PlanNode pnode)
     {
@@ -49,8 +61,10 @@ public class PardServlet
         pn.setKey(pnode.getName() + (++keyGen));
         StringBuilder sb = new StringBuilder();
         Map<String, String> map = NodeHelper.getPlanNodeInfo(pnode);
-        for (String key : map.keySet()) {
-            sb.append(key).append(":").append(map.get(key)).append("\n");
+        if (map != null && map.keySet() != null) {
+            for (String key : map.keySet()) {
+                sb.append(key).append(":").append(map.get(key)).append("\n");
+            }
         }
         pn.setText(sb.toString());
         pn.setFigure("Rectangle");
@@ -121,7 +135,7 @@ public class PardServlet
             int xoffset = 0;
             for (PlanNode pnode : pnlist) {
                 PNode p = parse(pnode);
-                p.locx = parent.locx + xoffset * 320;
+                p.locx = parent.locx + xoffset * 120;
                 xoffset++;
                 p.locy = parent.locy + 150;
                 mapping.put(pnode, p);

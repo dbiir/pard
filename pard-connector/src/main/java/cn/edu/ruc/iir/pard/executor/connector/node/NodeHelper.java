@@ -99,6 +99,9 @@ public class NodeHelper
     public static Map<String, String> getPlanNodeInfo(PlanNode node)
     {
         Map<String, String> obj = new HashMap<String, String>();
+        if (node == null) {
+            return obj;
+        }
         if (node instanceof TableScanNode) {
             TableScanNode cnode = (TableScanNode) node;
             obj.put("name", "TABLESCAN");
@@ -135,12 +138,14 @@ public class NodeHelper
             LimitNode cnode = (LimitNode) node;
             obj.put("name", "LIMIT");
             obj.put("number", ((LimitNode) node).getLimitNum() + "");
+            return obj;
         }
         else if (node instanceof JoinNode) {
             JoinNode cnode = (JoinNode) node;
             obj.put("name", "JOIN");
             JSONArray array = new JSONArray();
            // obj.put("joinSet", cnode.getJoinSet());
+            return obj;
         }
         else if (node instanceof InputNode) {
             InputNode cnode = (InputNode) node;
@@ -163,7 +168,10 @@ public class NodeHelper
             obj.put("name", "AggragationNode");
             return obj;
         }
-        return null;
+        else {
+            System.out.println(node.getClass().getName());
+        }
+        return obj;
     }
     public static JSONObject toJSON(PlanNode node)
     {

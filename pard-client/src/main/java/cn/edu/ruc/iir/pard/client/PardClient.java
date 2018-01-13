@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.client;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
+import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 
@@ -75,9 +76,9 @@ public class PardClient
                                     pretty.addRow(r);
                                     counter++;
                                 }
-                                //System.out.println(pretty);
+                                System.out.println(pretty);
                                 //pretty.printLargeDataSets();
-                                pretty.printLargeDataSetsOneByOne();
+                                //pretty.printLargeDataSetsOneByOne();
                                 System.out.println("Selected " + counter + " tuples");
                                 System.out.println("Execution time: " + ((double) resultSet.getExecutionTime()) / 1000 + "s");
                                 if (resultSet.getSemanticErrmsg() != null) {
@@ -109,7 +110,7 @@ public class PardClient
         System.exit(0);
     }
 
-    /*
+
     public PardClient()
     {
         this.inputStream = null;
@@ -231,7 +232,7 @@ public class PardClient
                                 pretty.addRow(r5);
                                 pretty.addRow(r6);
 
-                                for (int i = 0; i < 20000; i++) {
+                                for (int i = 0; i < 200000; i++) {
                                     RowConstructor rc7 = new RowConstructor();
                                     rc7.appendString("hebe");
                                     rc7.appendInt(7899);
@@ -243,9 +244,9 @@ public class PardClient
                                     pretty.addRow(r7);
                                 }
                                 long st = System.currentTimeMillis();
-                                //System.out.println(pretty);
+                                System.out.println(pretty);
                                 //pretty.printLargeDataSets();
-                                pretty.printLargeDataSetsOneByOne();
+                                //pretty.printLargeDataSetsOneByOne();
                                 long et = System.currentTimeMillis();
                                 System.out.println("TIME " + (et - st));
                                 System.out.println(pretty.rowSize());
@@ -280,12 +281,12 @@ public class PardClient
         PardClient pc = new PardClient();
         pc.testrun();
     }
-    */
+
 
     public static void main(String[] args)
     {
-        //testPrettyTable();
-
+        testPrettyTable();
+        /*
         if (args.length != 2) {
             System.out.println("PardClient <host> <port>");
             System.exit(-1);
@@ -300,5 +301,6 @@ public class PardClient
         catch (IOException e) {
             e.printStackTrace();
         }
+        */
     }
 }

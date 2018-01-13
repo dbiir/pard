@@ -10,6 +10,7 @@ public class PrettyTable
 {
     private List<String> headers = new ArrayList<>();
     private List<List<String>> data = new ArrayList<>();
+    private List<Integer> colLength = new ArrayList<>();
 
     public PrettyTable(String... headers)
     {
@@ -58,7 +59,7 @@ public class PrettyTable
         return result.toString();
     }
 
-    public String toString()
+    public String toStringOld()
     {
         StringBuilder result = new StringBuilder();
         result.append(formatRule());
@@ -116,5 +117,59 @@ public class PrettyTable
             System.out.println(formatRow(row));
         }
         System.out.println(printEnd());
+    }
+
+    private int getMaxSizeForCol(int column)
+    {
+        int maxSize = headers.get(column).length();
+        for (List<String> row : data) {
+            if (row.get(column).length() > maxSize) {
+                maxSize = row.get(column).length();
+            }
+        }
+        return maxSize;
+    }
+
+    private String formatRuleNew()
+    {
+        StringBuilder result = new StringBuilder();
+        result.append("+");
+        for (int i = 0; i < headers.size(); i++) {
+            for (int j = 0; j < getMaxSize(i) + 2; j++) {
+                result.append("-");
+            }
+            colLength.add(new Integer(getMaxSizeForCol(i)));
+            result.append("+");
+        }
+        result.append("\n");
+        return result.toString();
+    }
+
+    private String formatRowNew(List<String> row)
+    {
+        StringBuilder result = new StringBuilder();
+        result.append("|");
+        for (int i = 0; i < row.size(); i++) {
+            result.append(StringUtils.center(row.get(i), colLength.get(i).intValue() + 2));
+            //System.out.println(colLength.get(i).intValue());
+            //result.append(StringUtils.center(row.get(i), getMaxSize(i) + 2));
+            //System.out.println(getMaxSize(i));
+            result.append("|");
+        }
+        result.append("\n");
+        return result.toString();
+    }
+
+    public String toString()
+    {
+        StringBuilder result = new StringBuilder();
+        result.append(formatRuleNew());
+        result.append(formatRow(headers));
+        result.append(formatRule());
+        for (List<String> row : data) {
+            result.append(formatRowNew(row));
+        }
+        result.append(formatRule());
+        return result.toString();
     }
 }

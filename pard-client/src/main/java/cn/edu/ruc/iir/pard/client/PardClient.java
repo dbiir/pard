@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.client;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
+//import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 
@@ -76,8 +77,6 @@ public class PardClient
                                     counter++;
                                 }
                                 System.out.println(pretty);
-                                //pretty.printLargeDataSets();
-                                //pretty.printLargeDataSetsOneByOne();
                                 System.out.println("Selected " + counter + " tuples");
                                 System.out.println("Execution time: " + ((double) resultSet.getExecutionTime()) / 1000 + "s");
                                 if (resultSet.getSemanticErrmsg() != null) {
@@ -153,8 +152,8 @@ public class PardClient
                         col3.setColumnName("score");
                         columns0.add(col0);
                         columns0.add(col1);
-                        columns0.add(col2);
                         columns0.add(col3);
+                        columns0.add(col2);
                         prs.setSchema(columns0);
                         Object obj = prs;
                         String temp = null;
@@ -176,63 +175,63 @@ public class PardClient
                                 }
                                 PrettyTable pretty = new PrettyTable(tableHeader);
 
-                                for (int i = 0; i < 10; i++) {
+                                for (int i = 0; i < 100000; i++) {
                                     RowConstructor rc1 = new RowConstructor();
                                     rc1.appendString("TOMTOMTOM");
                                     rc1.appendInt(121345);
-                                    rc1.appendString("RUCRUCRUCRUCRUCRUC");
                                     rc1.appendFloat(78.2f);
+                                    rc1.appendString("RUCRUCRUCRUCRUCRUC");
                                     Row row1 = rc1.build();
                                     temp = rc1.printRow(row1, colTypes);
-                                    String[] r1 = temp.substring(0, temp.length() - 1).split("\t");
+                                    String[] r1 = temp.split("\t");
                                     RowConstructor rc2 = new RowConstructor();
                                     rc2.appendString("TOMTOMTOMTOMTOMTOMTOMTOMTOM");
                                     rc2.appendInt(1213415565);
+                                    rc2.appendFloat(78.24848f);
                                     rc2.appendString("RUCRUCRUCRUCRUCRUCRUCRUCRUCRUCRUCRUC");
-                                    rc2.appendFloat(78.248481f);
                                     Row row2 = rc2.build();
                                     temp = rc2.printRow(row2, colTypes);
-                                    String[] r2 = temp.substring(0, temp.length() - 1).split("\t");
+                                    String[] r2 = temp.split("\t");
                                     RowConstructor rc3 = new RowConstructor();
                                     rc3.appendString("TOM");
                                     rc3.appendInt(1214);
+                                    rc3.appendFloat(78.24848136f);
                                     rc3.appendString("RUC");
-                                    rc3.appendFloat(78.248481f);
                                     Row row3 = rc3.build();
                                     temp = rc3.printRow(row3, colTypes);
-                                    String[] r3 = temp.substring(0, temp.length() - 1).split("\t");
+                                    String[] r3 = temp.split("\t");
                                     RowConstructor rc4 = new RowConstructor();
                                     rc4.appendString("T");
                                     rc4.appendInt(121345);
-                                    rc4.appendString("R");
                                     rc4.appendFloat(78.2f);
+                                    rc4.appendString("R");
                                     Row row4 = rc4.build();
                                     temp = rc4.printRow(row1, colTypes);
-                                    String[] r4 = temp.substring(0, temp.length() - 1).split("\t");
+                                    String[] r4 = temp.split("\t");
                                     RowConstructor rc5 = new RowConstructor();
                                     rc5.appendString("OM");
                                     rc5.appendInt(1213415565);
+                                    rc5.appendFloat(78.24848f);
                                     rc5.appendString("UCR");
-                                    rc5.appendFloat(78.248481f);
                                     Row row5 = rc5.build();
                                     temp = rc5.printRow(row5, colTypes);
-                                    String[] r5 = temp.substring(0, temp.length() - 1).split("\t");
+                                    String[] r5 = temp.split("\t");
                                     RowConstructor rc6 = new RowConstructor();
                                     rc6.appendString("OMT");
                                     rc6.appendInt(1214);
-                                    rc6.appendString("CRU");
                                     rc6.appendFloat(78.248481f);
+                                    rc6.appendString("CRU");
                                     Row row6 = rc6.build();
                                     temp = rc6.printRow(row3, colTypes);
-                                    String[] r6 = temp.substring(0, temp.length() - 1).split("\t");
+                                    String[] r6 = temp.split("\t");
                                     RowConstructor rc7 = new RowConstructor();
                                     rc7.appendString("hebe");
                                     rc7.appendInt(7899);
-                                    rc7.appendString("irc");
                                     rc7.appendFloat(784.51f);
+                                    rc7.appendString("irc");
                                     Row row7 = rc7.build();
                                     temp = rc7.printRow(row7, colTypes);
-                                    String[] r7 = temp.substring(0, temp.length() - 1).split("\t");
+                                    String[] r7 = temp.split("\t");
                                     pretty.addRow(r1);
                                     pretty.addRow(r2);
                                     pretty.addRow(r3);
@@ -244,8 +243,6 @@ public class PardClient
 
                                 long st = System.currentTimeMillis();
                                 System.out.println(pretty);
-                                //pretty.printLargeDataSets();
-                                //pretty.printLargeDataSetsOneByOne();
                                 long et = System.currentTimeMillis();
                                 System.out.println("TIME " + (et - st));
                                 System.out.println(pretty.rowSize());

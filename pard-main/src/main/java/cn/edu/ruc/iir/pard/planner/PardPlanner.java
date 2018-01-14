@@ -11,6 +11,7 @@ import cn.edu.ruc.iir.pard.planner.dml.DeletePlan;
 import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.LoadPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
+import cn.edu.ruc.iir.pard.planner.dml.QueryPlan2;
 import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
 import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
@@ -40,7 +41,7 @@ public class PardPlanner
     public static Map<Class, Class> ast2plan = new HashMap<Class, Class>();
     public static void init()
     {
-        ast2plan.put(Query.class, QueryPlan.class);
+        ast2plan.put(Query.class, QueryPlan2.class);
         ast2plan.put(CreateSchema.class, SchemaCreationPlan.class);
         ast2plan.put(CreateTable.class, TableCreationPlan.class);
         ast2plan.put(Use.class, UsePlan.class);

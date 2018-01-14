@@ -80,12 +80,14 @@ public class PardClient
                                 System.out.println("Execution time: " + ((double) resultSet.getExecutionTime()) / 1000 + "s");
                                 if (resultSet.getSemanticErrmsg() != null) {
                                     System.err.println("Semantic Status:" + resultSet.getSemanticErrmsg());
+                                    System.out.println("Semantic Status:" + resultSet.getSemanticErrmsg());
                                 }
                             }
                             else {
                                 System.err.println(resultSet.getStatus().toString());
                                 if (resultSet.getSemanticErrmsg() != null) {
                                     System.err.println(resultSet.getSemanticErrmsg());
+                                    System.out.println(resultSet.getSemanticErrmsg());
                                 }
                             }
                         }

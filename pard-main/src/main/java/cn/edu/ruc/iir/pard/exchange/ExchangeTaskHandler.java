@@ -83,6 +83,7 @@ public class ExchangeTaskHandler
                 logger.info("task map key " + key + JSONObject.fromObject(state.getTaskMap().get(key)).toString());
             }
             Block b = state.fetch();
+            logger.info("fetch~");
             hasNext = b.isSequenceHasNext() || state.getTaskMap().size() > 1;
             b.setSequenceHasNext(hasNext);
             f = ctx.write(b);

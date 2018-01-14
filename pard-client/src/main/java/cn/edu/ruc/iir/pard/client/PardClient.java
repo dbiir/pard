@@ -2,7 +2,6 @@ package cn.edu.ruc.iir.pard.client;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.memory.Row;
-//import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 

@@ -24,4 +24,18 @@ public class JoinSemantic
             e.printStackTrace();
         }
     }
+    @Test
+    public void testJoin()
+    {
+        UsePlan.setCurrentSchema("book");
+        SqlParser parser = new SqlParser();
+        Statement stmt = parser.createStatement("select customer.name, orders.quantity, book.title from customer,orders,book where customer.id=orders.id and book.id=orders.book_id and customer.rank=1 and book.copies>5000");
+        plan(stmt);
+    }
+    public QueryPlan plan(Statement stmt)
+    {
+        QueryPlan plan = new QueryPlan2(stmt);
+        //plan.afterExecution(true);
+        return plan;
+    }
 }

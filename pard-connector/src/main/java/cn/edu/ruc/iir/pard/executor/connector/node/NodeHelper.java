@@ -143,7 +143,15 @@ public class NodeHelper
         else if (node instanceof JoinNode) {
             JoinNode cnode = (JoinNode) node;
             obj.put("name", "JOIN");
-            JSONArray array = new JSONArray();
+            if (!cnode.getJoinSet().isEmpty()) {
+                obj.put("joinColumn", cnode.getJoinSet().toString());
+            }
+            if (!cnode.getExprList().isEmpty()) {
+                obj.put("exprList", cnode.getExprList().toString());
+            }
+            if (cnode.getOtherInfo() != null) {
+                obj.put("mark", cnode.getOtherInfo());
+            }
            // obj.put("joinSet", cnode.getJoinSet());
             return obj;
         }

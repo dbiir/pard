@@ -1,7 +1,6 @@
 package cn.edu.ruc.iir.pard.executor.connector.node;
 
-import cn.edu.ruc.iir.pard.sql.tree.LogicalBinaryExpression;
-
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import static com.google.common.base.MoreObjects.toStringHelper;
 
 import java.util.ArrayList;
@@ -19,12 +18,13 @@ public class JoinNode
 {
     private static final long serialVersionUID = 3355047142533066940L;
     private Set<String> joinSet;
-    private List<LogicalBinaryExpression> exprList;
+    private List<ComparisonExpression> exprList;
+    private String otherInfo;
     public JoinNode()
     {
         name = "JOIN";
         joinSet = new HashSet<String>();
-        exprList = new ArrayList<LogicalBinaryExpression>();
+        exprList = new ArrayList<ComparisonExpression>();
     }
     public JoinNode(JoinNode node)
     {
@@ -32,7 +32,10 @@ public class JoinNode
         name = "JOIN";
         joinSet = new HashSet<String>();
         joinSet.addAll(node.joinSet);
-        exprList = new ArrayList<LogicalBinaryExpression>();
+        exprList = new ArrayList<ComparisonExpression>();
+        exprList.addAll(node.getExprList());
+        childrens.clear();
+        childrens.addAll(node.getJoinChildren());
     }
     public boolean hasChildren()
     {
@@ -58,9 +61,18 @@ public class JoinNode
                 .add("name", "JOIN")
                 .add("children", childrens)
                 .add("joinSet", this.joinSet)
+                .add("exprList", this.exprList)
                 .toString();
     }
-    public List<LogicalBinaryExpression> getExprList()
+    public String getOtherInfo()
+    {
+        return otherInfo;
+    }
+    public void setOtherInfo(String otherInfo)
+    {
+        this.otherInfo = otherInfo;
+    }
+    public List<ComparisonExpression> getExprList()
     {
         return exprList;
     }

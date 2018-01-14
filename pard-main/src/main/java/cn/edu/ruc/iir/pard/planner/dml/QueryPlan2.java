@@ -12,6 +12,7 @@ import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.JoinNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
@@ -27,8 +28,11 @@ import cn.edu.ruc.iir.pard.sql.expr.ColumnItem;
 import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
 import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
+import cn.edu.ruc.iir.pard.sql.expr.SingleExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
+import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.AllColumns;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.DereferenceExpression;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
@@ -99,6 +103,11 @@ public class QueryPlan2
     public QueryPlan2(Statement stmt)
     {
         super(stmt);
+    }
+    private QueryPlan2(PlanNode p, int k)
+    {
+        super(new SqlParser().createStatement("select * from customer where rank =" + k));
+        node = p;
     }
     public PlanNode getPlan()
     {
@@ -200,8 +209,10 @@ public class QueryPlan2
             }
         }
     }
+    //TODO:根据Expr里的条件,确定Join树
     public PlanNode join()
     {
+        /*
         JoinNode join = new JoinNode();
         for (String tableName : tableList) {
             PlanNode node = localization(tableName);
@@ -212,7 +223,163 @@ public class QueryPlan2
                 return null;
             }
         }
+        List<SingleExpr> singleExprs = Expr.extractTableJoinExpr(Expr.parse(filter.get().getExpression()));
+        for (SingleExpr s : singleExprs) {
+            join.getExprList().add((ComparisonExpression) s.toExpression());
+        }
         return join;
+        */
+        Set<String> unjoinTable = new HashSet<String>();
+        unjoinTable.addAll(tableList);
+        PlanNode p = localization(tableList.get(0));
+        Set<String> joinTable = new HashSet<String>();
+        joinTable.add(tableList.get(0));
+        unjoinTable.remove(tableList.get(0));
+        List<SingleExpr> singleExprs = Expr.extractTableJoinExpr(Expr.parse(filter.get().getExpression()));
+       // System.out.println(singleExprs);
+        while (unjoinTable.size() > 0) {
+            String waitJoinTableName = null;
+            SingleExpr joinExpr = null;
+            for (String t1 : joinTable) {
+                for (String t2 : unjoinTable) {
+                    for (SingleExpr se : singleExprs) {
+                        ColumnItem ci1 = (ColumnItem) se.getLvalue();
+                        ColumnItem ci2 = (ColumnItem) se.getRvalue();
+                        String t11 = ci1.getTableName();
+                        String t22 = ci2.getTableName();
+                        //System.out.println("t11" + t11 + " t22 " + t22 + " t1 " + t1 + "t2 " + t2);
+                        if ((t11.equalsIgnoreCase(t1) && t22.equalsIgnoreCase(t2)) || (t11.equalsIgnoreCase(t2) && t22.equalsIgnoreCase(t1))) {
+                            waitJoinTableName = t2;
+                            joinExpr = se;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (joinExpr != null && waitJoinTableName != null) {
+                joinTable.add(waitJoinTableName);
+                unjoinTable.remove(waitJoinTableName);
+                singleExprs.remove(joinExpr);
+                JoinNode jn = new JoinNode();
+                jn.addJoinChild(p);
+                jn.addJoinChild(localization(waitJoinTableName));
+                p = jn;
+                jn.getExprList().add((ComparisonExpression) joinExpr.toExpression());
+            }
+            else {
+                throw new SemanticException(ErrCode.UnSupportedQuery, "Not Equal Join");
+            }
+        }
+        if (p instanceof JoinNode) {
+            //return p;
+            return pushDownJoin((JoinNode) p);
+        }
+        else {
+            return p;
+        }
+    }
+    private int cnt = 0;
+    public PlanNode pushDownJoin(JoinNode node)
+    {
+        int k = cnt++;
+        node = (JoinNode) NodeHelper.copyNode(node);
+        //new QueryPlan2(node, k).afterExecution(true);
+        if (node.getExprList().isEmpty()) {
+            PlanNode o = NodeHelper.copyNode(node);
+            //new QueryPlan2(o, 3000 + k).afterExecution(true);
+            return o;
+        }
+        JoinNode oldNode = node;
+        List<PlanNode> joinChildren = node.getJoinChildren();
+        if (joinChildren.size() == 1) {
+            PlanNode p = NodeHelper.copyNode(joinChildren.get(0));
+            //new QueryPlan2(p, 1000 + k).afterExecution(true);
+            return p;
+        }
+        else if (joinChildren.size() == 2) {
+            int unionIndex = -1;
+            for (int i = 0; i < joinChildren.size(); i++) {
+                PlanNode chd = joinChildren.get(i);
+                if (chd instanceof UnionNode) {
+                   // UnionNode cu = (UnionNode) chd;
+                    unionIndex = i;
+                    break;
+                }
+            }
+            if (unionIndex >= 0) {
+                UnionNode union = (UnionNode) joinChildren.get(unionIndex);
+                PlanNode other = joinChildren.get(1 - unionIndex);
+                PlanNode o = pushDownJoin(union, other, oldNode);
+                //new QueryPlan2(o, 2000 + k).afterExecution(true);
+                return o;
+            }
+            else {
+                return checkPruneJoin(node);
+            }
+        }
+        return NodeHelper.copyNode(node);
+    }
+    private SqlParser parser = new SqlParser();
+    public PlanNode checkPruneJoin(JoinNode node)
+    {
+        node.setOtherInfo("mark");
+        if (node.getJoinChildren().size() != 2) {
+            return node;
+        }
+        Expression expr = node.getExprList().get(0);
+        Expression expr1 = findExpression(node.getJoinChildren().get(0));
+        Expression expr2 = findExpression(node.getJoinChildren().get(1));
+        if (expr != null && expr1 != null && expr2 != null) {
+            return node;
+        }
+        return node;
+    }
+    public Expression findExpression(PlanNode node)
+    {
+        while (!(node instanceof FilterNode)) {
+            if (node instanceof UnionNode || node instanceof JoinNode) {
+                return null;
+            }
+            if (node == null) {
+                return null;
+            }
+            node = node.getLeftChild();
+        }
+        if (node instanceof FilterNode) {
+            return ((FilterNode) node).getExpression();
+        }
+        return null;
+    }
+    public PlanNode pushDownJoin(UnionNode union, PlanNode others, JoinNode oldNode)
+    {
+        // 考虑union为０和１时
+        UnionNode ret = new UnionNode();
+        List<PlanNode> children = union.getUnionChildren();
+        if (others instanceof JoinNode) {
+            others = pushDownJoin((JoinNode) others);
+        }
+        if (children.isEmpty()) {
+            return union;
+        }
+        for (PlanNode node : children) {
+            JoinNode joins = new JoinNode();
+            joins.addJoinChild(NodeHelper.copyNode(node));
+            joins.addJoinChild(NodeHelper.copyNode(others));
+            joins.getJoinSet().addAll(oldNode.getJoinSet());
+            joins.getExprList().addAll(oldNode.getExprList());
+            ret.getUnionChildren().add(pushDownJoin(joins));
+            //ret.getUnionChildren().add(joins);
+            //TODO 进行搜索　如果没有Ｕnion结点，且没有带ｅｘｐｒ的join结点，则考虑减枝
+        }
+        if (ret.getUnionChildren().size() == 0) {
+            return ret;
+        }
+        else if (ret.getUnionChildren().size() == 1) {
+            return ret.getUnionChildren().get(0);
+        }
+        else {
+            return ret;
+        }
     }
     public PlanNode localization(String fromTableName)
     {
@@ -602,11 +769,18 @@ public class QueryPlan2
             }
             if (project != null) {
                 //TODO: 选择自己表里元素下推
-                List<String> ownList = extractColumnNameFromProjection(catalogTable);
+                Set<String> tblCol = new HashSet<String>();
+                tblCol.addAll(extractColumnNameFromProjection(catalogTable));
+                tblCol.addAll(extractColumnNameFromFilter(catalogTable));
                 List<Column> singleTableProjection = new ArrayList<Column>();
-                for (Column col : project.getColumns()) {
-                    if (ownList.contains(col.getColumnName())) {
+                //System.out.println(tblCol);
+                for (Column col : catalogTable.getColumns().values()) {
+                    if (tblCol.contains(col.getColumnName())) {
                         singleTableProjection.add(col);
+                        //System.out.println("table " + fromTableName + " add projection " + col.getColumnName());
+                    }
+                    else {
+                        //System.out.println("table " + fromTableName + " not add projection " + col.getColumnName());
                     }
                 }
                 ProjectNode pnode = new ProjectNode(singleTableProjection);

@@ -86,7 +86,7 @@ public abstract class Expr
                     SingleExpr se = (SingleExpr) e;
                     if (se.getLvalue() instanceof ColumnItem && se.getRvalue() instanceof ValueItem) {
                         ColumnItem ci = (ColumnItem) se.getLvalue();
-                        if (tableName != null && tableName.equals(ci.getTableName())) {
+                        if (tableName != null && tableName.equalsIgnoreCase(ci.getTableName())) {
                             list.add(se);
                         }
                         else {

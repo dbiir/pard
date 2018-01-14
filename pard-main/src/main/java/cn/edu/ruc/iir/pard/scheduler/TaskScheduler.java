@@ -341,6 +341,7 @@ public class TaskScheduler
         availableSite.addAll(siteDao.listNodes().keySet());
         int rand = (int) (Math.random() * availableSite.size() * 2);
         rand = rand % availableSite.size();
+        rand = 0;
         List<Task> tasks = new ArrayList<>();
         List<PlanNode> unionChildren = union.getUnionChildren();
         //int index = jobOffset;

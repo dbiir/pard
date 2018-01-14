@@ -77,7 +77,7 @@ public class ExchangeTaskHandler
         boolean hasNext = true;
         ChannelFuture f = null;
         if (!state.isDone()) {
-            logger.info("waiting more blocks in exchange task handler.");
+            logger.info("waiting more blocks in exchange task handlers.");
             logger.info("print task map:");
             for (String key : state.getTaskMap().keySet()) {
                 logger.info("task map key " + key + JSONObject.fromObject(state.getTaskMap().get(key)).toString());

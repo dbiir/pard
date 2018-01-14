@@ -75,6 +75,9 @@ public class PardQueryHandler
         catch (IOException e) {
             e.printStackTrace();
         }
+        catch (Exception e2) {
+            e2.printStackTrace();
+        }
     }
 
     public PardResultSet executeQuery(String sql)

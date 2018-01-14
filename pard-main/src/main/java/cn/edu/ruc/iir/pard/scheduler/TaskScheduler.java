@@ -18,12 +18,16 @@ import cn.edu.ruc.iir.pard.executor.connector.DeleteTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.JoinTask;
 import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
+import cn.edu.ruc.iir.pard.executor.connector.UnionTask;
+import cn.edu.ruc.iir.pard.executor.connector.node.JoinNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
 import cn.edu.ruc.iir.pard.planner.Plan;
@@ -54,6 +58,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -267,48 +272,9 @@ public class TaskScheduler
 
         // query plan
         if (plan instanceof QueryPlan) {
-            logger.info("Task generation for query plan");
+            QueryPlan queryPlan = (QueryPlan) plan;
             try {
-                QueryPlan queryPlan = (QueryPlan) plan;
-                PlanNode planNode = queryPlan.getPlan();
-                PlanNode currentNode = planNode;
-                UnionNode internalUnionNode = null;
-                while (currentNode.hasChildren()) {
-                    currentNode = currentNode.getLeftChild();
-                    if (currentNode instanceof UnionNode) {
-                        internalUnionNode = (UnionNode) currentNode;
-                        break;
-                    }
-                }
-                if (internalUnionNode == null) {
-                    return ImmutableList.of(new QueryTask(planNode));
-                }
-                List<Task> tasks = new ArrayList<>();
-                List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
-                int index = 0;
-                for (PlanNode childNode : unionChildren) {
-                    internalUnionNode.setChildren(childNode, true, false);
-                    PlanNode node = childNode;
-                    TableScanNode tableScanNode = null;
-                    if (node instanceof TableScanNode) {
-                        tableScanNode = (TableScanNode) node;
-                    }
-                    while (!(node instanceof TableScanNode) && node.hasChildren()) {
-                        if (node.getLeftChild() instanceof TableScanNode) {
-                            tableScanNode = (TableScanNode) node.getLeftChild();
-                            break;
-                        }
-                        node = node.getLeftChild();
-                    }
-                    if (tableScanNode == null) {
-                        return null;
-                    }
-                    QueryTask task = new QueryTask(tableScanNode.getSite(), NodeHelper.copyNode(planNode));
-                    task.setTaskId(plan.getJobId() + "-" + index);
-                    tasks.add(task);
-                    index++;
-                }
-                return ImmutableList.copyOf(tasks);
+                return processQueryPlan2(queryPlan);
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -316,7 +282,162 @@ public class TaskScheduler
         }
         return null;
     }
-
+    public List<Task> processQueryPlan2(QueryPlan queryPlan)
+    {
+        logger.info("Task generation for query plan");
+        PlanNode planNode = queryPlan.getPlan();
+        PlanNode currentNode = planNode;
+        UnionNode internalUnionNode = null;
+        ProjectNode projNode = null;
+        while (currentNode != null) {
+            if (currentNode instanceof UnionNode) {
+                internalUnionNode = (UnionNode) currentNode;
+            }
+            if (currentNode instanceof ProjectNode) {
+                projNode = (ProjectNode) currentNode;
+            }
+            currentNode = currentNode.getLeftChild();
+        }
+        if (internalUnionNode == null) {
+            return ImmutableList.of(new QueryTask(planNode));
+        }
+        else {
+            return ImmutableList.copyOf(processUnionTask(internalUnionNode, queryPlan.getJobId(), new AtomicInteger(1)));
+        }
+        /*
+        List<Task> tasks = new ArrayList<>();
+        List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
+        int index = 0;
+        return ImmutableList.copyOf(tasks);
+        */
+    }
+    public JoinTask joinTask(JoinNode node, String jobId, AtomicInteger jobOffset)
+    {
+        return null;
+    }
+    public QueryTask singleSiteTableTask(PlanNode node, String jobId, AtomicInteger jobOffset)
+    {
+        TableScanNode tableScanNode = null;
+        if (node instanceof TableScanNode) {
+            tableScanNode = (TableScanNode) node;
+        }
+        while (!(node instanceof TableScanNode) && node.hasChildren()) {
+            if (node.getLeftChild() instanceof TableScanNode) {
+                tableScanNode = (TableScanNode) node.getLeftChild();
+                break;
+            }
+            node = node.getLeftChild();
+        }
+        if (tableScanNode == null) {
+            return null;
+        }
+        QueryTask task = new QueryTask(tableScanNode.getSite(), NodeHelper.copyNode(node));
+        task.setTaskId(jobId + "-" + jobOffset.addAndGet(1));
+        return task;
+    }
+    public List<Task> processUnionTask(UnionNode union, String jobId, AtomicInteger jobOffset)
+    {
+        List<String> availableSite = new ArrayList<String>();
+        availableSite.addAll(siteDao.listNodes().keySet());
+        int rand = (int) (Math.random() * availableSite.size() * 2);
+        rand = rand % availableSite.size();
+        List<Task> tasks = new ArrayList<>();
+        List<PlanNode> unionChildren = union.getUnionChildren();
+        //int index = jobOffset;
+        List<Task> unionTasks = new ArrayList<>();
+        for (PlanNode childNode : unionChildren) {
+            //union.setChildren(childNode, true, false);
+            PlanNode node = childNode;
+            while (node != null) {
+                if (node instanceof TableScanNode) {
+                    Task tableTask = singleSiteTableTask(childNode, jobId, jobOffset);
+                    if (tableTask != null) {
+                        unionTasks.add(tableTask);
+                    }
+                    break;
+                }
+                else if (node instanceof JoinNode) {
+                    Task joinTask = joinTask((JoinNode) node, jobId, jobOffset);
+                    if (joinTask != null) {
+                        unionTasks.add(joinTask);
+                    }
+                }
+                node = node.getLeftChild();
+            }
+        }
+        UnionTask unionTask = new UnionTask(availableSite.get(rand));
+        unionTask.setWaitTask(unionTasks);
+        tasks.add(unionTask);
+        return tasks;
+    }
+    public List<Task> processQueryPlan(QueryPlan queryPlan)
+    {
+        logger.info("Task generation for query plan");
+        PlanNode planNode = queryPlan.getPlan();
+        PlanNode currentNode = planNode;
+        UnionNode internalUnionNode = null;
+        while (currentNode.hasChildren()) {
+            currentNode = currentNode.getLeftChild();
+            if (currentNode instanceof UnionNode) {
+                internalUnionNode = (UnionNode) currentNode;
+                break;
+            }
+        }
+        if (internalUnionNode == null) {
+            return ImmutableList.of(new QueryTask(planNode));
+        }
+        List<Task> tasks = new ArrayList<>();
+        List<PlanNode> unionChildren = internalUnionNode.getUnionChildren();
+        int index = 0;
+        for (PlanNode childNode : unionChildren) {
+            internalUnionNode.setChildren(childNode, true, false);
+            PlanNode node = childNode;
+            TableScanNode tableScanNode = null;
+            if (node instanceof TableScanNode) {
+                tableScanNode = (TableScanNode) node;
+            }
+            while (!(node instanceof TableScanNode) && node.hasChildren()) {
+                if (node.getLeftChild() instanceof TableScanNode) {
+                    tableScanNode = (TableScanNode) node.getLeftChild();
+                    break;
+                }
+                node = node.getLeftChild();
+            }
+            if (tableScanNode == null) {
+                return null;
+            }
+            QueryTask task = new QueryTask(tableScanNode.getSite(), NodeHelper.copyNode(planNode));
+            task.setTaskId(queryPlan.getJobId() + "-" + index);
+            tasks.add(task);
+            index++;
+        }
+        return ImmutableList.copyOf(tasks);
+    }
+    public TaskState executeQueryTask(List<Task> tasks, boolean isLocal)
+    {
+        if (isLocal) {
+            PardResultSet resultSet = new PardResultSet();
+            Map<String, Task> taskMap = new HashMap<>();
+            BlockingQueue<Block> blocks = new LinkedBlockingQueue<>();
+            TaskState state = new TaskState(taskMap, blocks);
+            state.setResultSet(resultSet);
+            for (Task task : tasks) {
+                String site = task.getSite();
+                String taskId = task.getTaskId();
+                Site nodeSite = siteDao.listNodes().get(site);
+                if (nodeSite == null) {
+                    logger.log(Level.SEVERE, "Node " + site + " is not active. Please check.");
+                    state.setResultSet(PardResultSet.execErrResultSet);
+                    return state;
+                }
+                PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+                client.connect(task, blocks);
+                taskMap.put(taskId, task);
+            }
+            return state;
+        }
+        return null;
+    }
     // todo this sucks, full of if else
     public PardResultSet executeJob(Job job)
     {

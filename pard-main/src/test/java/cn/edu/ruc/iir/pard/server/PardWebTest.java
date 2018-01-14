@@ -17,7 +17,11 @@ public class PardWebTest
         UsePlan.setCurrentSchema("book");
         Statement stmt = parser.createStatement("select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000");
         plan(stmt);
-        stmt = parser.createStatement("select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000");
+        stmt = parser.createStatement("select customer.name, orders.quantity, book.title from customer,orders,book where customer.id=orders.customer_id and book.id=orders.book_id and customer.rank=1 and book.copies>5000");
+        plan(stmt);
+        stmt = parser.createStatement("select * from customer");
+        plan(stmt);
+        stmt = parser.createStatement("select * from publisher");
         plan(stmt);
         System.out.println(PardServlet.planList.size());
         PardWebServer.main(new String[0]);

@@ -6,8 +6,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 
-import javax.servlet.ServletException;
-
 public class PardWebServer
         implements Runnable
 {
@@ -35,13 +33,13 @@ public class PardWebServer
         context.addServlet(staticHolder, "*.jpg");
         context.setResourceBase(".");
         PardServlet s = new PardServlet();
-        try {
-            s.test();
-        }
-        catch (ServletException e1) {
+        //try {
+           // s.test();
+        //}
+        //catch (ServletException e1) {
             // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
+           // e1.printStackTrace();
+        //}
         ServletHolder pardHolder = new ServletHolder(s);
         context.addServlet(pardHolder, "*.pard");
         //context.setParentLoaderPriority(true);

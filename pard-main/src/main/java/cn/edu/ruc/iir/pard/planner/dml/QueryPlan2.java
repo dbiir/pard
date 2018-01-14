@@ -189,6 +189,7 @@ public class QueryPlan2
         }
         else {
             PlanNode joinNode = join();
+            joinNode = formatUnion(joinNode);
             currentNode.setChildren(joinNode, true, true);
             currentNode = joinNode;
         }
@@ -207,6 +208,33 @@ public class QueryPlan2
             if (tb.size() == 1) {
                 alias2tbl.put(key, tb.get(0));
             }
+        }
+    }
+    public PlanNode formatUnion(PlanNode node)
+    {
+        if (node instanceof UnionNode) {
+            boolean needRec = false;
+            UnionNode union = new UnionNode();
+            UnionNode old = (UnionNode) node;
+            for (PlanNode p : old.getUnionChildren()) {
+                if (p instanceof UnionNode) {
+                    UnionNode pp = (UnionNode) p;
+                    needRec = true;
+                    for (PlanNode n : pp.getUnionChildren()) {
+                        union.addUnionChild(n);
+                    }
+                }
+                else {
+                    union.addUnionChild(p);
+                }
+            }
+            if (needRec) {
+                return formatUnion(union);
+            }
+            return union;
+        }
+        else {
+            return NodeHelper.copyNode(node);
         }
     }
     //TODO:根据Expr里的条件,确定Join树
@@ -319,22 +347,46 @@ public class QueryPlan2
         }
         return NodeHelper.copyNode(node);
     }
-    private SqlParser parser = new SqlParser();
+
     public PlanNode checkPruneJoin(JoinNode node)
     {
         node.setOtherInfo("mark");
         if (node.getJoinChildren().size() != 2) {
+            node.setOtherInfo("mark" + node.getJoinChildren().size());
             return node;
         }
         Expression expr = node.getExprList().get(0);
-        Expression expr1 = findExpression(node.getJoinChildren().get(0));
-        Expression expr2 = findExpression(node.getJoinChildren().get(1));
-        if (expr != null && expr1 != null && expr2 != null) {
+        FilterNode node1 = findExpression(node.getJoinChildren().get(0));
+        FilterNode node2 = findExpression(node.getJoinChildren().get(1));
+        if (node1 == null || node2 == null) {
             return node;
+        }
+        Expression expr1 = node1.getExpression();
+        Expression expr2 = node2.getExpression();
+        if (expr != null && expr1 != null && expr2 != null) {
+            SingleExpr se = (SingleExpr) Expr.parse(expr);
+            Expr e1 = Expr.parse(expr1);
+            Expr e2 = Expr.parse(expr2);
+            ColumnItem lv = (ColumnItem) se.getLvalue();
+            ColumnItem rv = (ColumnItem) se.getRvalue();
+            e1 = Expr.replace(e1, (ColumnItem) se.getLvalue(), (ColumnItem) se.getRvalue());
+            e2 = Expr.replace(e2, (ColumnItem) se.getLvalue(), (ColumnItem) se.getRvalue());
+            Expr res = Expr.and(e1, e2, LogicOperator.AND);
+            if (res instanceof FalseExpr) {
+                //System.out.println("Flase e1 " + e1.toString() + " e2 " + e2.toString() + "se " + se + " res " + res);
+                return null;
+            }
+            else {
+                //System.out.println("ke1 " + e1.toString() + " e2 " + e2.toString() + "se " + se + " res " + res);
+            }
+            return node;
+        }
+        else {
+            //System.out.println("?e1 " + expr1 + " e2 " + expr2 + "se " + expr);
         }
         return node;
     }
-    public Expression findExpression(PlanNode node)
+    public FilterNode findExpression(PlanNode node)
     {
         while (!(node instanceof FilterNode)) {
             if (node instanceof UnionNode || node instanceof JoinNode) {
@@ -346,7 +398,7 @@ public class QueryPlan2
             node = node.getLeftChild();
         }
         if (node instanceof FilterNode) {
-            return ((FilterNode) node).getExpression();
+            return ((FilterNode) node);
         }
         return null;
     }
@@ -357,6 +409,9 @@ public class QueryPlan2
         List<PlanNode> children = union.getUnionChildren();
         if (others instanceof JoinNode) {
             others = pushDownJoin((JoinNode) others);
+            if (others == null) {
+                return null;
+            }
         }
         if (children.isEmpty()) {
             return union;
@@ -367,7 +422,10 @@ public class QueryPlan2
             joins.addJoinChild(NodeHelper.copyNode(others));
             joins.getJoinSet().addAll(oldNode.getJoinSet());
             joins.getExprList().addAll(oldNode.getExprList());
-            ret.getUnionChildren().add(pushDownJoin(joins));
+            PlanNode pn = pushDownJoin(joins);
+            if (pn != null) {
+                ret.getUnionChildren().add(pn);
+            }
             //ret.getUnionChildren().add(joins);
             //TODO 进行搜索　如果没有Ｕnion结点，且没有带ｅｘｐｒ的join结点，则考虑减枝
         }

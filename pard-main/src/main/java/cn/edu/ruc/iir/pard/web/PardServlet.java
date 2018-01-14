@@ -44,13 +44,13 @@ public class PardServlet
        // plan(stmt).afterExecution(true);
         UsePlan.setCurrentSchema("book");
         stmt = parser.createStatement("select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000");
-        //plan(stmt).afterExecution(true);
+        plan(stmt).afterExecution(true);
         //stmt = parser.createStatement("select * from Customer where id<3 and rank >1");
        // plan(stmt).afterExecution(true);
       //  stmt = parser.createStatement("select id,rank from Customer where id<3 and rank >1");
         //plan(stmt).afterExecution(true);
         stmt = parser.createStatement("select customer.name, orders.quantity, book.title from customer,orders,book where customer.id=orders.customer_id and book.id=orders.book_id and customer.rank=1 and book.copies>5000");
-        //plan(stmt).afterExecution(true);
+        plan(stmt).afterExecution(true);
     }
     public QueryPlan plan(Statement stmt)
     {
@@ -207,11 +207,11 @@ public class PardServlet
                 PNode p = parse(pnode);
                 pque.add(p);
                 p.locx = giveX(levelNo, maxNumber, xInc, nodeNo[level]); //parent.locx + xoffset * 220;
-                /*
+
                 if (pnlist.size() == 1) {
                     p.locx = parent.locx;
                 }
-
+                /*
                 else if (pnlist.size() == 2) {
                     p.locx = parent.locx - xInc / 2 + xoffset * xInc;
                     xoffset++;

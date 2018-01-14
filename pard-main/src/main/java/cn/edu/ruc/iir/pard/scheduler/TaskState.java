@@ -45,6 +45,9 @@ public class TaskState
             catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (block == null) {
+                return null;
+            }
         }while (block == null && !isDone());
         if (!block.isSequenceHasNext()) {
             String taskId = block.getTaskId();

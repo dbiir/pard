@@ -11,6 +11,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import net.sf.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,9 +76,15 @@ public class ExchangeTaskHandler
         TaskState state = taskMap.get(task.getTaskId());
         boolean hasNext = true;
         ChannelFuture f = null;
-        if (!state.isDone()) {
+        while (!state.isDone()) {
             logger.info("waiting more blocks in exchange task handler.");
+            for (String key : state.getTaskMap().keySet()) {
+                logger.info("task map key " + key + JSONObject.fromObject(state.getTaskMap().get(key)).toString());
+            }
             Block b = state.fetch();
+            if (b == null) {
+                continue;
+            }
             hasNext = b.isSequenceHasNext() || state.getTaskMap().size() > 1;
             b.setSequenceHasNext(hasNext);
             f = ctx.write(b);

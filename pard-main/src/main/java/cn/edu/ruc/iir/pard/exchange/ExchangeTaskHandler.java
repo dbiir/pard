@@ -76,6 +76,7 @@ public class ExchangeTaskHandler
         boolean hasNext = true;
         ChannelFuture f = null;
         if (!state.isDone()) {
+            logger.info("waiting more blocks in exchange task handler.");
             Block b = state.fetch();
             hasNext = b.isSequenceHasNext() || state.getTaskMap().size() > 1;
             b.setSequenceHasNext(hasNext);

@@ -76,15 +76,13 @@ public class ExchangeTaskHandler
         TaskState state = taskMap.get(task.getTaskId());
         boolean hasNext = true;
         ChannelFuture f = null;
-        while (!state.isDone()) {
+        if (!state.isDone()) {
             logger.info("waiting more blocks in exchange task handler.");
+            logger.info("print task map:");
             for (String key : state.getTaskMap().keySet()) {
                 logger.info("task map key " + key + JSONObject.fromObject(state.getTaskMap().get(key)).toString());
             }
             Block b = state.fetch();
-            if (b == null) {
-                continue;
-            }
             hasNext = b.isSequenceHasNext() || state.getTaskMap().size() > 1;
             b.setSequenceHasNext(hasNext);
             f = ctx.write(b);

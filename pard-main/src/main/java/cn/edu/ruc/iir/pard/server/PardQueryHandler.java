@@ -97,6 +97,9 @@ public class PardQueryHandler
         catch (ParsingException e) {
             return new PardResultSet(PardResultSet.ResultStatus.PARSING_ERR);
         }
+        catch (NullPointerException e1) {
+            return new PardResultSet(PardResultSet.ResultStatus.PARSING_ERR, e1.getMessage());
+        }
         if (statement == null) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create statement for sql: " + sql);

@@ -338,7 +338,7 @@ public class TaskScheduler
             if (plan instanceof SchemaShowPlan) {
                 SchemaDao schemaDao = new SchemaDao();
                 Set<String> schemas = schemaDao.listAll();
-                Column header = new Column(0, DataType.VARCHAR.getType(), "schema", 100, 0, 0);
+                Column header = new Column(0, DataType.VARCHAR.getType(), "schema", 100, 0, 0, null);
                 PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header));
                 for (String schemaName : schemas) {
                     RowConstructor rowConstructor = new RowConstructor();
@@ -352,7 +352,7 @@ public class TaskScheduler
                 SchemaDao schemaDao = new SchemaDao();
                 Schema schema = schemaDao.loadByName(((TableShowPlan) plan).getSchema());
                 List<Table> tables = schema.getTableList();
-                Column header = new Column(0, DataType.VARCHAR.getType(), "table", 100, 0, 0);
+                Column header = new Column(0, DataType.VARCHAR.getType(), "table", 100, 0, 0, null);
                 PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK, ImmutableList.of(header));
                 for (Table table : tables) {
                     RowConstructor rowConstructor = new RowConstructor();

@@ -20,6 +20,7 @@ import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
+import cn.edu.ruc.iir.pard.planner.dml.QueryPlan2;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Node;
 import cn.edu.ruc.iir.pard.sql.tree.OrderBy;
@@ -234,5 +235,18 @@ public class SemanticAnalysisTest
             return obj;
         }
         return null;
+    }
+    @Test
+    public void testCount()
+    {
+        UsePlan.setCurrentSchema("booktest");
+        String cnt = "select count(*) from publisher";
+        try {
+            Statement stmt = parser.createStatement(cnt);
+            QueryPlan plan = new QueryPlan2(stmt);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

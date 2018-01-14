@@ -22,7 +22,7 @@ if [ $1 == "start" ] ; then
     if [ -e ../pid ] ; then
         echo "Pard already started. Please stop it first."
     else
-        nohup java -jar ../bin/pard-server.jar ../pard.properties &
+        nohup java -jar ../bin/pard-server.jar ../pard.properties >../nohup.log 2>&1 &
         pid=$!
         echo ${pid} > ../pid
         echo "Pard is running in background as" ${pid}

@@ -9,6 +9,7 @@ public class Column
     private int id;
     private int dataType;
     private String columnName;
+    private String tableName;
     private int len;
     private int index; //0:none; 1:hashindex; 2:btreeindex; 3:others
     private int key;
@@ -17,7 +18,7 @@ public class Column
     {
     }
 
-    public Column(int id, int dataType, String columnName, int len, int index, int key)
+    public Column(int id, int dataType, String columnName, int len, int index, int key, String tableName)
     {
         this.id = id;
         this.dataType = dataType;
@@ -25,6 +26,7 @@ public class Column
         this.len = len;
         this.index = index;
         this.key = key;
+        this.tableName = tableName;
     }
 
     public int getId()
@@ -93,6 +95,7 @@ public class Column
         final int prime = 31;
         int result = 1;
         result = prime * result + ((columnName == null) ? 0 : columnName.hashCode());
+        result = prime * result + ((tableName == null) ? 0 : tableName.hashCode());
         result = prime * result + dataType;
         result = prime * result + id;
         result = prime * result + index;
@@ -122,6 +125,14 @@ public class Column
         else if (!columnName.equals(other.columnName)) {
             return false;
         }
+        if (tableName == null) {
+            if (other.tableName != null) {
+                return false;
+            }
+        }
+        else if (!tableName.equals(other.tableName)) {
+            return false;
+        }
         if (dataType != other.dataType) {
             return false;
         }
@@ -138,5 +149,15 @@ public class Column
             return false;
         }
         return true;
+    }
+
+    public String getTableName()
+    {
+        return tableName;
+    }
+
+    public void setTableName(String tableName)
+    {
+        this.tableName = tableName;
     }
 }

@@ -8,6 +8,7 @@ import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
+import cn.edu.ruc.iir.pard.executor.connector.CreateTmpTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.DeleteTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
@@ -24,13 +25,21 @@ import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
+import cn.edu.ruc.iir.pard.sql.expr.ColumnItem;
+import cn.edu.ruc.iir.pard.sql.expr.Expr;
+import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
+import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
+import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import com.google.common.collect.ImmutableList;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +52,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -112,6 +122,9 @@ public class PostgresConnector
             }
             if (task instanceof SendDataTask) {
                 return executeSendDataTask(conn, (SendDataTask) task);
+            }
+            if (task instanceof CreateTmpTableTask) {
+                return executeCreateTmpTable(conn, (CreateTmpTableTask) task);
             }
         }
         catch (SQLException e) {
@@ -581,17 +594,17 @@ public class PostgresConnector
                     isLimit = true;
                 }
             }
-            if (isProject) {
-                List<Column> columns = projectNode.getColumns();
-                for (Column column : columns) {
-                    querySQL.append(column.getColumnName());
-                    querySQL.append(",");
-                }
-                querySQL = new StringBuilder(querySQL.substring(0, querySQL.length() - 1));
+//            if (isProject) {
+            List<Column> cols = projectNode.getColumns();
+            for (Column column : cols) {
+                querySQL.append(column.getColumnName());
+                querySQL.append(",");
             }
-            else {
-                querySQL.append(" *");
-            }
+            querySQL = new StringBuilder(querySQL.substring(0, querySQL.length() - 1));
+//            }
+//            else {
+//                querySQL.append(" *");
+//            }
             querySQL.append(" from ");
             querySQL.append(schema);
             querySQL.append(".");
@@ -620,7 +633,7 @@ public class PostgresConnector
             Map<String, Expression> siteExpression = task.getSiteExpression(); // site -> Expression
             Map<String, String> tmpTableMap = task.getTmpTableMap(); // site -> tmpTableName
 
-            boolean flag = dispense(siteExpression, tmpTableMap, rs);
+            boolean flag = dispense(siteExpression, tmpTableMap, rs, cols, schema, table);
             if (flag == true) {
                 conn.close();
                 return PardResultSet.okResultSet;
@@ -644,19 +657,172 @@ public class PostgresConnector
         return PardResultSet.execErrResultSet;
     }
 
+    public PardResultSet executeCreateTmpTable(Connection conn, CreateTmpTableTask task)
+    {
+        String schemaName = task.getSchemaName();
+        String tableName = task.getTableName();
+        DropTableTask dropTableTask = new DropTableTask(schemaName, tableName);
+        PardResultSet prsDropTempTale = dropTempTable(conn, dropTableTask);
+        CreateTableTask createTableTask = new CreateTableTask(schemaName, tableName, false, task.getColumnDefinitions());
+        PardResultSet prsCreateTempTable = createTempTable(conn, createTableTask);
+        String filePath1 = task.getPath();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(new File(filePath1)));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(new File(filePath1 + "tmp")));
+            String readIn = br.readLine();
+            readIn = br.readLine();
+            while ((readIn = br.readLine()) != null) {
+                bw.write(readIn);
+                bw.newLine();
+            }
+            br.close();
+            bw.flush();
+            bw.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        LoadTask loadTask = new LoadTask(schemaName, tableName, ImmutableList.of(filePath1 + "tmp"));
+        PardResultSet prsLoadTemoTable = loadTmpTable(conn, loadTask);
+        return prsLoadTemoTable;
+    }
+
+    private PardResultSet loadTmpTable(Connection conn, LoadTask task)
+    {
+        String schema = task.getSchema();
+        String table = task.getTable();
+        List<String> paths = task.getPaths();
+        try {
+            PgConnection pgConnection;
+            if (!conn.isWrapperFor(PgConnection.class)) {
+                return PardResultSet.execErrResultSet;
+            }
+            pgConnection = conn.unwrap(PgConnection.class);
+            CopyManager copyManager = new CopyManager(pgConnection);
+            for (String path : paths) {
+                if (schema != null) {
+                    logger.info("Copying " + path + " into " + schema + "." + table);
+                    String sql = "COPY " + schema + "." + table + " FROM STDIN DELIMITER E'\t'";
+                    logger.info("Postgres connector: " + sql);
+                    File file = new File(path);
+                    InputStream inputStream = new FileInputStream(file);
+                    copyManager.copyIn(sql, inputStream);
+                    file.deleteOnExit();
+                }
+                else {
+                    logger.info("Copying " + path + " into " + table);
+                    String sql = "COPY " + table + " FROM STDIN DELIMITER E'\t'";
+                    logger.info("Postgres connector: " + sql);
+                    File file = new File(path);
+                    InputStream inputStream = new FileInputStream(file);
+                    copyManager.copyIn(sql, inputStream);
+                    file.deleteOnExit();
+                }
+            }
+            PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK);
+            RowConstructor rowConstructor = new RowConstructor();
+            rowConstructor.appendString(PardResultSet.ResultStatus.OK.toString());
+            resultSet.add(rowConstructor.build());
+            return resultSet;
+        }
+        catch (SQLException | IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return PardResultSet.execErrResultSet;
+    }
+
+    private PardResultSet dropTempTable(Connection conn, DropTableTask task)
+    {
+        try {
+            Statement statement = conn.createStatement();
+            String dropTableSQL;
+            if (task.getSchemaName() == null) {
+                dropTableSQL = "drop table if exists " + task.getTableName();
+            }
+            else {
+                dropTableSQL = "drop table if exists " + task.getSchemaName() + "." + task.getTableName();
+            }
+            logger.info("Postgres connector: " + dropTableSQL);
+            int status = statement.executeUpdate(dropTableSQL);
+            if (status == 0) {
+                logger.info("DROP TEMP TABLE SUCCESSFULLY");
+                return PardResultSet.okResultSet;
+            }
+        }
+        catch (SQLException e) {
+            logger.info("DROP TEMP TABLE FAILED");
+            e.printStackTrace();
+        }
+        return PardResultSet.execErrResultSet;
+    }
+
+    private PardResultSet createTempTable(Connection conn, CreateTableTask task)
+    {
+        try {
+            StringBuilder createTableSQL = new StringBuilder("create table if not exists ");
+            if (task.getSchemaName() != null) {
+                createTableSQL.append(task.getSchemaName() + "." + task.getTableName() + "(");
+            }
+            else {
+                createTableSQL.append(task.getTableName() + "(");
+            }
+            for (Column cd : task.getColumnDefinitions()) {
+                if (cd.getKey() == 1) {
+                    createTableSQL.append(cd.getColumnName()).append(" ").append(getTypeString(cd.getDataType(), cd.getLen())).append(" primary key ");
+                }
+                else {
+                    createTableSQL.append(cd.getColumnName()).append(" ").append(getTypeString(cd.getDataType(), cd.getLen()));
+                }
+                createTableSQL.append(" ,");
+            }
+            createTableSQL = new StringBuilder(createTableSQL.substring(0, createTableSQL.length() - 1));
+            createTableSQL.append(")");
+            logger.info("Connector: " + createTableSQL.toString());
+            Statement statement = conn.createStatement();
+            int status = statement.executeUpdate(createTableSQL.toString());
+            if (status == 0) {
+                logger.info("CREATE TEMP TABLE SUCCESSFULLY");
+                return PardResultSet.okResultSet;
+            }
+        }
+        catch (SQLException e) {
+            logger.info("CREATE TEMP TABLE FAILED");
+            e.printStackTrace();
+        }
+        return PardResultSet.execErrResultSet;
+    }
+
     private PardResultSet executeJoin(Connection conn, JoinTask task)
     {
         return PardResultSet.execErrResultSet;
     }
 
-    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs)
+    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs, List<Column> columns, String schema, String table)
     {
         boolean isSucceeded;
         Map<String, BufferedWriter> localWriter = new HashMap<String, BufferedWriter>(); // site -> local BufferedWirter
         for (String site : siteExpression.keySet()) {
             try {
-                BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/dev/shm/" + site.toString() + tmpTableMap.get(site))));
+                BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/dev/shm/" + site + tmpTableMap.get(site) + "SENDDATA")));
                 localWriter.put(site, bw);
+                bw.write(schema + "\t" + table + "\n"); //schema name, table name
+                Iterator it = columns.iterator();
+                String secondLine = "";
+                while (it.hasNext()) {
+                    secondLine += ((Column) it.next()).getColumnName() + "\t";   // column names
+                }
+                secondLine = secondLine.substring(0, secondLine.length() - 1);
+                bw.write(secondLine);
+                bw.write("\n");
+                bw.flush();
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -669,39 +835,46 @@ public class PostgresConnector
             while (rs.next()) {
                 RowConstructor rowConstructor = new RowConstructor();
                 List<Integer> colTypes = new ArrayList<>();
+
                 for (int i = 0; i < colNum; i++) {
                     switch (rsmd.getColumnType(i + 1)) {
                         case Types.CHAR:
                             rowConstructor.appendString(rs.getString(i + 1));
                             colTypes.add(DataType.CHAR.getType());
                             break;
+
                         case Types.VARCHAR:
                             rowConstructor.appendString(rs.getString(i + 1));
                             colTypes.add(DataType.VARCHAR.getType());
                             break;
+
                         case Types.DATE:
                             rowConstructor.appendString(rs.getString(i + 1).toString());
                             colTypes.add(DataType.DATE.getType());
                             break;
+
                         case Types.INTEGER:
                             rowConstructor.appendInt(rs.getInt(i + 1));
                             colTypes.add(DataType.INT.getType());
                             break;
+
                         case Types.FLOAT:
                             rowConstructor.appendFloat(rs.getFloat(i + 1));
                             colTypes.add(DataType.FLOAT.getType());
                             break;
+
                         case Types.DOUBLE:
                             rowConstructor.appendDouble(rs.getDouble(i + 1));
                             colTypes.add(DataType.DOUBLE.getType());
                             break;
+
                         default:
                             break;
                     }
                 }
                 Row row = rowConstructor.build();
                 for (Map.Entry<String, Expression> entry : siteExpression.entrySet()) {
-                    boolean ifTrue = compare(entry.getValue(), row);
+                    boolean ifTrue = compare(entry.getValue(), row, columns);
                     if (ifTrue) {
                         localWriter.get(entry.getKey()).write(rowConstructor.printRow(row, colTypes) + "\n");
                     }
@@ -727,10 +900,56 @@ public class PostgresConnector
         return isSucceeded;
     }
 
-    private boolean compare(Expression expression, Row row)
+    private Boolean compare(Expression expr, Row row, List<Column> col)
     {
-        // TODO it's gonna be replaced
-        return false;
+        List<Integer> types = new ArrayList<Integer>();
+        col.forEach(x -> types.add(x.getDataType()));
+        String[] list = RowConstructor.printRow(row, types).split("\t");
+        List<ColumnItem> ciList = new ArrayList<ColumnItem>();
+        List<ValueItem> vList = new ArrayList<ValueItem>();
+        Expr e = Expr.parse(expr);
+        for (int i = 0; i < list.length; i++) {
+            ColumnItem ci = new ColumnItem(col.get(i).getTableName(), col.get(i).getColumnName(), col.get(i).getDataType());
+            ValueItem vi = new ValueItem(parseFromString(col.get(i).getDataType(), list[i]));
+            ciList.add(ci);
+            vList.add(vi);
+        }
+        for (int i = 0; i < list.length; i++) {
+            ColumnItem ci = ciList.get(i);
+            ValueItem vi = vList.get(i);
+            e = Expr.generalReplace(e, ci, vi);
+        }
+        System.out.println(e.toString());
+        e = Expr.optimize(e, Expr.LogicOperator.AND);
+        if (e instanceof TrueExpr) {
+            return true;
+        }
+        else if (e instanceof FalseExpr) {
+            return false;
+        }
+        return null;
+    }
+
+    private static Comparable parseFromString(int dataType, String value)
+    {
+        switch(dataType) {
+            case DataType.DataTypeInt.SMALLINT:
+            case DataType.DataTypeInt.BIGINT:
+            case DataType.DataTypeInt.INT:
+                return Long.parseLong(value);
+            case DataType.DataTypeInt.FLOAT:
+            case DataType.DataTypeInt.DOUBLE:
+                return Double.parseDouble(value);
+            case DataType.DataTypeInt.TEXT:
+            case DataType.DataTypeInt.CHAR:
+            case DataType.DataTypeInt.VARCHAR:
+                return value;
+            case DataType.DataTypeInt.TIME:
+            case DataType.DataTypeInt.DATE:
+            case DataType.DataTypeInt.TIMESTAMP:
+                return value;
+        }
+        return value;
     }
 
     private String getTypeString(int type, int length)

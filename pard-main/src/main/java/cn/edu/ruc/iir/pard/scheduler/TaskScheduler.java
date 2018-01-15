@@ -282,7 +282,7 @@ public class TaskScheduler
         if (plan instanceof QueryPlan) {
             QueryPlan queryPlan = (QueryPlan) plan;
             try {
-                return processQueryPlan(queryPlan);
+                return processQueryPlan2(queryPlan);
             }
             catch (Exception e) {
                 e.printStackTrace();

@@ -2,8 +2,11 @@ package cn.edu.ruc.iir.pard.connector.postgresql;
 
 import cn.edu.ruc.iir.pard.catalog.Column;
 import cn.edu.ruc.iir.pard.commons.config.PardUserConfiguration;
+import cn.edu.ruc.iir.pard.commons.memory.Row;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
+//import cn.edu.ruc.iir.pard.exchange.PardExchangeClient;
+//import cn.edu.ruc.iir.pard.exchange.PardFileExchangeClient;
 import cn.edu.ruc.iir.pard.executor.connector.Connector;
 import cn.edu.ruc.iir.pard.executor.connector.CreateSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.CreateTableTask;
@@ -11,9 +14,11 @@ import cn.edu.ruc.iir.pard.executor.connector.DeleteTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropSchemaTask;
 import cn.edu.ruc.iir.pard.executor.connector.DropTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.InsertIntoTask;
+import cn.edu.ruc.iir.pard.executor.connector.JoinTask;
 import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
+import cn.edu.ruc.iir.pard.executor.connector.SendDataTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
@@ -21,20 +26,27 @@ import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
+import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -96,6 +108,12 @@ public class PostgresConnector
             }
             if (task instanceof DeleteTask) {
                 return executeDelete(conn, (DeleteTask) task);
+            }
+            if (task instanceof JoinTask) {
+                return executeJoin(conn, (JoinTask) task);
+            }
+            if (task instanceof SendDataTask) {
+                return executeSendDataTask(conn, (SendDataTask) task);
             }
         }
         catch (SQLException e) {
@@ -509,6 +527,212 @@ public class PostgresConnector
             }
         }
         return PardResultSet.execErrResultSet;
+    }
+
+    private PardResultSet executeSendDataTask(Connection conn, SendDataTask task)
+    {
+        String schema = task.getSchemaName();
+        String table = null;
+        try {
+            Statement statement = conn.createStatement();
+            StringBuilder querySQL = new StringBuilder("select ");
+            PlanNode rootNode = task.getNode();
+            List<PlanNode> nodeList = new ArrayList<>();
+            int nodeListCursor = 0;
+            FilterNode filterNode = null;
+            ProjectNode projectNode = null;
+            SortNode sortNode = null;
+            LimitNode limitNode = null;
+            boolean isFilter = false;
+            boolean isProject = false;
+            boolean isSort = false;
+            boolean isLimit = false;
+            nodeList.add(rootNode);
+            nodeListCursor++;
+            while (nodeList.get(nodeListCursor - 1).hasChildren()) {
+                nodeList.add(nodeList.get(nodeListCursor - 1).getLeftChild());
+                nodeListCursor++;
+            }
+            for (int i = nodeListCursor - 1; i >= 0; i--) {
+                if (nodeList.get(i) instanceof TableScanNode) {
+                    table = ((TableScanNode) nodeList.get(i)).getTable();
+                    schema = ((TableScanNode) nodeList.get(i)).getSchema();
+                    continue;
+                }
+
+                if (nodeList.get(i) instanceof FilterNode) {
+                    filterNode = (FilterNode) nodeList.get(i);
+                    isFilter = true;
+                    continue;
+                }
+
+                if (nodeList.get(i) instanceof ProjectNode) {
+                    projectNode = (ProjectNode) nodeList.get(i);
+                    isProject = true;
+                    continue;
+                }
+
+                if (nodeList.get(i) instanceof SortNode) {
+                    sortNode = (SortNode) nodeList.get(i);
+                    isSort = true;
+                    continue;
+                }
+
+                if (nodeList.get(i) instanceof LimitNode) {
+                    limitNode = (LimitNode) nodeList.get(i);
+                    isLimit = true;
+                }
+            }
+            if (isProject) {
+                List<Column> columns = projectNode.getColumns();
+                for (Column column : columns) {
+                    querySQL.append(column.getColumnName());
+                    querySQL.append(",");
+                }
+                querySQL = new StringBuilder(querySQL.substring(0, querySQL.length() - 1));
+            }
+            else {
+                querySQL.append(" *");
+            }
+            querySQL.append(" from ");
+            querySQL.append(schema);
+            querySQL.append(".");
+            querySQL.append(table);
+            if (isFilter) {
+                querySQL.append(" where ").append(filterNode.getExpression()).append(" ");
+            }
+            if (isSort) {
+                querySQL.append("order by");
+                List<Column> columns = sortNode.getColumns();
+                for (Column column : columns) {
+                    querySQL.append(" ");
+                    querySQL.append(column.getColumnName());
+                    querySQL.append(",");
+                }
+                querySQL = new StringBuilder(querySQL.substring(0, querySQL.length() - 1));
+            }
+            if (isLimit) {
+                querySQL.append(" limit ");
+                querySQL.append(limitNode.getLimitNum());
+            }
+
+            logger.info("Postgres connector: " + querySQL);
+            ResultSet rs = statement.executeQuery(querySQL.toString());
+
+            Map<String, Expression> siteExpression = task.getSiteExpression(); // site -> Expression
+            Map<String, String> tmpTableMap = task.getTmpTableMap(); // site -> tmpTableName
+
+            boolean flag = dispense(siteExpression, tmpTableMap, rs);
+            if (flag == true) {
+                conn.close();
+                return PardResultSet.okResultSet;
+            }
+            else {
+                conn.close();
+                return PardResultSet.execErrResultSet;
+            }
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+        finally {
+            try {
+                conn.close();
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return PardResultSet.execErrResultSet;
+    }
+
+    private PardResultSet executeJoin(Connection conn, JoinTask task)
+    {
+        return PardResultSet.execErrResultSet;
+    }
+
+    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs)
+    {
+        boolean isSucceeded;
+        Map<String, BufferedWriter> localWriter = new HashMap<String, BufferedWriter>(); // site -> local BufferedWirter
+        for (String site : siteExpression.keySet()) {
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/dev/shm/" + site.toString() + tmpTableMap.get(site))));
+                localWriter.put(site, bw);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int colNum = rsmd.getColumnCount();
+            while (rs.next()) {
+                RowConstructor rowConstructor = new RowConstructor();
+                List<Integer> colTypes = new ArrayList<>();
+                for (int i = 0; i < colNum; i++) {
+                    switch (rsmd.getColumnType(i + 1)) {
+                        case Types.CHAR:
+                            rowConstructor.appendString(rs.getString(i + 1));
+                            colTypes.add(DataType.CHAR.getType());
+                            break;
+                        case Types.VARCHAR:
+                            rowConstructor.appendString(rs.getString(i + 1));
+                            colTypes.add(DataType.VARCHAR.getType());
+                            break;
+                        case Types.DATE:
+                            rowConstructor.appendString(rs.getString(i + 1).toString());
+                            colTypes.add(DataType.DATE.getType());
+                            break;
+                        case Types.INTEGER:
+                            rowConstructor.appendInt(rs.getInt(i + 1));
+                            colTypes.add(DataType.INT.getType());
+                            break;
+                        case Types.FLOAT:
+                            rowConstructor.appendFloat(rs.getFloat(i + 1));
+                            colTypes.add(DataType.FLOAT.getType());
+                            break;
+                        case Types.DOUBLE:
+                            rowConstructor.appendDouble(rs.getDouble(i + 1));
+                            colTypes.add(DataType.DOUBLE.getType());
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                Row row = rowConstructor.build();
+                for (Map.Entry<String, Expression> entry : siteExpression.entrySet()) {
+                    boolean ifTrue = compare(entry.getValue(), row);
+                    if (ifTrue) {
+                        localWriter.get(entry.getKey()).write(rowConstructor.printRow(row, colTypes) + "\n");
+                    }
+                }
+            }
+
+            for (Map.Entry<String, BufferedWriter> entry : localWriter.entrySet()) {
+                entry.getValue().flush();
+                entry.getValue().close();
+            }
+
+            isSucceeded = true;
+            return isSucceeded;
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+            isSucceeded = false;
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            isSucceeded = false;
+        }
+        return isSucceeded;
+    }
+
+    private boolean compare(Expression expression, Row row)
+    {
+        // TODO it's gonna be replaced
+        return false;
     }
 
     private String getTypeString(int type, int length)

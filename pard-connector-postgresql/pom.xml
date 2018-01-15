@@ -24,7 +24,6 @@
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-catalog</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>

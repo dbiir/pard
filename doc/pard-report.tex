@@ -128,6 +128,9 @@ Executor是本地执行器，Connetor连接pard到本地的postGRESQL。
 	\label{fig:node1}
 \end{figure}
 
+\subsection{启动/关闭流程}
+package cn.edu.ruc.iir.pard.server;
+class PardServer
 
 \subsection{时间安排}
 如图\ref{fig:tl}。
@@ -138,20 +141,144 @@ Executor是本地执行器，Connetor连接pard到本地的postGRESQL。
 	\caption{时间安排timeline}
 	\label{fig:tl}
 \end{figure}
-在国栋师兄的英明领导下，我们pard小组稳中有进，时间安排还算合理。
+
+
+
 
 \section{各模块详细设计}
 
-\subsection{SQL Engine}
-\subsection{Execution Engine}
+\subsection{Execution Flow}
+package cn.edu.ruc.iir.pard.scheduler;
+
+job 
+
+ABORTED(0), BEGIN(1), PARSING(2), PLANNING(3), SCHEDULING(4), EXECUTING(5), DONE(6), FAILED(-1);
+
+
+getNext() 状态转换
+
+
+
+记录各个状态的job供用户查看。
+private final List<Job> doneJobs;
+private final List<Job> abortedJobs;
+private final List<Job> failedJobs;
+
+
+错误
+cn.edu.ruc.iir.pard.planner.ErrorMessage
+
+
+
+=============== 
+package cn.edu.ruc.iir.pard.planner.ddl;
+dml  优化具体 韩涵
+
+\subsubsection{Insert/Delete 流程}
+RPC
+
+\subsubsection{Load 流程}
+返回值比较少，返回状态
+
+\subsubsection{Select 流程}
+
+
+\subsubsection{Join 流程}
+
 
 
 \subsection{Communication}
+通讯任务依据数据传输量的大小，和任务本身性质，可以自然的分为两类：
+
+
+pipeline  Netty inbound outbound
+
 
 
 \subsection{Catalog}
+元数据模型  etcd   
+
+
+watch机制
+
+
+
+\subsection{Parser}
+语义语法解析
+Antlrv4
+
+
+\begin{lstlisting}
+statement
+: query                                                            #statementDefault
+| USE schema=identifier                                            #use
+| CREATE SCHEMA (IF NOT EXISTS)? qualifiedName                     #createSchema
+| DROP SCHEMA (IF EXISTS)? qualifiedName (CASCADE | RESTRICT)?     #dropSchema
+| ALTER SCHEMA qualifiedName RENAME TO identifier                  #renameSchema
+| CREATE TABLE (IF NOT EXISTS)? qualifiedName
+tableElementPart
+(',' tableElementPart)*
+partitionOps?                                                  #createTable
+| CREATE INDEX indexName=identifier ON
+indexTbl=qualifiedName '(' identifier (',' identifier)*')'     #createIndex
+| DROP INDEX indexName=identifier                                  #dropIndex
+| DROP TABLE (IF EXISTS)? qualifiedName                            #dropTable
+| INSERT INTO qualifiedName columnAliases? query                   #insertInto
+| DELETE FROM qualifiedName (WHERE booleanExpression)?             #delete
+| ALTER TABLE from=qualifiedName RENAME TO to=qualifiedName        #renameTable
+| ALTER TABLE tableName=qualifiedName
+RENAME COLUMN from=identifier TO to=identifier                 #renameColumn
+| ALTER TABLE tableName=qualifiedName
+DROP COLUMN column=qualifiedName                               #dropColumn
+| ALTER TABLE tableName=qualifiedName
+ADD COLUMN column=columnDefinition                             #addColumn
+| GRANT
+(privilege (',' privilege)* | ALL PRIVILEGES)
+ON TABLE? qualifiedName TO grantee=identifier
+(WITH GRANT OPTION)?                                           #grant
+| REVOKE
+(GRANT OPTION FOR)?
+(privilege (',' privilege)* | ALL PRIVILEGES)
+ON TABLE? qualifiedName FROM grantee=identifier                #revoke
+| SHOW GRANTS
+(ON TABLE? qualifiedName)?                                     #showGrants
+| EXPLAIN ANALYZE? VERBOSE?
+('(' explainOption (',' explainOption)* ')')? statement        #explain
+| SHOW STATS (FOR | ON) qualifiedName                              #showStats
+| SHOW STATS FOR '(' querySpecification ')'                        #showStatsForQuery
+| DESCRIBE qualifiedName                                           #showColumns
+| DESC qualifiedName                                               #showColumns
+| START TRANSACTION (transactionMode (',' transactionMode)*)?      #startTransaction
+| COMMIT WORK?                                                     #commit
+| ROLLBACK WORK?                                                   #rollback
+| SHOW PARTITIONS (FROM | IN) qualifiedName                        #showPartitions
+| SHOW SCHEMAS                                                     #showSchemas
+| SHOW TABLES (FROM schemaName=identifier)?                        #showTables
+| LOAD path=identifier INTO table=qualifiedName                    #load
+;
+\end{lstlisting}
+
+支持基本的Select语句，如
+
+select * from ASG where eno<’E1020’ and eno>=’E0990’
+
+
+expression  and or not
+
+
+
+
+
+\subsection{SQL Optimization}
+package cn.edu.ruc.iir.pard.server.PardQueryHandler;
+
+
+
+
 
 \subsection{Project Dependency Management}
+
+
 
 \section{任务分工及小结}
 

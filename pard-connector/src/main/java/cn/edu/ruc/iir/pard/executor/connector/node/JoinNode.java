@@ -64,14 +64,17 @@ public class JoinNode
                 .add("exprList", this.exprList)
                 .toString();
     }
+
     public String getOtherInfo()
     {
         return otherInfo;
     }
+
     public void setOtherInfo(String otherInfo)
     {
         this.otherInfo = otherInfo;
     }
+
     public List<ComparisonExpression> getExprList()
     {
         return exprList;

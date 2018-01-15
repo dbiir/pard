@@ -1,6 +1,4 @@
-package cn.edu.ruc.iir.pard.planner;
-
-import cn.edu.ruc.iir.pard.semantic.SemanticException;
+package cn.edu.ruc.iir.pard.commons.exception;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +7,7 @@ public class ErrorMessage
 {
     private int errcode;
     private String errmsg;
-    private transient SemanticException exception;
+    private transient PardException exception;
     private static Map<Integer, String> template = null;
     private static ErrorMessage ok = throwMessage(ErrCode.OK, "");
     public static ErrorMessage throwMessage(int errorCode, Object...objects)
@@ -103,10 +101,10 @@ public class ErrorMessage
     public ErrorMessage()
     {
         try {
-            exception = new SemanticException();
+            exception = new PardException();
             throw exception;
         }
-        catch (SemanticException e) {
+        catch (PardException e) {
             exception = e;
         }
     }
@@ -150,7 +148,7 @@ public class ErrorMessage
         return String.format("ERROR:[%d] %s", errcode, errmsg);
     }
     // get set
-    public SemanticException getException()
+    public PardException getException()
     {
         return exception;
     }

@@ -305,6 +305,15 @@ public abstract class Expr
         Expr and = optimize(comp, opt);
         return and;
     }
+    public static Expr or(Expr e1, Expr e2, LogicOperator opt)
+    {
+        CompositionExpr comp = new CompositionExpr(LogicOperator.OR);
+        comp.getConditions().add(e1);
+        comp.getConditions().add(e2);
+        comp = PushDownLaw.formatExpr(comp);
+        Expr and = optimize(comp, opt);
+        return and;
+    }
     public static Expr parse(List<Condition> conditions, String tableName)
     {
         if (conditions.isEmpty()) {

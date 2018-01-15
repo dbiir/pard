@@ -1,9 +1,9 @@
 package cn.edu.ruc.iir.pard.planner.ddl;
 
 import cn.edu.ruc.iir.pard.catalog.Schema;
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage;
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage.ErrCode;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
-import cn.edu.ruc.iir.pard.planner.ErrorMessage;
-import cn.edu.ruc.iir.pard.planner.ErrorMessage.ErrCode;
 import cn.edu.ruc.iir.pard.planner.GDDPlan;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import cn.edu.ruc.iir.pard.sql.tree.Use;

@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.semantic;
 
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.executor.connector.node.AggregationNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
@@ -14,7 +15,6 @@ import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
-import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.TableCreationPlan;

@@ -2,7 +2,6 @@ package cn.edu.ruc.iir.pard.exchange;
 
 import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
 import cn.edu.ruc.iir.pard.executor.connector.Block;
-import cn.edu.ruc.iir.pard.executor.connector.JoinTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.executor.connector.UnionTask;
 import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
@@ -44,7 +43,7 @@ public class ExchangeTaskHandler
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg)
     {
-        if (msg instanceof Task && !(msg instanceof UnionTask) && !(msg instanceof JoinTask)) {
+        if (msg instanceof Task && !(msg instanceof UnionTask)) {
             Task task = (Task) msg;
             Block block = executor.executeQuery(task);
             if (block.isSequenceHasNext()) {

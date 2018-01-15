@@ -1,6 +1,4 @@
-package cn.edu.ruc.iir.pard.semantic;
-
-import cn.edu.ruc.iir.pard.planner.ErrorMessage;
+package cn.edu.ruc.iir.pard.commons.exception;
 
 /**
  * SemanticException
@@ -9,7 +7,7 @@ import cn.edu.ruc.iir.pard.planner.ErrorMessage;
  * @author hagen
  * */
 public class SemanticException
-        extends RuntimeException
+        extends PardException
 {
     /**
      *

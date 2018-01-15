@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.planner;
 
-import cn.edu.ruc.iir.pard.semantic.SemanticException;
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage;
+import cn.edu.ruc.iir.pard.commons.exception.SemanticException;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
 /**

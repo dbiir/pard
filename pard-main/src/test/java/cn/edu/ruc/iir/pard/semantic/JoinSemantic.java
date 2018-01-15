@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.semantic;
 
+import cn.edu.ruc.iir.pard.commons.exception.SemanticException;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan2;

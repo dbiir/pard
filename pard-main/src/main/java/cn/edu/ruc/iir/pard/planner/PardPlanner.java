@@ -1,5 +1,6 @@
 package cn.edu.ruc.iir.pard.planner;
 
+import cn.edu.ruc.iir.pard.commons.exception.SemanticException;
 import cn.edu.ruc.iir.pard.planner.ddl.SchemaCreationPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.SchemaDropPlan;
 import cn.edu.ruc.iir.pard.planner.ddl.SchemaShowPlan;
@@ -12,7 +13,6 @@ import cn.edu.ruc.iir.pard.planner.dml.InsertPlan;
 import cn.edu.ruc.iir.pard.planner.dml.LoadPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan2;
-import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.tree.CreateSchema;
 import cn.edu.ruc.iir.pard.sql.tree.CreateTable;
 import cn.edu.ruc.iir.pard.sql.tree.Delete;

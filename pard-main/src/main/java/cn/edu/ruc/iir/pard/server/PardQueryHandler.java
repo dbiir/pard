@@ -1,15 +1,16 @@
 package cn.edu.ruc.iir.pard.server;
 
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage;
 import cn.edu.ruc.iir.pard.commons.exception.ParsingException;
+import cn.edu.ruc.iir.pard.commons.exception.SemanticException;
+import cn.edu.ruc.iir.pard.commons.exception.TaskSchedulerException;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
-import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.scheduler.Job;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
 import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
-import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
@@ -134,11 +135,18 @@ public class PardQueryHandler
         jobScheduler.updateJob(job.getJobId());
         logger.info("Created plan for job[" + job.getJobId() + "], job state: " + job.getJobState());
 
-        List<Task> tasks = taskScheduler.generateTasks(plan);
+        List<Task> tasks = null;
+        String taskMsg = null;
+        try {
+            tasks = taskScheduler.generateTasks(plan);
+        }
+        catch (TaskSchedulerException e) {
+            taskMsg = e.getPardErrorMessage().toString();
+        }
         if (tasks == null) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create tasks for sql: " + sql);
-            return new PardResultSet(PardResultSet.ResultStatus.SCHEDULING_ERR);
+            return new PardResultSet(PardResultSet.ResultStatus.SCHEDULING_ERR, taskMsg);
         }
         if (!tasks.isEmpty()) {
             tasks.forEach(job::addTask);

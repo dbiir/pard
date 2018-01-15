@@ -28,7 +28,16 @@ public class Column
         this.key = key;
         this.tableName = tableName;
     }
-
+    public Column(Column column)
+    {
+        this.id = column.id;
+        this.dataType = column.dataType;
+        this.columnName = column.columnName;
+        this.len = column.len;
+        this.index = column.index;
+        this.key = column.key;
+        this.tableName = column.tableName;
+    }
     public int getId()
     {
         return id;

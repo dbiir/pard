@@ -420,12 +420,20 @@ public class TaskScheduler
         Expr dataTaskExpr = extractTableExpr(joinExpr, dataExpr, dataTableName.getValue(), node);
         Expr joinTaskSingleTableExpr = extractTableExpr(joinExpr, dataExpr, joinTableName.getValue(), node);
         String tmpTableName = "tmp_" + dataTableName.getValue() + "_" + jobId + "_" + joinTable.getSite();
+        tmpTableName = tmpTableName.replace('-', '_').replace('-', '_').replace('-', '_');
+        boolean needDropTable = true;
+//        if (dataTable.getSite().equals(joinTable.getSite())) {
+            //位于相同站点，不需要发数据
+//            tmpTableName = dataTableName.getValue();
+//            needDropTable = false;
+ //       }
+//        else {
         if (dataTask == null) {
             dataTask = new SendDataTask(dataTable.getSite());
             dataTask.setSchemaName(dataTable.getTable());
             PlanNode p = new OutputNode();
             p.setChildren(NodeHelper.copyNode(dataNode), true, true);
-            dataTask.setNode(orFilterNode(p, dataTaskExpr));
+            dataTask.setNode(orFilterNode(p, dataTaskExpr, null, null));
             dataTask.getSiteExpression().put(joinTable.getSite(), dataTaskExpr.toExpression());
             dataTask.setTaskId(jobId + "_ " + jobOffset.addAndGet(1));
             dataTask.getTmpTableMap().put(joinTable.getSite(), tmpTableName);
@@ -433,20 +441,29 @@ public class TaskScheduler
         }
         else {
             PlanNode p = dataTask.getNode();
-            dataTask.setNode(orFilterNode(p, dataTaskExpr));
+            dataTask.setNode(orFilterNode(p, dataTaskExpr, null, null));
             dataTask.getSiteExpression().put(joinTable.getSite(), dataTaskExpr.toExpression());
             dataTask.getTmpTableMap().put(joinTable.getSite(), tmpTableName);
         }
+//        }
         JoinTask joinTask = joinMap.get(joinTable.getSite());
         if (joinTask == null) {
             //Do sth.
-            PlanNode p = NodeHelper.copyNode(proj);
+            List<Column> clist = new ArrayList<Column>();
+            for (Column c : proj.getColumns()) {
+                Column col = new Column(c);
+                if (dataTableName.getValue().equals(col.getTableName())) {
+                    col.setTableName(tmpTableName);
+                }
+                clist.add(col);
+            }
+            PlanNode p = new ProjectNode(clist);
             JoinNode join = new JoinNode();
             p.setChildren(join, true, true);
             join.getJoinSet().addAll(node.getJoinSet());
             join.getExprList().addAll(node.getExprList());
             //TODO: add children.
-            join.addJoinChild(orFilterNode(NodeHelper.copyNode(joinNode), joinTaskSingleTableExpr));
+            join.addJoinChild(orFilterNode(NodeHelper.copyNode(joinNode), joinTaskSingleTableExpr, dataTableName.getValue(), tmpTableName));
             PlanNode dataCopy = NodeHelper.copyNode(dataNode);
             PlanNode tmp = dataCopy;
             if (dataCopy instanceof TableScanNode) {
@@ -466,7 +483,12 @@ public class TaskScheduler
             }
             join.addJoinChild(dataCopy);
             joinTask = new JoinTask(joinTable.getSite());
-            joinTask.setTmpTableName(tmpTableName);
+            if (needDropTable) {
+                joinTask.setTmpTableName(tmpTableName);
+            }
+            else {
+                joinTask.setTmpTableName(null);
+            }
             joinTask.setTaskId(jobId + "_" + jobOffset.addAndGet(1));
             joinTask.setNode(p);
             joinMap.put(joinTable.getSite(), joinTask);
@@ -480,7 +502,7 @@ public class TaskScheduler
                     System.out.println();
                     //System.out.println(jnode.getJoinChildren().size() + "aaaaaaaaa");
                     PlanNode pnode = jnode.getJoinChildren().get(0);
-                    pnode = orFilterNode(NodeHelper.copyNode(p), joinTaskSingleTableExpr);
+                    pnode = orFilterNode(NodeHelper.copyNode(p), joinTaskSingleTableExpr, dataTableName.getValue(), tmpTableName);
                     jnode.getJoinChildren().set(0, pnode);
                     break;
                 }
@@ -489,7 +511,7 @@ public class TaskScheduler
             joinTask.setNode(p);
         }
     }
-    public PlanNode orFilterNode(PlanNode node, Expr filterExpr)
+    public PlanNode orFilterNode(PlanNode node, Expr filterExpr, String oldTableName, String newTableName)
     {
         //System.out.println(node == null);
         node = NodeHelper.copyNode(node);
@@ -499,6 +521,10 @@ public class TaskScheduler
             if (node.getLeftChild() instanceof FilterNode) {
                 FilterNode children = (FilterNode) node.getLeftChild();
                 Expr e1 = Expr.parse(children.getExpression());
+                if (oldTableName != null) {
+                    e1 = Expr.replaceTableName(e1, oldTableName, newTableName);
+                    filterExpr = Expr.replaceTableName(filterExpr, oldTableName, newTableName);
+                }
                 e1 = Expr.or(e1, filterExpr, LogicOperator.AND);
                 children.setExpression(e1.toExpression());
                 return root;

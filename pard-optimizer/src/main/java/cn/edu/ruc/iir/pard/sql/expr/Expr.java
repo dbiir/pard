@@ -87,6 +87,38 @@ public abstract class Expr
         }
         return e;
     }
+    public static Expr generalReplace(Expr e1, Item from, Item to)
+    {
+        Expr e = Expr.clone(e1);
+        if (e instanceof SingleExpr) {
+            SingleExpr se = (SingleExpr) e;
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv.equals(from)) {
+                lv = Item.clone(to);
+            }
+            if (rv.equals(from)) {
+                rv = Item.clone(to);
+            }
+            return new SingleExpr(lv, rv, se.getCompareType());
+        }
+        else if (e instanceof CompositionExpr) {
+            CompositionExpr ce = (CompositionExpr) e;
+            for (int i = 0; i < ce.getConditions().size(); i++) {
+                Expr ex = ce.getConditions().get(i);
+                ce.getConditions().set(i, generalReplace(ex, from, to));
+            }
+            return ce;
+        }
+        else if (e instanceof UnaryExpr) {
+            UnaryExpr ue = (UnaryExpr) e;
+            return new UnaryExpr(ue.getCompareType(), generalReplace(ue.getExpression(), from, to));
+        }
+        else if (e instanceof TrueExpr || e instanceof FalseExpr) {
+            return e;
+        }
+        return e;
+    }
     public static Expr clone(Expr expr)
     {
         if (expr instanceof CompositionExpr) {

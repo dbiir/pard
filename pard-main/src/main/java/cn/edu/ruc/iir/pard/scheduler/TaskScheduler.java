@@ -656,6 +656,7 @@ public class TaskScheduler
         }
         return null;
     }
+    /*
     public PardResultSet executeQueryPlanJob(Job job, QueryPlan plan, List<Task> tasks)
     {
         logger.info("Executing query tasks for job[" + job.getJobId() + "]");
@@ -664,6 +665,7 @@ public class TaskScheduler
         BlockingQueue<Block> blocks = new LinkedBlockingQueue<>();
         List<SendDataTask> sendDataTask = new ArrayList<SendDataTask>();
         List<JoinTask> joinTask = new ArrayList<JoinTask>();
+        List<Task> otherTask = new ArrayList<Task>();
         for (Task task : tasks) {
             if (task instanceof SendDataTask) {
                 sendDataTask.add((SendDataTask) task);
@@ -672,6 +674,9 @@ public class TaskScheduler
             if (task instanceof JoinTask) {
                 joinTask.add((JoinTask) task);
                 continue;
+            }
+            else {
+                otherTask.add(task);
             }
             String site = task.getSite();
             String taskId = task.getTaskId();
@@ -707,7 +712,7 @@ public class TaskScheduler
         }
         plan.afterExecution(true);
         return resultSet;
-    }
+    }*/
     // todo this sucks, full of if else
     public PardResultSet executeJob(Job job)
     {
@@ -804,7 +809,7 @@ public class TaskScheduler
             // this is a simplest implementation
             // todo collected result set form exchange client shall be passed on for next query stage
             if (plan instanceof QueryPlan) {
-                return executeQueryPlanJob(job, (QueryPlan) plan, tasks);
+                return new QueryJobExecutor(job).execute();
             }
 
             // delete

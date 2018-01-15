@@ -31,6 +31,7 @@ import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.Join;
 import com.google.common.collect.ImmutableList;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;
@@ -125,6 +126,9 @@ public class PostgresConnector
             }
             if (task instanceof CreateTmpTableTask) {
                 return executeCreateTmpTable(conn, (CreateTmpTableTask) task);
+            }
+            if (task instanceof JoinTask) {
+                return executeJoin(conn, (JoinTask) task);
             }
         }
         catch (SQLException e) {
@@ -802,6 +806,35 @@ public class PostgresConnector
 
     private PardResultSet executeJoin(Connection conn, JoinTask task)
     {
+        String tmpTableName = task.getTmpTableName();
+        PlanNode rootNode = task.getNode();
+        try {
+            Statement statement = conn.createStatement();
+            StringBuilder joinSQL = new StringBuilder("select ");
+            List<PlanNode> nodeList = new ArrayList<>();
+            int nodeListCursor = 0;
+            String schemaName = null;
+            String tableName = null;
+            FilterNode filterNode = null;
+            ProjectNode projectNode = null;
+            SortNode sortNode = null;
+            LimitNode limitNode = null;
+            boolean isFilter = false;
+            boolean isProject = false;
+            boolean isSort = false;
+            boolean isLimit = false;
+            nodeList.add(rootNode);
+            nodeListCursor++;
+            while (nodeList.get(nodeListCursor - 1).hasChildren()) {
+                nodeList.add(nodeList.get(nodeListCursor - 1).getLeftChild());
+                nodeListCursor++;
+            }
+            
+        }
+        catch (SQLException e) {
+            logger.info("JOIN FAILED");
+            e.printStackTrace();
+        }
         return PardResultSet.execErrResultSet;
     }
 

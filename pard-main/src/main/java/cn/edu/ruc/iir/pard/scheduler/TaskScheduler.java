@@ -477,6 +477,8 @@ public class TaskScheduler
             while (p.hasChildren()) {
                 if (p.getLeftChild() instanceof JoinNode) {
                     JoinNode jnode = (JoinNode) p.getLeftChild();
+                    System.out.println();
+                    //System.out.println(jnode.getJoinChildren().size() + "aaaaaaaaa");
                     PlanNode pnode = jnode.getJoinChildren().get(0);
                     pnode = orFilterNode(NodeHelper.copyNode(p), joinTaskSingleTableExpr);
                     jnode.getJoinChildren().set(0, pnode);
@@ -489,7 +491,9 @@ public class TaskScheduler
     }
     public PlanNode orFilterNode(PlanNode node, Expr filterExpr)
     {
+        //System.out.println(node == null);
         node = NodeHelper.copyNode(node);
+        //System.out.println(node == null);
         PlanNode root = node;
         while (node.hasChildren()) {
             if (node.getLeftChild() instanceof FilterNode) {
@@ -500,6 +504,9 @@ public class TaskScheduler
                 return root;
             }
             node = node.getLeftChild();
+            if (node == null) {
+                break;
+            }
         }
         return root;
     }
@@ -649,6 +656,58 @@ public class TaskScheduler
         }
         return null;
     }
+    public PardResultSet executeQueryPlanJob(Job job, QueryPlan plan, List<Task> tasks)
+    {
+        logger.info("Executing query tasks for job[" + job.getJobId() + "]");
+        PardResultSet resultSet = new PardResultSet();
+        Map<String, Task> taskMap = new HashMap<>();
+        BlockingQueue<Block> blocks = new LinkedBlockingQueue<>();
+        List<SendDataTask> sendDataTask = new ArrayList<SendDataTask>();
+        List<JoinTask> joinTask = new ArrayList<JoinTask>();
+        for (Task task : tasks) {
+            if (task instanceof SendDataTask) {
+                sendDataTask.add((SendDataTask) task);
+                continue;
+            }
+            if (task instanceof JoinTask) {
+                joinTask.add((JoinTask) task);
+                continue;
+            }
+            String site = task.getSite();
+            String taskId = task.getTaskId();
+            Site nodeSite = siteDao.listNodes().get(site);
+            if (nodeSite == null) {
+                logger.log(Level.SEVERE, "Node " + site + " is not active. Please check.");
+                return PardResultSet.execErrResultSet;
+            }
+            PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
+            client.connect(task, blocks);
+            taskMap.put(taskId, task);
+        }
+        // wait for all tasks done
+        while (!taskMap.isEmpty()) {
+            Block block = null;
+            try {
+                block = blocks.poll(8000, TimeUnit.MILLISECONDS);
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (block == null) {
+                logger.info("Waiting for more blocks...");
+                continue;
+            }
+            resultSet.addBlock(block);
+            logger.info("Added block " + block.getSequenceId() + ", num of rows: " + block.getRows().size());
+            if (!block.isSequenceHasNext()) {
+                String taskId = block.getTaskId();
+                taskMap.remove(taskId);
+                logger.info("Task " + taskId + " done.");
+            }
+        }
+        plan.afterExecution(true);
+        return resultSet;
+    }
     // todo this sucks, full of if else
     public PardResultSet executeJob(Job job)
     {
@@ -745,45 +804,7 @@ public class TaskScheduler
             // this is a simplest implementation
             // todo collected result set form exchange client shall be passed on for next query stage
             if (plan instanceof QueryPlan) {
-                logger.info("Executing query tasks for job[" + job.getJobId() + "]");
-                PardResultSet resultSet = new PardResultSet();
-                Map<String, Task> taskMap = new HashMap<>();
-                BlockingQueue<Block> blocks = new LinkedBlockingQueue<>();
-                for (Task task : tasks) {
-                    String site = task.getSite();
-                    String taskId = task.getTaskId();
-                    Site nodeSite = siteDao.listNodes().get(site);
-                    if (nodeSite == null) {
-                        logger.log(Level.SEVERE, "Node " + site + " is not active. Please check.");
-                        return PardResultSet.execErrResultSet;
-                    }
-                    PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
-                    client.connect(task, blocks);
-                    taskMap.put(taskId, task);
-                }
-                // wait for all tasks done
-                while (!taskMap.isEmpty()) {
-                    Block block = null;
-                    try {
-                        block = blocks.poll(8000, TimeUnit.MILLISECONDS);
-                    }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    if (block == null) {
-                        logger.info("Waiting for more blocks...");
-                        continue;
-                    }
-                    resultSet.addBlock(block);
-                    logger.info("Added block " + block.getSequenceId() + ", num of rows: " + block.getRows().size());
-                    if (!block.isSequenceHasNext()) {
-                        String taskId = block.getTaskId();
-                        taskMap.remove(taskId);
-                        logger.info("Task " + taskId + " done.");
-                    }
-                }
-                plan.afterExecution(true);
-                return resultSet;
+                return executeQueryPlanJob(job, (QueryPlan) plan, tasks);
             }
 
             // delete

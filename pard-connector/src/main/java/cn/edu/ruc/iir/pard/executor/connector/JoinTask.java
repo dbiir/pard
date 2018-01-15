@@ -1,10 +1,6 @@
 package cn.edu.ruc.iir.pard.executor.connector;
 
-import cn.edu.ruc.iir.pard.sql.tree.Expression;
-import com.google.common.collect.ImmutableList;
-
-import java.util.ArrayList;
-import java.util.List;
+import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 
 public class JoinTask
         extends Task
@@ -12,38 +8,50 @@ public class JoinTask
     /**
      *
      */
-    private static final long serialVersionUID = 8086274031234684990L;
-    private List<Task> waitTask;
-    private String verticalJoinColumn;
-    private List<Expression> joinList;
+    private static final long serialVersionUID = -5881505715821305268L;
+    private String taskId;
+    private PlanNode node;
+    private String tmpTableName;
     public JoinTask(String site)
     {
         super(site);
-        verticalJoinColumn = null;
-        joinList = new ArrayList<Expression>();
+        this.tmpTableName = null;
+        this.node = null;
     }
-    public List<Task> getWaitTask()
+    public JoinTask(String site, PlanNode node)
     {
-        return waitTask;
+        super(site);
+        this.node = node;
+        this.tmpTableName = null;
     }
-    public void setWaitTask(List<Task> waitTask)
+    public JoinTask(String site, PlanNode node, String tmpTableName)
     {
-        this.waitTask = ImmutableList.copyOf(waitTask);
+        super(site);
+        this.node = node;
+        this.tmpTableName = tmpTableName;
     }
-    public String getVerticalJoinColumn()
+    public String getTaskId()
     {
-        return verticalJoinColumn;
+        return taskId;
     }
-    public void setVerticalJoinColumn(String verticalJoinColumn)
+    public void setTaskId(String taskId)
     {
-        this.verticalJoinColumn = verticalJoinColumn;
+        this.taskId = taskId;
     }
-    public List<Expression> getJoinList()
+    public PlanNode getNode()
     {
-        return joinList;
+        return node;
     }
-    public void setJoinList(List<Expression> joinList)
+    public void setNode(PlanNode node)
     {
-        this.joinList = joinList;
+        this.node = node;
+    }
+    public String getTmpTableName()
+    {
+        return tmpTableName;
+    }
+    public void setTmpTableName(String tmpTableName)
+    {
+        this.tmpTableName = tmpTableName;
     }
 }

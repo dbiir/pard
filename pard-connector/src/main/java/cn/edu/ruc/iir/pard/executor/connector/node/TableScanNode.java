@@ -11,8 +11,8 @@ public class TableScanNode
         extends InputNode
 {
     private static final long serialVersionUID = 2673717961909269975L;
-    private final String schema;
-    private final String table;
+    private String schema;
+    private String table;
     private String site;
 /*
     private Optional<LimitNode> limit;

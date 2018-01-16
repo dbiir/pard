@@ -378,7 +378,7 @@ public class TaskScheduler
         return new TrueExpr();
     }
     //TODO: add projection.
-    public void processJoinTask(JoinNode node, Map<String, JoinTask> joinMap, Map<String, SendDataTask> sendDataMap, List<Task> otherTask, Pointer<String> joinTableName, Pointer<String> dataTableName, String jobId, AtomicInteger jobOffset, ProjectNode proj)
+    public void processJoinTask(JoinNode node, Map<String, JoinTask> joinMap, Map<String, SendDataTask> sendDataMap, List<Task> otherTask, Pointer<String> joinTableName, Pointer<String> dataTableName, String jobId, AtomicInteger jobOffset, ProjectNode proj, String randomString)
     {
         PlanNode joinNode = null;
         PlanNode dataNode = null;
@@ -424,7 +424,7 @@ public class TaskScheduler
         Expr joinTaskSingleTableExpr = extractTableExpr(joinExpr, dataExpr, joinTableName.getValue(), node);
         String tmpTableName = "tmp_" + dataTableName.getValue() + "_" + jobId + "_" + joinTable.getSite();
         tmpTableName = tmpTableName.replace('-', '_').replace('-', '_').replace('-', '_');
-        tmpTableName += (int) (Math.random() * Integer.MAX_VALUE);
+        tmpTableName += randomString;
         while (tmpTableName.contains(" ")) {
             tmpTableName = tmpTableName.replace(" ", "");
         }
@@ -588,6 +588,7 @@ public class TaskScheduler
         Map<String, JoinTask> joinMap = new HashMap<String, JoinTask>();
         Pointer<String> joinTableName = new Pointer<String>(null);
         Pointer<String> dataTableName = new Pointer<String>(null);
+        String randomString = "_" + (int) (Math.random() * Integer.MAX_VALUE);
         for (PlanNode childNode : unionChildren) {
             //union.setChildren(childNode, true, false);
             PlanNode node = childNode;
@@ -612,7 +613,7 @@ public class TaskScheduler
                 }
                 else if (node instanceof JoinNode && ((JoinNode) node).getJoinChildren().size() == 2) {
                     //需要收集task的site,确定主表从表
-                    processJoinTask((JoinNode) node, joinMap, sendDataMap, otherTask, joinTableName, dataTableName, jobId, jobOffset, proj);
+                    processJoinTask((JoinNode) node, joinMap, sendDataMap, otherTask, joinTableName, dataTableName, jobId, jobOffset, proj, randomString);
                 }
                 else if (node instanceof JoinNode && ((JoinNode) node).getJoinChildren().size() == 1) {
                     node = ((JoinNode) node).getJoinChildren().get(0);

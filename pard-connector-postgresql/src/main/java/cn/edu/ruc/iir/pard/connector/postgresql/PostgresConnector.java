@@ -852,7 +852,10 @@ public class PostgresConnector
             if (isProject) {
                 List<Column> columns = projectNode.getColumns();
                 for (Column column : columns) {
-                    joinSQL.append(column.getTableName() + "." + column.getColumnName());
+                    if (!column.getTableName().isEmpty()) {
+                        joinSQL.append(column.getTableName()).append(".");
+                    }
+                    joinSQL.append(column.getColumnName());
                     joinSQL.append(",");
                 }
                 joinSQL = new StringBuilder(joinSQL.substring(0, joinSQL.length() - 1));

@@ -926,7 +926,7 @@ public class PostgresConnector
                             fromClause.append(schemaName + "." + tableName);
                         }
                         else {
-                            fromClause.append(schemaName + "." + tableName + " as " schemaName + "." + aliasName);
+                            fromClause.append(schemaName + "." + tableName + " as " + schemaName + "." + aliasName);
                         }
                     }
                 }

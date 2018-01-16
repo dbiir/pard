@@ -169,4 +169,14 @@ public class Column
     {
         this.tableName = tableName;
     }
+
+    public String toString()
+    {
+        if (tableName == null) {
+            return columnName;
+        }
+        else {
+            return tableName + "." + columnName;
+        }
+    }
 }

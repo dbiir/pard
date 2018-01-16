@@ -31,9 +31,9 @@ import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
-import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
+//import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
-import cn.edu.ruc.iir.pard.sql.tree.Table;
+//import cn.edu.ruc.iir.pard.sql.tree.Table;
 import com.google.common.collect.ImmutableList;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;
@@ -825,7 +825,7 @@ public class PostgresConnector
             nodeList.add(rootNode);
             nodeListCursor++;
 
-            while (nodeList.get(nodeListCursor - 1 ).hasChildren()) {
+            while (nodeList.get(nodeListCursor - 1).hasChildren()) {
                 nodeList.add(nodeList.get(nodeListCursor - 1).getLeftChild());
                 nodeListCursor++;
                 if (nodeList.get(nodeListCursor - 1) instanceof JoinNode) {
@@ -854,7 +854,7 @@ public class PostgresConnector
             if (isProject) {
                 List<Column> columns = projectNode.getColumns();
                 for (Column column : columns) {
-                    joinSQL.append(column.getColumnName());
+                    joinSQL.append(column.getTableName() + "." + column.getColumnName());
                     joinSQL.append(",");
                 }
                 joinSQL = new StringBuilder(joinSQL.substring(0, joinSQL.length() - 1));
@@ -908,7 +908,7 @@ public class PostgresConnector
                     String aliasName = childTableScanNode.getAlias();
                     if (isFirst) {
                         fromClause.append(schemaName + "." + tableName);
-                        fromClause.append( "inner join ");
+                        fromClause.append("inner join ");
                         isFirst = false;
                     }
                     else {
@@ -921,14 +921,14 @@ public class PostgresConnector
                 whereClause.append(joinNode.getExprList().get(0).toString());
             }
             else {
-                whereClause.append((String)(joinNode.getJoinSet().iterator().next()));
+                whereClause.append((String) (joinNode.getJoinSet().iterator().next()));
             }
             if (isSort) {
                 whereClause.append("order by");
                 List<Column> columns = sortNode.getColumns();
                 for (Column column : columns) {
                     whereClause.append(" ");
-                    whereClause.append(column.getColumnName());
+                    whereClause.append(column.getTableName() + "." + column.getColumnName());
                     whereClause.append(",");
                 }
                 whereClause = new StringBuilder(whereClause.substring(0, whereClause.length() - 1));

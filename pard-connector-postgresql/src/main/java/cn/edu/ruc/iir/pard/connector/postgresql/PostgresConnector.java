@@ -32,7 +32,6 @@ import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
-//import cn.edu.ruc.iir.pard.sql.tree.Join;
 import com.google.common.collect.ImmutableList;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;

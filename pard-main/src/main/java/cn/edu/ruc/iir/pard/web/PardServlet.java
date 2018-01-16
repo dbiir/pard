@@ -4,8 +4,9 @@ import cn.edu.ruc.iir.pard.executor.connector.node.InputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.NodeHelper;
 import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
-import cn.edu.ruc.iir.pard.planner.PardPlanner;
+import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.planner.dml.QueryPlan;
+import cn.edu.ruc.iir.pard.planner.dml.QueryPlan2;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import net.sf.json.JSONObject;
@@ -18,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,12 +36,27 @@ public class PardServlet
      * */
     public void test() throws ServletException
     {
-        PardPlanner planner = new PardPlanner();
+        //PardPlanner planner = new PardPlanner();
         SqlParser parser = new SqlParser();
         Statement stmt = parser.createStatement("SELECT * FROM pardtest.emp where eno < 'E0010' and eno > 'E0000'");
-        planner.plan(stmt).afterExecution(true);
-        stmt = parser.createStatement("SELECT * FROM pardtest.emp@pard3");
-        planner.plan(stmt).afterExecution(true);
+        //plan(stmt).afterExecution(true);
+        //stmt = parser.createStatement("SELECT * FROM pardtest.emp@pard3");
+       // plan(stmt).afterExecution(true);
+        UsePlan.setCurrentSchema("book");
+        stmt = parser.createStatement("select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000");
+        plan(stmt).afterExecution(true);
+        //stmt = parser.createStatement("select * from Customer where id<3 and rank >1");
+       // plan(stmt).afterExecution(true);
+      //  stmt = parser.createStatement("select id,rank from Customer where id<3 and rank >1");
+        //plan(stmt).afterExecution(true);
+        stmt = parser.createStatement("select customer.name, orders.quantity, book.title from customer,orders,book where customer.id=orders.customer_id and book.id=orders.book_id and customer.rank=1 and book.copies>5000");
+        plan(stmt).afterExecution(true);
+    }
+    public QueryPlan plan(Statement stmt)
+    {
+        QueryPlan plan = new QueryPlan2(stmt);
+        //plan.afterExecution(true);
+        return plan;
     }
     public PNode parse(PlanNode pnode)
     {
@@ -49,8 +64,10 @@ public class PardServlet
         pn.setKey(pnode.getName() + (++keyGen));
         StringBuilder sb = new StringBuilder();
         Map<String, String> map = NodeHelper.getPlanNodeInfo(pnode);
-        for (String key : map.keySet()) {
-            sb.append(key).append(":").append(map.get(key)).append("\n");
+        if (map != null && map.keySet() != null) {
+            for (String key : map.keySet()) {
+                sb.append(key).append(":").append(map.get(key)).append("\n");
+            }
         }
         pn.setText(sb.toString());
         pn.setFigure("Rectangle");
@@ -100,31 +117,111 @@ public class PardServlet
         System.out.println("sb " + sb.toString());
         return body;
     }
-
+    public int giveX(int nodeNo, int maxCount, int xInc, int levelCount)
+    {
+        /*
+        int offset = (maxCount - levelCount) / 2;
+        offset += nodeNo;
+        offset -= 1;
+        offset = offset * xInc;
+        return offset;*/
+        int realInc = maxCount / levelCount;
+        int offset = nodeNo * realInc;
+        offset -= realInc / 2;
+        offset = offset * xInc;
+        return offset;
+    }
+    public int giveY(int levelNo, int yInc)
+    {
+        return (levelNo - 1) * yInc;
+    }
     public String getBody(QueryPlan plan) throws IOException
     {
         List<PNode> nodeDataArray = new ArrayList<PNode>();
         List<PEdge> linkedDataArray = new ArrayList<PEdge>();
-        PlanNode node = ((QueryPlan) plan).optimize();
-        Map<PlanNode, PNode> mapping = new HashMap<PlanNode, PNode>();
+        PlanNode node = ((QueryPlan) plan).getPlan();
+        //Map<PlanNode, PNode> mapping = new HashMap<PlanNode, PNode>();
         Queue<PlanNode> que = new LinkedList<PlanNode>();
+
+        //Map<PlanNode, Integer> nodeLevel = new HashMap<>();
+        //Map<PlanNode, Integer> nodeNumber = new HashMap<>();
+        Queue<Integer> nodeLevelQue = new LinkedList<Integer>();
+        Queue<Integer> nodeLevelQue2 = new LinkedList<Integer>();
+        Queue<Integer> nodeNumberQueue = new LinkedList<Integer>();
+        //Queue<Integer> nodeNumberQueue2 = new LinkedList<Integer>();
+        int[] nodeNo = new int[100];
         que.add(node);
-        PNode pa = parse(node);
-        pa.locx = 0;
-        pa.locy = 60;
-        mapping.put(node, pa);
-        nodeDataArray.add(pa);
+        //nodeLevel.put(node, 1);
+        nodeLevelQue.add(1);
+        nodeLevelQue2.add(1);
+        nodeNo[1]++;
+        int maxLevel = 1;
+        int maxNumber = 1;
+        //nodeNumber.put(node, nodeNo[1]);
+        nodeNumberQueue.add(nodeNo[1]);
+        //nodeNumberQueue2.add(nodeNo[1]);
         while (!que.isEmpty()) {
             PlanNode planNode = que.poll();
-            PNode parent = mapping.get(planNode);
+            int level = nodeLevelQue.poll(); //nodeLevel.get(planNode);
+            if (level > maxLevel) {
+                maxLevel = level;
+            }
+            level++;
+            List<PlanNode> children = NodeHelper.getChildren(planNode);
+            for (PlanNode pn : children) {
+                if (pn == null) {
+                    continue;
+                }
+                que.add(pn);
+                //nodeLevel.put(pn, level);
+                nodeLevelQue.add(level);
+                nodeLevelQue2.add(level);
+                nodeNo[level]++;
+                //nodeNumber.put(pn, nodeNo[level]);
+                nodeNumberQueue.add(nodeNo[level]);
+            }
+        }
+        for (int i = 0; i < maxLevel; i++) {
+            if (nodeNo[i] > maxNumber) {
+                maxNumber = nodeNo[i];
+            }
+        }
+        que.add(node);
+        PNode pa = parse(node);
+        int xInc = 270;
+        int yInc = 200;
+        pa.locx = giveX(1, maxNumber, xInc, 1);
+        pa.locy = 60 + giveY(1, yInc);
+        //mapping.put(node, pa);
+        nodeDataArray.add(pa);
+        Queue<PNode> pque = new LinkedList<PNode>();
+        pque.add(pa);
+        nodeLevelQue2.poll();
+        nodeNumberQueue.poll();
+        while (!que.isEmpty()) {
+            PlanNode planNode = que.poll();
+            PNode parent = pque.poll();
+            //PNode parent = mapping.get(planNode);
             List<PlanNode> pnlist = NodeHelper.getChildren(planNode);
             int xoffset = 0;
             for (PlanNode pnode : pnlist) {
+                int level = nodeLevelQue2.poll(); //nodeLevel.get(pnode);
+                int levelNo = nodeNumberQueue.poll(); //nodeNumber.get(pnode);
                 PNode p = parse(pnode);
-                p.locx = parent.locx + xoffset * 320;
+                pque.add(p);
+                p.locx = giveX(levelNo, maxNumber, xInc, nodeNo[level]); //parent.locx + xoffset * 220;
+
+                if (pnlist.size() == 1) {
+                    p.locx = parent.locx;
+                }
+                /*
+                else if (pnlist.size() == 2) {
+                    p.locx = parent.locx - xInc / 2 + xoffset * xInc;
+                    xoffset++;
+                }*/
                 xoffset++;
-                p.locy = parent.locy + 150;
-                mapping.put(pnode, p);
+                p.locy = giveY(level, yInc);
+                //mapping.put(pnode, p);
                 PEdge e = new PEdge();
                 e.from = parent.getKey();
                 e.to = p.getKey();

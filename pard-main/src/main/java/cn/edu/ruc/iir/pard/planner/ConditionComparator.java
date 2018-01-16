@@ -2,9 +2,9 @@ package cn.edu.ruc.iir.pard.planner;
 
 import cn.edu.ruc.iir.pard.catalog.Condition;
 import cn.edu.ruc.iir.pard.catalog.GddUtil;
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage.ErrCode;
+import cn.edu.ruc.iir.pard.commons.exception.SemanticException;
 import cn.edu.ruc.iir.pard.commons.utils.DataType.DataTypeInt;
-import cn.edu.ruc.iir.pard.planner.ErrorMessage.ErrCode;
-import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.tree.BooleanLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.CharLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.DoubleLiteral;

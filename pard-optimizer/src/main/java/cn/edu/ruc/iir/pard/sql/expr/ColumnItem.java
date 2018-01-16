@@ -42,8 +42,8 @@ public class ColumnItem
     public ColumnItem(String tableName, String columnName, int dataType)
     {
         super();
-        this.tableName = tableName;
-        this.columnName = columnName;
+        this.tableName = tableName.toLowerCase();
+        this.columnName = columnName.toLowerCase();
         this.dataType = dataType;
     }
 

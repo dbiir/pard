@@ -11,9 +11,10 @@ public class TableScanNode
         extends InputNode
 {
     private static final long serialVersionUID = 2673717961909269975L;
-    private final String schema;
-    private final String table;
+    private String schema;
+    private String table;
     private String site;
+    private String alias;
 /*
     private Optional<LimitNode> limit;
     private Optional<SortNode> sort;
@@ -136,6 +137,15 @@ public class TableScanNode
                 .add("table", table)
                 .add("site", site)
                 .add("child", getLeftChild())
+                .add("alias", alias)
                 .toString();
+    }
+    public String getAlias()
+    {
+        return alias;
+    }
+    public void setAlias(String alias)
+    {
+        this.alias = alias;
     }
 }

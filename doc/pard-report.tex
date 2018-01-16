@@ -1,0 +1,498 @@
+\documentclass[a4paper, 12pt]{ctexart}
+
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+%\usepackage{fancyhdr}
+
+
+% code listings
+\lstdefinestyle{customc}{
+	belowcaptionskip=1\baselineskip,
+	breaklines=true,
+	frame=L,
+	xleftmargin=\parindent,
+	language=C,
+	showstringspaces=false,
+	basicstyle=\footnotesize\ttfamily,
+	keywordstyle=\bfseries\color{green!40!black},
+	commentstyle=\itshape\color{purple!40!black},
+	identifierstyle=\color{blue},
+	stringstyle=\color{orange},
+}
+
+\lstset{basicstyle=\ttfamily\color{brown},
+	showstringspaces=false,
+	commentstyle=\color{red},
+	keywordstyle=\color{blue}
+}
+
+%%%%%%%%%%%% author  %%%%%%%%%%%%%%%%
+\author{金国栋\\
+	\and
+	韩涵\\
+	\and
+	黄文韬\\
+	\and
+	陈成\\
+}
+\title{分布与并行数据库Pard系统实验报告}
+\date{\today}
+
+
+%%%%%%%%%%%%%%%==============  \begin{document}  ====================%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\maketitle%
+\hspace{8em}
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figure/leopard.png}
+\end{figure}
+
+\newpage
+ 
+\tableofcontents
+ 
+ 
+\section{系统概述}
+\subsection{任务描述}
+本实验主要设计和实现一个面向分析的分布式数据库系统，即通过网络将多个不同的局部数据库系统连接起来，
+使得用户可以通过分布式数据库管理系统达到透明性管理的目的，采用横向扩展的方式，扩展数据库系统的查询性能。
+
+\subsection{系统需求}
+\begin{enumerate}
+\item 支持数据库的创建和删除。
+\item 支持表的创建和删除。
+\item 支持数据表的水平分片和垂直分片。
+\item 支持元数据的存储和管理。
+\item 支持数据从文件批量导入。
+\item 支持插入记录。
+\item 支持删除记录。
+\item 支持SQL语句\textit{select ... from ... where ...}。
+\end{enumerate}
+
+\subsection{运行环境}
+Pard系统采用Java语言开发，运行时需要Java 8以上的运行环境，目前仅支持Linux系统。
+Pard采用P2P的设计思想，每个Pard Server都可以部署在集群中的任意节点上，且每个节点都可以作为主节点被客户端访问。
+在我们的实验环境中，我们利用三台普通台式机搭建了一个集群，分别为pard01、pard02和pard03。
+其中pard01和pard02分别部署了一个Pard Server，pard03部署了两个Pard Server。
+
+\subsection{开发环境}
+系统的开发环境主要由Git、Maven(v3.3.9+)和Java 8构成。开发的IDE包括Eclipse和Intellij IDEA。
+系统利用Maven实现了代码风格的管理和代码编译、打包、自动分发的功能，方便了项目的开发过程。
+\lstinline|mvn clean compile|
+\lstinline[language=bash]|mvn clean package|
+ 
+\subsection{使用说明}
+Pard系统的使用说明如下：
+\begin{enumerate}
+\item 代码编译和打包：
+
+切换到Pard项目的根目录，执行
+\lstinline[language=bash]|mvn clean package|
+
+\textit{pard-assembly/target}目录下的\textit{.zip}或\textit{.tar.gz}文件即为部署文件。
+
+解压后目录结构如图\ref{fig:release}
+
+\item Pard Server的启动：
+\lstinline[language=bash]|./sbin/pard-server start/run|
+Pard Server的启动方式分为两种：
+\begin{itemize}
+	\item start: 后台启动。Pard Server进程将利用nohup后台启动。
+	\item run: 前台启动。
+\end{itemize}
+对于后台启动的Pard Server，可以调用
+\lstinline[language=bash]|./sbin/pard-server stop|
+停止进程。
+
+\item 配置文件：
+\begin{itemize}
+\item \textit{pard.name}: Pard Server的名称，需要保证每个Server都不相同。
+\item \textit{pard.host}: Pard Server的网络IP地址。
+\item \textit{pard.server.port}: Pard Server的服务端口号。客户端连接该端口。
+\item \textit{pard.web.port}: Pard Server的网络端口号。
+\item \textit{pard.rpc.port}: Pard Server的RPC端口。供Server之间调用。
+\item \textit{pard.exchange.port}: Pard Server数据传输的端口。
+\item \textit{pard.file.port}: Pard Server文件传输的端口。
+\item \textit{pard.connector.host}: Pard Server连接的数据库的地址。
+\item \textit{pard.connector.user}: Pard Server连接的数据库的用户名。
+\item \textit{pard.connector.password}: Pard Server连接的数据库对应用户的密码。
+\item \textit{pard.connector.driver}: Pard Server使用的JDBC连接的driver类。
+\end{itemize}
+\end{enumerate}
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.9]{figure/release.jpg}
+	\caption{发布版目录结构}
+	\label{fig:release}
+\end{figure}
+
+
+\subsection{项目管理}
+Pard的开发利用Github进行协同，并且代码都开源在Github上。\textit{https://github.com/dbiir/pard} 
+ 
+\section{系统架构}
+Pard整体架构如图\ref{fig:archi}。用户通过命令行连接集群中的任意一个Pard Node进行交互，每个Pard Node都可以通过内置的connector连接多个SlaveDB。
+通过connector的方式屏蔽底层SlaveDB的细节，这样SlaveDB可以为PostgreSQL或者MySQL等任意数据库，只需按照connector的接口开发对应的connector即可。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figure/architecture.png}
+	\caption{Pard整体架构图}
+	\label{fig:archi}
+\end{figure}
+
+Pard单个节点的架构如图\ref{fig:node1}。每个节点都有可能成为与用户直接交互的节点，应用层面诸如Client、Web UI
+是用户可见的抽象层级。下面来看底层实现。Pard收到用户输入的SQL语句，转化为执行的Job，先交给SQL Parser进行SQL的语法解析，得到抽象语法树AST。
+再依据查询本身特性和数据划分的特点，在SQL Optimizer模块中进行优化。然后由Job Planner制定物理的查询执行计划，并将计划交给Job scheduler，生成具体的查询执行任务，
+分发给各个节点去执行，并协调任务之间执行的顺序、同步异步等。
+
+各个节点还有存储管理模块，负责管理数据在内存中的组织形式。数据在内存中以\textit{Block}的方式组织。
+节点中的通讯模块具体分两类：一类是任务的通信，使用RPC技术发送较小数据量的任务通知；
+另一类是SQL执行需要的大批量数据的通信，比如节点之间的数据shuffle，我们使用Netty做大批量数据的异步传输。
+元数据由各节点的Catalog模块维护，数据分布在集群中的各个节点，由分布式的KV存储系统etcd负责存储和数据的同步，etcd遵循的raft协议可以确保各个节点元数据的一致性。
+节点中的Executor是本地执行器，负责执行接收到的具体的查询任务，并调用Connetor与本地连接的数据库进行交互。
+NodeKeeper模块负责集群中节点状态的维护，每个Pard Server启动的时候都需要向NodeKeeper注册，并在进程结束的时候通知NodeKeeper。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figure/pard-node-in.png}
+	\caption{Pard单个节点的架构}
+	\label{fig:node1}
+\end{figure}
+
+\subsection{PardServer启动/关闭流程}
+Pard Server的启动流程：
+\begin{enumerate}
+\item 初始化配置。读取配置文件，并且检查配置项。
+\item 加载connector。加载配置的connector，包括初始化数据库JDBC连接的连接池。
+\item 加载Catalog。初始化Catalog与etcd的连接，并启动etcd的watch线程。
+\item 加载本地执行器（Executor)。初始化本地执行器。
+\item 加载NodeKeeper。初始化本地的NodeKeeper模块。
+\item 启动数据传输的ExchangeServer。以线程方式初始化和启动Netty。不阻塞主进程。
+\item 启动文件传输的FileExchangeServer。以线程方式初始化和启动Netty。不阻塞主进程。
+\item 启动RPCServer。以线程方式初始化和启动RPC服务。不阻塞主进程。
+\item 加载JobScheduler。初始化JobScheduler，并创建单例。
+\item 加载TaskScheduler。初始化TaskScheduler，并创建单例。
+\item Pard Server注册。向NodeKeeper注册一个Pard Server，包括名称、IP地址、RPC端口、数据传输端口、文件传输端口等。该信息会在etcd中进行同步，方便其他节点查询。
+\item 启动Pard Web Server。以线程方式启动内嵌的Jetty作为web server，目前用于展示查询计划。
+\item 启动socket监听。服务器和客户端之间采用socket进行通信，启动服务器端的socket监听线程。
+\item 注册shutdownHook。注册JVM进程停止的shutdownHook，该hook中添加的方法将会按照顺序在JVM停止之前执行，进行清理和资源释放。
+\end{enumerate}
+
+Pard Server的停止流程：
+\begin{enumerate}
+\item 停止web server。
+\item 停止socket连接和监听。
+\item 通知NodeKeeper更改Pard Server的状态为下线（或从NodeKeeper中删除该节点）。
+\item 停止Catalog。中止etcd的watch线程，并释放与etcd的连接。
+\item 停止本地执行器（Executor)。停止正在执行的task。
+\item 停止数据传输的ExchangeServer。关闭Netty线程。
+\item 停止文件传输的FileExchangeServer。关闭Netty线程。
+\item 停止RPCServer。关闭RPC线程。
+\item 关闭Connector。关闭与数据库的连接池。
+\end{enumerate}
+
+\subsection{时间安排}
+如图\ref{fig:tl}。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figure/timeline.png}
+	\caption{时间安排timeline}
+	\label{fig:tl}
+\end{figure}
+
+\section{各模块详细设计}
+\subsection{执行流程}
+
+总体执行流程如图\ref{fig:exec-flow}。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figure/exec-flow.png}
+	\caption{总体执行流程}
+	\label{fig:exec-flow}
+\end{figure}
+
+
+package cn.edu.ruc.iir.pard.scheduler;
+
+
+在PardServer中，每个客户端连接由一个单独的线程负责，通过socket方式连接。
+用户输入的SQL语句会提交到\textit{JobScheduler}中，创建一个新的\textit{Job}。JobSchdueler会维护和更新该Job的状态信息。具体流程如下：
+\begin{itemize}
+\item SQL语句先由\textit{Pard Parser}进行语义解析，得到一个抽象语法树（AST），同时Job的状态更新为\textit{PARSED}。
+\item 抽象语法树由\textit{Pard Planner}制定逻辑查询计划，同时Job的状态更新为\textit{PLANNING}。
+\item 生成的逻辑查询计划由\textit{Pard Optimizer}负责进行优化，同时Job的状态更新为\textit{SCHEDULING}。
+\item 优化后的查询计划交给\textit{Task Scheduler}生成执行的任务，并进行任务的调度、分发和监控，各节点负责接收任务并执行。
+同时Job的状态更新为\textit{EXECUTING}。
+\item 任务执行完毕以后，Job的最终状态为三种，\textit{DONE}、\textit{ABORTED}和\textit{FAILED}。这三种状态分别表示执行顺利完成、执行被放弃和执行失败。
+\end{itemize}
+
+在查询执行过程中，每次任务执行时都需要通过NodeKeeper同步当前集群的节点状态，
+如果有节点状态为非在线，则该查询转为\textit{ABORTED}状态，并刷出日志提醒用户。
+
+在JobScheduler中记录了该Server所有正在执行的job的情况，并且已执行完的Job根据三种状态，分别维护了一个列表。
+这些信息可以提供给web端进行状态显示。
+
+\subsubsection{CREATE/DROP/INSERT 执行流程}
+\textit{CREATE/DROP/INSERT} 生成执行任务后，任务将通过RPC的方式发送给对应节点，并返回执行结果。
+
+\subsubsection{LOAD 执行流程}
+\textit{LOAD} 生成执行任务后，共有两类task。
+一类在本地读取文件，并按照数据划分的规则将文件内容划分后存储在内存中；
+另一类将内存中划分后的数据发送到对应节点，并调用节点的Executor执行本地数据库的LOAD操作。
+最后收集各节点的执行状态，返回最终状态给用户。
+
+\subsubsection{SELECT 执行流程}
+单表的\textit{SELECT} 生成执行任务后，分发给对应节点执行。任务中包含查询执行的操作树，节点的Executor调用本的Connector。
+本地Connector根据查询树生成对应的SQL语句，如适应于PostgreSQL语法规则的SQL语句。
+Connector执行的结果以Block的形式流式地返回给Executor，即Executor每次读取一个Block，而不是一次读取整个结果集，
+这种方式有效地节省了内存的使用，防止数据量大时内存不够。
+
+\subsubsection{JOIN 执行流程}
+
+
+\subsubsection{错误信息}
+查询执行过程可能产生各种错误，对此，系统设计了一套错误信息。
+% todo error message list
+
+\subsection{节点通信}
+通讯任务依据数据传输量的大小，和任务本身性质，可以自然的分为两类：
+一类是描述节点要负责的任务本身的通知，数据量很小，我们选用RPC技术来实现；
+另一类是因数据partition产生的大批量数据传输，数据量通常很大，我们选用Netty框架来实现。
+Insert、Delete、Load等返回值比较少，不需要太多交互通信的也都是用RPC来做的，
+其余大批量通信比较多的涉及到Netty。
+Pard有对Byte array做可选压缩的功能，
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figure/iobound.png}
+	\caption{Pard inbound outbound}
+	\label{fig:iobound}
+\end{figure}
+
+Pard中Netty 的事件可以分为 Inbound 和 Outbound 事件.
+从图\ref{fig:iobound}可以看出, inbound 事件和 outbound 事件的流向是不一样的, inbound 事件的流行是从下至上, 而 outbound 刚好相反, 是从上到下。并且 inbound 的传递方式是通过调用相应的 \lstinline|ChannelHandlerContext.fireIN_EVT()| 方法, 而 outbound 方法的的传递方式是通过调用 \lstinline|ChannelHandlerContext.OUT_EVT()| 方法。 例如 \lstinline|ChannelHandlerContext.fireChannelRegistered()| 调用会发送一个 \textit{ChannelRegistered} 的 inbound 给下一个ChannelHandlerContext, 而 \lstinline|ChannelHandlerContext.bind| 调用会发送一个 \textit{bind} 的 outbound 事件给 下一个 ChannelHandlerContext。
+\lstinline|PardFileExchangeClient| 的 \lstinline|run| 方法的pileline就加入了新的
+\lstinline|ExchangeFileSendHandler|（ \lstinline|extends ChannelInboundHandlerAdapter| ）的实例。
+
+网络传输是只能传输byte array的，拿到后要做语义解析。我们开始自己做了一个Object Encoder和Decoder，
+还有使用gzip算法做数据压缩的可选功能。
+Netty自己也实现了解析byte array的这类需求，叫编解码技术。
+服务器编码数据后发送到客户端，客户端需要对数据进行解码。编解码器由两部分组成：编码器、解码器。 
+解码器：负责将消息从字节或其他序列形式转成指定的消息对象； 
+编码器：将消息对象转成字节或其他序列形式在网络上传输。 
+我们的编解码其都是ChannelHandler的实现。 
+入站“ByteBuf”读取bytes后由 ToIntegerDecoder 进行解码，然后将解码后的消息存入List集合中，然后传递到ChannelPipeline中的下一个ChannelInboundHandler。
+
+
+
+
+
+\subsection{元数据}
+Pard使用etcd，以Key-Value形式存储GDD。etcd  的官方定义是：
+\begin{quote}
+	A highly-available key value store for shared configuration and service discovery.
+\end{quote}
+实际上，etcd作为一个受到Zookeeper与doozer启发而催生的项目，除了拥有与之类似的功能外，更具有以下4个特点:
+\begin{enumerate}
+	\item 简单：基于HTTP+JSON的API让你用curl命令就可以轻松使用;
+	\item 安全：可选SSL客户认证机制;
+	\item 快速：每个实例每秒支持一千次写操作;
+	\item 可信：使用Raft算法充分实现了分布式。
+\end{enumerate}
+所以我们选用etcd存储GDD。
+Pard的一个亮点是基于etcd的watch机制，减少了IO的操作。
+只有当GDD发生改变时，才去取数据，更新。
+我们使用etcd的持久监听（stream），当有事件时，会连续触发，不需要客户端重新发起监听。
+因为GDD本来就很小，所我们在内存中维护GDD。
+Pard watch的有site、schema、user，每个站点开启三个Thread来watch。
+调用 \lstinline| watcher.listen()| 方法持续的watch。
+
+
+元数据模型关键结构如下：
+\begin{lstlisting}
+public class GDD {
+HashMap<String,Site>siteList;
+HashMap<String,Schema>schemaList;
+HashMap<String,User>userList;
+}
+
+public class Site {
+int Id;
+String name;
+String ip;
+int port;
+boolean isLeader;
+}
+
+public class Schema {
+String name;
+int id;
+List<Table>tableList;
+List<Privilege>userList;
+//Statics statics;
+}
+public class Privilege {
+int use;//1,read, 3, write,5create 7,delete;
+int uid;
+String username;
+}
+public class Table {
+String tablename;
+int id;
+HashMap<String,Column>columns;
+List<Fragment>fragment;
+List<Privilege>userList;
+int isFragment;
+Statics statics;
+}
+
+public class Column {
+int id;
+int dataType;
+String columnName;
+int len;
+int index;//0:none; 1:hashindex; 2:btreeindex; 3:others
+boolean isKey;
+}
+public class Fragment {
+int fragmentType;//0: horizontal;1:vertical
+List<Condition>condition;
+Table subTable
+int siteId;
+Statics statics;
+}
+public class Condition {
+String columnName;
+int CompareType;//define less,great,equal..
+String value;
+int dataType;//the datatype of value
+}
+public class Statics {
+String columnName;
+String min;
+String max;
+String mean;
+String mode;
+String median;
+HashMap<String,Integer>staticList;
+}
+public class User {
+int uid;
+String username;
+HashMap<String,Privilege>tableList;
+HashMap<String,Privilege>schemaList;
+}
+\end{lstlisting}
+
+
+
+
+
+
+\subsection{SQL解析}
+语义语法解析使用Antlrv4。
+ANTLR—Another Tool for Language Recognition，可以根据输入的SQL命令和我们自定义的规则，
+根据自动生成语法树，
+
+Pard支持的语法如下：
+\begin{lstlisting}
+statement
+: query                                                            #statementDefault
+| USE schema=identifier                                            #use
+| CREATE SCHEMA (IF NOT EXISTS)? qualifiedName                     #createSchema
+| DROP SCHEMA (IF EXISTS)? qualifiedName (CASCADE | RESTRICT)?     #dropSchema
+| ALTER SCHEMA qualifiedName RENAME TO identifier                  #renameSchema
+| CREATE TABLE (IF NOT EXISTS)? qualifiedName
+tableElementPart
+(',' tableElementPart)*
+partitionOps?                                                  #createTable
+| CREATE INDEX indexName=identifier ON
+indexTbl=qualifiedName '(' identifier (',' identifier)*')'     #createIndex
+| DROP INDEX indexName=identifier                                  #dropIndex
+| DROP TABLE (IF EXISTS)? qualifiedName                            #dropTable
+| INSERT INTO qualifiedName columnAliases? query                   #insertInto
+| DELETE FROM qualifiedName (WHERE booleanExpression)?             #delete
+| ALTER TABLE from=qualifiedName RENAME TO to=qualifiedName        #renameTable
+| ALTER TABLE tableName=qualifiedName
+RENAME COLUMN from=identifier TO to=identifier                 #renameColumn
+| ALTER TABLE tableName=qualifiedName
+DROP COLUMN column=qualifiedName                               #dropColumn
+| ALTER TABLE tableName=qualifiedName
+ADD COLUMN column=columnDefinition                             #addColumn
+| GRANT
+(privilege (',' privilege)* | ALL PRIVILEGES)
+ON TABLE? qualifiedName TO grantee=identifier
+(WITH GRANT OPTION)?                                           #grant
+| REVOKE
+(GRANT OPTION FOR)?
+(privilege (',' privilege)* | ALL PRIVILEGES)
+ON TABLE? qualifiedName FROM grantee=identifier                #revoke
+| SHOW GRANTS
+(ON TABLE? qualifiedName)?                                     #showGrants
+| EXPLAIN ANALYZE? VERBOSE?
+('(' explainOption (',' explainOption)* ')')? statement        #explain
+| SHOW STATS (FOR | ON) qualifiedName                              #showStats
+| SHOW STATS FOR '(' querySpecification ')'                        #showStatsForQuery
+| DESCRIBE qualifiedName                                           #showColumns
+| DESC qualifiedName                                               #showColumns
+| START TRANSACTION (transactionMode (',' transactionMode)*)?      #startTransaction
+| COMMIT WORK?                                                     #commit
+| ROLLBACK WORK?                                                   #rollback
+| SHOW PARTITIONS (FROM | IN) qualifiedName                        #showPartitions
+| SHOW SCHEMAS                                                     #showSchemas
+| SHOW TABLES (FROM schemaName=identifier)?                        #showTables
+| LOAD path=identifier INTO table=qualifiedName                    #load
+;
+\end{lstlisting}
+
+目前并没有实现全部的完整SQL功能，只
+支持基本的Select语句，也就是验收要求的部分，如
+\lstinline|select * from ASG where eno<’E1020’ and eno>=’E0990’| 
+
+
+
+
+
+\subsection{SQL优化}
+% PLAN树结构
+% PROJECT/FILTER下推
+% 表达式计算
+% INSERT/DELETE/SELECT剪枝
+% JOIN优化
+
+\section{任务分工及小结}
+
+\subsection{金国栋的小结}
+
+\subsection{韩涵的小结}
+
+\subsection{黄文韬的小结}
+
+\subsection{陈成的小结}
+本门课程中，学习了分布式数据库的一些非常基础的知识，相比于另一门数据库管理系统实现，这门课就多在了分布式的部分，
+数据如何partition，不同的partition方式下查询等操作如何优化。大作业确实非常challenging，比如Netty框架设计复杂精妙，我学习花了很大时间，一个个example的改、试，后来在师兄的帮助下才正确的运用在了项目中。
+前几次课与卢卫老师的大数据管理冲突，我都没来，后来觉得还是应该去一下明确本学期在课程上的投入。
+课程消耗精力太多的话，没时间做自己该负责的科研项目了。
+我认为，我们没有在预期时间完成任务的原因是当初系统设计的导向不是任务导向，当初可能要求太高了，各种复杂的结构、情况都考虑的话，
+过早优化是万恶之源，
+可能基本的任务都没完成就得不偿失了。
+通过这次大作业感受到搭建一个能够work的系统并不是一件容易的事
+情，总是会有莫名其妙的 bug 困扰着你并消磨你的热情；另一个体会是，永远不要把工作往
+后推，因为一到期末 deadline 很多，你并不会像自己预期那样高效，连续的熬夜也不能迅速
+打造完美的系统。
+
+
+
+
+ 
+\end{document}

@@ -13,7 +13,7 @@ public class FilterNode
         extends PlanNode
 {
     private static final long serialVersionUID = 8695368351559462220L;
-    private final Expression expression;
+    private Expression expression;
 
     public FilterNode(Expression expression)
     {
@@ -30,7 +30,10 @@ public class FilterNode
     {
         return expression;
     }
-
+    public void setExpression(Expression expression)
+    {
+        this.expression = expression;
+    }
     @Override
     public String toString()
     {

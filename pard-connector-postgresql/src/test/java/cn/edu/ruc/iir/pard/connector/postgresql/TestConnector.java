@@ -43,7 +43,7 @@ public class TestConnector
     @BeforeTest
     public void init()
     {
-        configuration.init("../pard-main/etc/pard.properties");
+        configuration.init("../pard-main/etc/pard-wentao.properties");
     }
 
     @Test
@@ -198,5 +198,22 @@ public class TestConnector
         Connector connector = PostgresConnector.INSTANCE();
         LoadTask loadTask = new LoadTask("pard", "emp", ImmutableList.of("/Users/Jelly/Desktop/emp.tsv"));
         connector.execute(loadTask);
+    }
+
+    @Test
+    public void testJoin()
+    {
+        PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
+        Connector connector = PostgresConnector.INSTANCE();
+    }
+
+    @Test
+    public void testSendData()
+    {
+        PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
+        Connector connector = PostgresConnector.INSTANCE();
+    }
+    public void testQuery()
+    {
     }
 }

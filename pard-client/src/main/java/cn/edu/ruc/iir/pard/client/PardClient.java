@@ -76,18 +76,16 @@ public class PardClient
                                     counter++;
                                 }
                                 System.out.println(pretty);
-                                System.out.println("Selected " + counter + " tuples");
-                                System.out.println("Execution time: " + ((double) resultSet.getExecutionTime()) / 1000 + "s");
+                                System.err.println("Selected " + counter + " tuples");
+                                System.err.println("Execution time: " + ((double) resultSet.getExecutionTime()) / 1000 + "s");
                                 if (resultSet.getSemanticErrmsg() != null) {
                                     System.err.println("Semantic Status:" + resultSet.getSemanticErrmsg());
-                                    System.out.println("Semantic Status:" + resultSet.getSemanticErrmsg());
                                 }
                             }
                             else {
                                 System.err.println(resultSet.getStatus().toString());
                                 if (resultSet.getSemanticErrmsg() != null) {
                                     System.err.println(resultSet.getSemanticErrmsg());
-                                    System.out.println(resultSet.getSemanticErrmsg());
                                 }
                             }
                         }

@@ -31,6 +31,7 @@ import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 //import cn.edu.ruc.iir.pard.sql.tree.Join;
 import com.google.common.collect.ImmutableList;
@@ -814,25 +815,92 @@ public class PostgresConnector
             StringBuilder joinSQL = new StringBuilder("select ");
             List<PlanNode> nodeList = new ArrayList<>();
             int nodeListCursor = 0;
-            String schemaName = null;
-            String tableName = null;
-            FilterNode filterNode = null;
-            ProjectNode projectNode1 = null;
-            JoinNode joinNode = null;
-            ProjectNode projectNode2 = null;
-            SortNode sortNode = null;
-            LimitNode limitNode = null;
-            boolean isFilter = false;
-            boolean isProject1 = false;
-            boolean isJoin = false;
-            boolean isProject2 = false;
+            boolean isProject = false;
             boolean isSort = false;
             boolean isLimit = false;
+            ProjectNode projectNode = null;
+            LimitNode limitNode = null;
+            SortNode sortNode = null;
+            JoinNode joinNode = null;
             nodeList.add(rootNode);
             nodeListCursor++;
-            while (nodeList.get(nodeListCursor - 1).hasChildren()) {
+
+            while (nodeList.get(nodeListCursor - 1 ).hasChildren()) {
                 nodeList.add(nodeList.get(nodeListCursor - 1).getLeftChild());
                 nodeListCursor++;
+                if (nodeList.get(nodeListCursor - 1) instanceof JoinNode) {
+                    joinNode = (JoinNode) nodeList.get(nodeListCursor - 1);
+                    break;
+                }
+            }
+
+            for (int i = nodeListCursor - 1; i >= 0; i--) {
+                if (nodeList.get(i) instanceof LimitNode) {
+                    limitNode = (LimitNode) nodeList.get(i);
+                    isLimit = true;
+                }
+
+                if (nodeList.get(i) instanceof SortNode) {
+                    sortNode = (SortNode) nodeList.get(i);
+                    isSort = true;
+                }
+
+                if (nodeList.get(i) instanceof ProjectNode) {
+                    projectNode = (ProjectNode) nodeList.get(i);
+                    isProject = true;
+                }
+            }
+
+            if (isProject) {
+                List<Column> columns = projectNode.getColumns();
+                for (Column column : columns) {
+                    joinSQL.append(column.getColumnName());
+                    joinSQL.append(",");
+                }
+                joinSQL = new StringBuilder(joinSQL.substring(0, joinSQL.length() - 1));
+            }
+            else {
+                joinSQL.append(" *");
+            }
+
+            joinSQL.append(" from ");
+            StringBuilder whereClause = new StringBuilder(" where ");
+            List<PlanNode> joinChildren = joinNode.getJoinChildren();
+            if (joinNode.getExprList().size() > 0) {
+                whereClause.append(joinNode.getExprList().get(0).toString());
+            }
+            else {
+                whereClause.append((String)(joinNode.getJoinSet().iterator().next()));
+            }
+            whereClause.append(" ");
+
+            Iterator it = joinChildren.iterator();
+            while (it.hasNext()) {
+                PlanNode childRootNode = (PlanNode) it.next();
+                List<PlanNode> childNodeList = new ArrayList<>();
+                int childNodeListCursor = 0;
+                ProjectNode childProjectNode = null;
+                FilterNode childFilterNode = null;
+                TableScanNode childTableScanNode = null;
+                boolean childIsProject = false;
+                boolean childIsFilter = false;
+                boolean childIsTableScan = false;
+                childNodeList.add(childRootNode);
+                childNodeListCursor++;
+                while (childNodeList.get(childNodeListCursor - 1).hasChildren()) {
+                    childNodeList.add(childNodeList.get(childNodeListCursor - 1).getLeftChild());
+                    childNodeListCursor++;
+                }
+                for (int i = childNodeListCursor - 1; i >= 0; i--) {
+                    if (childNodeList.get(i) instanceof ProjectNode) {
+                        childProjectNode = (ProjectNode) childNodeList.get(i);
+                        childIsProject = true;
+                    }
+                    if (childNodeList.get(i) instanceof FilterNode) {
+                        childFilterNode = (FilterNode) childNodeList.get(i);
+                        childIsFilter = true;
+                    }
+                }
             }
         }
         catch (SQLException e) {

@@ -20,12 +20,14 @@ public class JoinNode
     private Set<String> joinSet;
     private List<ComparisonExpression> exprList;
     private String otherInfo;
+
     public JoinNode()
     {
         name = "JOIN";
         joinSet = new HashSet<String>();
         exprList = new ArrayList<ComparisonExpression>();
     }
+
     public JoinNode(JoinNode node)
     {
         super(node);
@@ -37,10 +39,12 @@ public class JoinNode
         childrens.clear();
         childrens.addAll(node.getJoinChildren());
     }
+
     public boolean hasChildren()
     {
         return !childrens.isEmpty();
     }
+
     public void addJoinChild(PlanNode node)
     {
         this.childrens.add(node);
@@ -50,10 +54,12 @@ public class JoinNode
     {
         return childrens;
     }
+
     public Set<String> getJoinSet()
     {
         return joinSet;
     }
+
     @Override
     public String toString()
     {

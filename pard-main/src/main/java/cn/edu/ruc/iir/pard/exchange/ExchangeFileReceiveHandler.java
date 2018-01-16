@@ -1,6 +1,10 @@
 package cn.edu.ruc.iir.pard.exchange;
 
+import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.catalog.Table;
+import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.executor.PardTaskExecutor;
+import cn.edu.ruc.iir.pard.executor.connector.CreateTmpTableTask;
 import cn.edu.ruc.iir.pard.executor.connector.LoadTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
@@ -10,10 +14,15 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -69,6 +78,32 @@ public class ExchangeFileReceiveHandler
                     Task task = new LoadTask(schema, table, ImmutableList.of(path));
                     PardResultSet resultSet = executor.executeStatus(task);
                     logger.info("File copy result: " + resultSet.getStatus().toString());
+                    writer = null;
+                    path = null;
+                    ChannelFuture future = ctx.writeAndFlush(resultSet.getStatus().toString() + "\n");
+                    future.addListener((ChannelFutureListener) f -> ctx.close());
+                }
+                else if (message.equalsIgnoreCase("OKDONESENDDATA")) {
+                    logger.info("File Writer close");
+                    if (writer != null) {
+                        writer.close();
+                    }
+                    BufferedReader br = new BufferedReader(new FileReader(new File(this.path)));
+                    String[] header = br.readLine().split("\t");
+                    TableDao tableDao = new TableDao(header[0]);
+                    Table table = tableDao.loadByName(header[1]);
+                    HashMap<String, Column> tableColumn = table.getColumns();
+                    List<Column> columnDefinitions = new ArrayList<>();
+                    String[] columnNames = br.readLine().split("\t");
+                    for (String s : columnNames) {
+                        columnDefinitions.add(tableColumn.get(s));
+                    }
+                    br.close();
+                    //TODO table name is what?
+                    Task task = new CreateTmpTableTask(header[0], header[1], columnDefinitions, this.path);
+                    //Task task = new CreateTmpTableTask(null, header[1], columnDefinitions, this.path);
+                    PardResultSet resultSet = executor.executeStatus(task);
+                    logger.info("Create tmp table: " + resultSet.getStatus().toString());
                     writer = null;
                     path = null;
                     ChannelFuture future = ctx.writeAndFlush(resultSet.getStatus().toString() + "\n");

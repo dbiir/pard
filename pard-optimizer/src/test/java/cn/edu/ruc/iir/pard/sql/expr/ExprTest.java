@@ -174,6 +174,7 @@ public class ExprTest
         match = match(expression, row, cols);
         System.out.println(match);
     }
+
     public Boolean match(Expression expr, Row row, List<Column> col)
     {
         List<Integer> types = new ArrayList<Integer>();
@@ -203,6 +204,7 @@ public class ExprTest
         }
         return null;
     }
+
     public static Comparable parseFromString(int dataType, String value)
     {
         switch(dataType) {

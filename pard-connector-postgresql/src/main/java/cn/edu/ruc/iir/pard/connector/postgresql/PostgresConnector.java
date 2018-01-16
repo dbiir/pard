@@ -464,6 +464,9 @@ public class PostgresConnector
             }
             logger.info("QUERY SUCCESSFULLY");
             PardResultSet prs = new PardResultSet(PardResultSet.ResultStatus.OK, columns);
+            for (Column column : columns) {
+                logger.info("PROJECT Columns: " + column.getColumnName());
+            }
             prs.setJdbcResultSet(rs);
             prs.setJdbcConnection(conn);
             return prs;

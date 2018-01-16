@@ -19,7 +19,7 @@ public class TestQueryHandler
         JobScheduler scheduler = JobScheduler.INSTANCE();
         TaskScheduler taskScheduler = TaskScheduler.INSTANCE();
         PardQueryHandler handler = new PardQueryHandler(null, scheduler, taskScheduler);
-        String sql = "select * from booktest.customer";
+        String sql = "delete from booktest.customer where 1=1";
         PardResultSet resultSet = handler.executeQuery(sql);
         System.out.println(resultSet);
     }

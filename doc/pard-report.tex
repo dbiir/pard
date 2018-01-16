@@ -163,12 +163,37 @@ NodeKeeper模块负责集群中节点状态的维护，每个Pard Server启动�
 	\label{fig:node1}
 \end{figure}
 
-\subsection{启动/关闭流程}
+\subsection{PardServer启动/关闭流程}
 Pard Server的启动流程：
 \begin{enumerate}
-\item 节点注册。
+\item 初始化配置。读取配置文件，并且检查配置项。
+\item 加载connector。加载配置的connector，包括初始化数据库JDBC连接的连接池。
+\item 加载Catalog。初始化Catalog与etcd的连接，并启动etcd的watch线程。
+\item 加载本地执行器（Executor)。初始化本地执行器。
+\item 加载NodeKeeper。初始化本地的NodeKeeper模块。
+\item 启动数据传输的ExchangeServer。以线程方式初始化和启动Netty。不阻塞主进程。
+\item 启动文件传输的FileExchangeServer。以线程方式初始化和启动Netty。不阻塞主进程。
+\item 启动RPCServer。以线程方式初始化和启动RPC服务。不阻塞主进程。
+\item 加载JobScheduler。初始化JobScheduler，并创建单例。
+\item 加载TaskScheduler。初始化TaskScheduler，并创建单例。
+\item Pard Server注册。向NodeKeeper注册一个Pard Server，包括名称、IP地址、RPC端口、数据传输端口、文件传输端口等。该信息会在etcd中进行同步，方便其他节点查询。
+\item 启动Pard Web Server。以线程方式启动内嵌的Jetty作为web server，目前用于展示查询计划。
+\item 启动socket监听。服务器和客户端之间采用socket进行通信，启动服务器端的socket监听线程。
+\item 注册shutdownHook。注册JVM进程停止的shutdownHook，该hook中添加的方法将会按照顺序在JVM停止之前执行，进行清理和资源释放。
 \end{enumerate}
-class PardServer
+
+Pard Server的停止流程：
+\begin{enumerate}
+\item 停止web server。
+\item 停止socket连接和监听。
+\item 通知NodeKeeper更改Pard Server的状态为下线（或从NodeKeeper中删除该节点）。
+\item 停止Catalog。中止etcd的watch线程，并释放与etcd的连接。
+\item 停止本地执行器（Executor)。停止正在执行的task。
+\item 停止数据传输的ExchangeServer。关闭Netty线程。
+\item 停止文件传输的FileExchangeServer。关闭Netty线程。
+\item 停止RPCServer。关闭RPC线程。
+\item 关闭Connector。关闭与数据库的连接池。
+\end{enumerate}
 
 \subsection{时间安排}
 如图\ref{fig:tl}。
@@ -181,7 +206,7 @@ class PardServer
 \end{figure}
 
 \section{各模块详细设计}
-\subsection{Execution Flow}
+\subsection{执行流程}
 package cn.edu.ruc.iir.pard.scheduler;
 
 job 

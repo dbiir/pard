@@ -31,7 +31,9 @@ import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
+//import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
+//import cn.edu.ruc.iir.pard.sql.tree.Table;
 import com.google.common.collect.ImmutableList;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;
@@ -637,7 +639,7 @@ public class PostgresConnector
             Map<String, Expression> siteExpression = task.getSiteExpression(); // site -> Expression
             Map<String, String> tmpTableMap = task.getTmpTableMap(); // site -> tmpTableName
 
-            boolean flag = dispense(siteExpression, tmpTableMap, rs, cols, schema);
+            boolean flag = dispense(siteExpression, tmpTableMap, rs, cols, schema, table);
             if (flag == true) {
                 conn.close();
                 return PardResultSet.okResultSet;
@@ -813,26 +815,140 @@ public class PostgresConnector
             StringBuilder joinSQL = new StringBuilder("select ");
             List<PlanNode> nodeList = new ArrayList<>();
             int nodeListCursor = 0;
-            String schemaName = null;
-            String tableName = null;
-            FilterNode filterNode = null;
-            ProjectNode projectNode1 = null;
-            JoinNode joinNode = null;
-            ProjectNode projectNode2 = null;
-            SortNode sortNode = null;
-            LimitNode limitNode = null;
-            boolean isFilter = false;
-            boolean isProject1 = false;
-            boolean isJoin = false;
-            boolean isProject2 = false;
+            boolean isProject = false;
             boolean isSort = false;
             boolean isLimit = false;
+            ProjectNode projectNode = null;
+            LimitNode limitNode = null;
+            SortNode sortNode = null;
+            JoinNode joinNode = null;
             nodeList.add(rootNode);
             nodeListCursor++;
+
             while (nodeList.get(nodeListCursor - 1).hasChildren()) {
                 nodeList.add(nodeList.get(nodeListCursor - 1).getLeftChild());
                 nodeListCursor++;
+                if (nodeList.get(nodeListCursor - 1) instanceof JoinNode) {
+                    joinNode = (JoinNode) nodeList.get(nodeListCursor - 1);
+                    break;
+                }
             }
+
+            for (int i = nodeListCursor - 1; i >= 0; i--) {
+                if (nodeList.get(i) instanceof LimitNode) {
+                    limitNode = (LimitNode) nodeList.get(i);
+                    isLimit = true;
+                }
+
+                if (nodeList.get(i) instanceof SortNode) {
+                    sortNode = (SortNode) nodeList.get(i);
+                    isSort = true;
+                }
+
+                if (nodeList.get(i) instanceof ProjectNode) {
+                    projectNode = (ProjectNode) nodeList.get(i);
+                    isProject = true;
+                }
+            }
+
+            if (isProject) {
+                List<Column> columns = projectNode.getColumns();
+                for (Column column : columns) {
+                    joinSQL.append(column.getTableName() + "." + column.getColumnName());
+                    joinSQL.append(",");
+                }
+                joinSQL = new StringBuilder(joinSQL.substring(0, joinSQL.length() - 1));
+            }
+            else {
+                joinSQL.append(" *");
+            }
+
+            StringBuilder fromClause = new StringBuilder(" from ");
+            StringBuilder whereClause = new StringBuilder(" where ");
+            List<PlanNode> joinChildren = joinNode.getJoinChildren();
+            Iterator it = joinChildren.iterator();
+            Boolean isFirst = true;
+            while (it.hasNext()) {
+                PlanNode childRootNode = (PlanNode) it.next();
+                List<PlanNode> childNodeList = new ArrayList<>();
+                int childNodeListCursor = 0;
+                ProjectNode childProjectNode = null;
+                FilterNode childFilterNode = null;
+                TableScanNode childTableScanNode = null;
+                boolean childIsProject = false;
+                boolean childIsFilter = false;
+                boolean childIsTableScan = false;
+                childNodeList.add(childRootNode);
+                childNodeListCursor++;
+                while (childNodeList.get(childNodeListCursor - 1).hasChildren()) {
+                    childNodeList.add(childNodeList.get(childNodeListCursor - 1).getLeftChild());
+                    childNodeListCursor++;
+                }
+                for (int i = childNodeListCursor - 1; i >= 0; i--) {
+                    if (childNodeList.get(i) instanceof ProjectNode) {
+                        childProjectNode = (ProjectNode) childNodeList.get(i);
+                        childIsProject = true;
+                    }
+                    if (childNodeList.get(i) instanceof FilterNode) {
+                        childFilterNode = (FilterNode) childNodeList.get(i);
+                        childIsFilter = true;
+                    }
+                    if (childNodeList.get(i) instanceof TableScanNode) {
+                        childTableScanNode = (TableScanNode) childNodeList.get(i);
+                        childIsTableScan = true;
+                    }
+                }
+                //HERE WE IGNORE THE childProjectNode
+                if (childIsFilter) {
+                    whereClause.append("and " + childFilterNode.getExpression());
+                }
+                if (childIsTableScan) {
+                    String schemaName = childTableScanNode.getSchema();
+                    String tableName = childTableScanNode.getTable();
+                    String aliasName = childTableScanNode.getAlias();
+                    if (isFirst) {
+                        fromClause.append(schemaName + "." + tableName);
+                        fromClause.append("inner join ");
+                        isFirst = false;
+                    }
+                    else {
+                        fromClause.append(schemaName + "." + aliasName);
+                        fromClause.append(" on ");
+                    }
+                }
+            }
+            if (joinNode.getExprList().size() > 0) {
+                whereClause.append(joinNode.getExprList().get(0).toString());
+            }
+            else {
+                whereClause.append((String) (joinNode.getJoinSet().iterator().next()));
+            }
+            if (isSort) {
+                whereClause.append("order by");
+                List<Column> columns = sortNode.getColumns();
+                for (Column column : columns) {
+                    whereClause.append(" ");
+                    whereClause.append(column.getTableName() + "." + column.getColumnName());
+                    whereClause.append(",");
+                }
+                whereClause = new StringBuilder(whereClause.substring(0, whereClause.length() - 1));
+            }
+            if (isLimit) {
+                whereClause.append(" limit ");
+                whereClause.append(limitNode.getLimitNum());
+            }
+            joinSQL.append(fromClause.toString() + whereClause.toString());
+            logger.info("Postgres connector: " + joinSQL);
+            ResultSet rs = statement.executeQuery(joinSQL.toString());
+            List<Column> columns = new ArrayList<>();
+            if (isProject) {
+                columns = projectNode.getColumns();
+            }
+            logger.info("JOIN SUCCESSFULLY");
+            PardResultSet prs = new PardResultSet(PardResultSet.ResultStatus.OK, columns);
+            prs.setJdbcResultSet(rs);
+            prs.setJdbcConnection(conn);
+            return prs;
         }
         catch (SQLException e) {
             logger.info("JOIN FAILED");
@@ -841,7 +957,7 @@ public class PostgresConnector
         return PardResultSet.execErrResultSet;
     }
 
-    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs, List<Column> columns, String schema)
+    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs, List<Column> columns, String schema, String table)
     {
         boolean isSucceeded;
         Map<String, BufferedWriter> localWriter = new HashMap<String, BufferedWriter>(); // site -> local BufferedWirter
@@ -849,7 +965,7 @@ public class PostgresConnector
             try {
                 BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/dev/shm/" + site + tmpTableMap.get(site) + "SENDDATA")));
                 localWriter.put(site, bw);
-                bw.write(schema + "\t" + tmpTableMap.get(site) + "\n"); //schema name, table name
+                bw.write(schema + "\t" + tmpTableMap.get(site) + "\t" + table + "\n"); //schema name, table name
                 Iterator it = columns.iterator();
                 String secondLine = "";
                 while (it.hasNext()) {
@@ -955,7 +1071,7 @@ public class PostgresConnector
             ValueItem vi = vList.get(i);
             e = Expr.generalReplace(e, ci, vi);
         }
-        System.out.println(e.toString());
+//        System.out.println(e.toString());
         e = Expr.optimize(e, Expr.LogicOperator.AND);
         if (e instanceof TrueExpr) {
             return true;

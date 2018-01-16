@@ -459,9 +459,10 @@ public class TaskScheduler
             List<Column> clist = new ArrayList<Column>();
             for (Column c : proj.getColumns()) {
                 Column col = new Column(c);
-                if (dataTableName.getValue().equals(col.getTableName())) {
-                    col.setTableName(tmpTableName);
-                }
+                //设置为实际表的名字 但是因为别名的存在 所以目前不需要
+                //if (dataTableName.getValue().equals(col.getTableName())) {
+                   // col.setTableName(tmpTableName);
+                //}
                 clist.add(col);
             }
             PlanNode output = new OutputNode();

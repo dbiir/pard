@@ -108,6 +108,7 @@ public class QueryJobExecutor
             Site nodeSite = siteDao.listNodes().get(site);
             if (nodeSite == null) {
                 logger.log(Level.SEVERE, "Node " + site + " is not active. Please check.");
+                return PardResultSet.execErrResultSet;
             }
             PardExchangeClient client = new PardExchangeClient(nodeSite.getIp(), nodeSite.getExchangePort());
             client.connect(task, blocks);

@@ -24,6 +24,7 @@
     </modules>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <antlr.version>4.6</antlr.version>
         <check-style.skip>false</check-style.skip>
         <check-style.failOnViolation>true</check-style.failOnViolation>

@@ -58,6 +58,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -552,11 +553,18 @@ public class TaskScheduler
         JoinTask joinTask = joinMap.get(joinTable.getSite());
         if (joinTask == null) {
             //Do sth.
+            Iterator<String> iter = node.getJoinSet().iterator();
+            String common = null;
+            if (iter.hasNext()) {
+                common = iter.next();
+            }
             List<Column> clist = new ArrayList<Column>();
             for (Column c : proj.getColumns()) {
                 Column col = new Column(c);
                 if (node.getExprList().isEmpty()) {
-                    col.setTableName(null);
+                    if (!col.getColumnName().equals(common)) {
+                        col.setTableName(null);
+                    }
                 }
                 //设置为实际表的名字 但是因为别名的存在 所以目前不需要
                 //if (dataTableName.getValue().equals(col.getTableName())) {

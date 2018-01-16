@@ -808,6 +808,7 @@ public class PostgresConnector
     {
         String tmpTableName = task.getTmpTableName();
         PlanNode rootNode = task.getNode();
+        boolean isVertical = false;
         try {
             Statement statement = conn.createStatement();
             StringBuilder joinSQL = new StringBuilder("SELECT ");
@@ -852,7 +853,7 @@ public class PostgresConnector
             if (isProject) {
                 List<Column> columns = projectNode.getColumns();
                 for (Column column : columns) {
-                    if (!column.getTableName().isEmpty()) {
+                    if (column.getTableName() != null && !column.getTableName().isEmpty()) {
                         joinSQL.append(column.getTableName()).append(".");
                     }
                     joinSQL.append(column.getColumnName());

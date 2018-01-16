@@ -298,6 +298,7 @@ public class TaskScheduler
         ProjectNode proj = null;
         PlanNode currentNode = planNode;
         UnionNode internalUnionNode = null;
+        JoinNode joinNode = null;
         while (currentNode != null) {
             if (currentNode instanceof UnionNode) {
                 internalUnionNode = (UnionNode) currentNode;
@@ -305,10 +306,16 @@ public class TaskScheduler
             if (currentNode instanceof ProjectNode) {
                 proj = (ProjectNode) currentNode;
             }
+            if (currentNode instanceof JoinNode) {
+                joinNode = (JoinNode) currentNode;
+            }
             currentNode = currentNode.getLeftChild();
         }
-        if (internalUnionNode == null) {
+        if (internalUnionNode == null && joinNode == null) {
             return ImmutableList.of(new QueryTask(planNode));
+        }
+        else if (joinNode != null) {
+            return ImmutableList.copyOf(processJoinTask(joinNode, proj, queryPlan.getJobId(), new AtomicInteger(0)));
         }
         else {
             return ImmutableList.copyOf(processUnionTask(internalUnionNode, queryPlan.getJobId(), new AtomicInteger(1), proj));
@@ -556,6 +563,7 @@ public class TaskScheduler
     }
     public Expr extractTableExpr(Expr joinExpr, Expr dataExpr, String tableName, JoinNode node)
     {
+        List<Task> tasks = new ArrayList<>();
         Expr e = Expr.and(joinExpr, dataExpr, LogicOperator.AND);
         if (node.getExprList().size() == 0) {
             return new TrueExpr();
@@ -576,6 +584,22 @@ public class TaskScheduler
         else {
             throw new TaskSchedulerException(ErrCode.ParseError, "expression that can replace");
         }
+    }
+    public List<Task> processJoinTask(JoinNode node, ProjectNode proj, String jobId, AtomicInteger jobOffset)
+    {
+        List<Task> tasks = new ArrayList<>();
+        Pointer<String> joinTableName = new Pointer<String>(null);
+        Pointer<String> dataTableName = new Pointer<String>(null);
+        Map<String, SendDataTask> sendDataMap = new HashMap<String, SendDataTask>();
+        Map<String, JoinTask> joinMap = new HashMap<String, JoinTask>();
+        List<Task> otherTask = new ArrayList<Task>();
+        String randomString = "_" + (int) (Math.random() * Integer.MAX_VALUE);
+        processJoinTask((JoinNode) node, joinMap, sendDataMap, otherTask, joinTableName, dataTableName, jobId, jobOffset, proj, randomString);
+        tasks.addAll(otherTask);
+        tasks.addAll(sendDataMap.values());
+       // tasks.addAll(joinMap.values());
+        tasks.addAll(joinMap.values());
+        return tasks;
     }
     public List<Task> processUnionTask(UnionNode union, String jobId, AtomicInteger jobOffset, ProjectNode proj)
     {

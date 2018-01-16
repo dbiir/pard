@@ -12,7 +12,9 @@ import cn.edu.ruc.iir.pard.sql.tree.NotExpression;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public abstract class Expr
         implements Serializable
@@ -53,6 +55,107 @@ public abstract class Expr
     public Expr()
     {
     }
+    public static Expr replace(Expr e1, ColumnItem from, ColumnItem to)
+    {
+        Expr e = Expr.clone(e1);
+        if (e instanceof SingleExpr) {
+            SingleExpr se = (SingleExpr) e;
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv.equals(from)) {
+                lv = Item.clone(to);
+            }
+            if (rv.equals(from)) {
+                rv = Item.clone(to);
+            }
+            return new SingleExpr(lv, rv, se.getCompareType());
+        }
+        else if (e instanceof CompositionExpr) {
+            CompositionExpr ce = (CompositionExpr) e;
+            for (int i = 0; i < ce.getConditions().size(); i++) {
+                Expr ex = ce.getConditions().get(i);
+                ce.getConditions().set(i, replace(ex, from, to));
+            }
+            return ce;
+        }
+        else if (e instanceof UnaryExpr) {
+            UnaryExpr ue = (UnaryExpr) e;
+            return new UnaryExpr(ue.getCompareType(), replace(ue.getExpression(), from, to));
+        }
+        else if (e instanceof TrueExpr || e instanceof FalseExpr) {
+            return e;
+        }
+        return e;
+    }
+    public static Expr replaceTableName(Expr e1, String from, String to)
+    {
+        Expr e = Expr.clone(e1);
+        if (e instanceof SingleExpr) {
+            System.out.println("from " + e.toString());
+            SingleExpr se = (SingleExpr) e;
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv instanceof ColumnItem && ((ColumnItem) lv).getTableName().equalsIgnoreCase(from)) {
+                ColumnItem ci = (ColumnItem) lv;
+                lv = new ColumnItem(to, ci.getColumnName(), ci.getDataType());
+            }
+            if (rv instanceof ColumnItem && ((ColumnItem) rv).getTableName().equalsIgnoreCase(from)) {
+                ColumnItem ci = (ColumnItem) rv;
+                rv = new ColumnItem(to, ci.getColumnName(), ci.getDataType());
+            }
+            se = new SingleExpr(lv, rv, se.getCompareType());
+            //System.out.println("to " + se.toString());
+            return se;
+        }
+        else if (e instanceof CompositionExpr) {
+            CompositionExpr ce = (CompositionExpr) e;
+            for (int i = 0; i < ce.getConditions().size(); i++) {
+                Expr ex = ce.getConditions().get(i);
+                ce.getConditions().set(i, replaceTableName(ex, from, to));
+            }
+            return ce;
+        }
+        else if (e instanceof UnaryExpr) {
+            UnaryExpr ue = (UnaryExpr) e;
+            return new UnaryExpr(ue.getCompareType(), replaceTableName(ue.getExpression(), from, to));
+        }
+        else if (e instanceof TrueExpr || e instanceof FalseExpr) {
+            return e;
+        }
+        return e;
+    }
+    public static Expr generalReplace(Expr e1, Item from, Item to)
+    {
+        Expr e = Expr.clone(e1);
+        if (e instanceof SingleExpr) {
+            SingleExpr se = (SingleExpr) e;
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv.equals(from)) {
+                lv = Item.clone(to);
+            }
+            if (rv.equals(from)) {
+                rv = Item.clone(to);
+            }
+            return new SingleExpr(lv, rv, se.getCompareType());
+        }
+        else if (e instanceof CompositionExpr) {
+            CompositionExpr ce = (CompositionExpr) e;
+            for (int i = 0; i < ce.getConditions().size(); i++) {
+                Expr ex = ce.getConditions().get(i);
+                ce.getConditions().set(i, generalReplace(ex, from, to));
+            }
+            return ce;
+        }
+        else if (e instanceof UnaryExpr) {
+            UnaryExpr ue = (UnaryExpr) e;
+            return new UnaryExpr(ue.getCompareType(), generalReplace(ue.getExpression(), from, to));
+        }
+        else if (e instanceof TrueExpr || e instanceof FalseExpr) {
+            return e;
+        }
+        return e;
+    }
     public static Expr clone(Expr expr)
     {
         if (expr instanceof CompositionExpr) {
@@ -84,7 +187,7 @@ public abstract class Expr
                     SingleExpr se = (SingleExpr) e;
                     if (se.getLvalue() instanceof ColumnItem && se.getRvalue() instanceof ValueItem) {
                         ColumnItem ci = (ColumnItem) se.getLvalue();
-                        if (tableName != null && tableName.equals(ci.getTableName())) {
+                        if (tableName != null && tableName.equalsIgnoreCase(ci.getTableName())) {
                             list.add(se);
                         }
                         else {
@@ -107,6 +210,114 @@ public abstract class Expr
             }
         }
         return list;
+    }
+    // 可能有重复值
+    public static List<String> extractTableColumn(Expr expr, String tableName)
+    {
+        Expr extractOr = pdAnd.apply(expr);
+        Queue<Expr> traverse = new LinkedList<Expr>();
+        Queue<SingleExpr> output = new LinkedList<SingleExpr>();
+        List<String> out = new ArrayList<String>();
+        traverse.add(extractOr);
+        while (!traverse.isEmpty()) {
+            Expr pop = traverse.poll();
+            if (pop instanceof CompositionExpr) {
+                traverse.addAll(((CompositionExpr) pop).getConditions());
+            }
+            else if (pop instanceof UnaryExpr) {
+                traverse.add(((UnaryExpr) pop).getExpression());
+            }
+            else {
+                output.add((SingleExpr) pop);
+            }
+        }
+        while (!output.isEmpty()) {
+            SingleExpr se = output.poll();
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv instanceof ColumnItem && tableName.equals(((ColumnItem) lv).getTableName())) {
+                out.add(((ColumnItem) lv).getColumnName());
+            }
+            if (rv instanceof ColumnItem && tableName.equals(((ColumnItem) rv).getTableName())) {
+                out.add(((ColumnItem) rv).getColumnName());
+            }
+        }
+        return out;
+    }
+    public static List<SingleExpr> extractTableJoinExpr(Expr expr)
+    {
+        Expr extractOr = pdOr.apply(expr);
+        Queue<Expr> traverse = new LinkedList<Expr>();
+        Queue<SingleExpr> output = new LinkedList<SingleExpr>();
+        List<SingleExpr> out = new ArrayList<SingleExpr>();
+        traverse.add(extractOr);
+        while (!traverse.isEmpty()) {
+            Expr pop = traverse.poll();
+            if (pop instanceof CompositionExpr) {
+                traverse.addAll(((CompositionExpr) pop).getConditions());
+            }
+            else if (pop instanceof UnaryExpr) {
+                traverse.add(((UnaryExpr) pop).getExpression());
+            }
+            else {
+                output.add((SingleExpr) pop);
+            }
+        }
+        while (!output.isEmpty()) {
+            SingleExpr se = output.poll();
+            Item lv = se.getLvalue();
+            Item rv = se.getRvalue();
+            if (lv instanceof ColumnItem && rv instanceof ColumnItem) {
+                out.add(se);
+            }
+        }
+        return out;
+    }
+    //TODO: 从extractTableFilter的结果里提取垂直分片的信息。OK
+    // 以及提取多表连接的条件
+    // 以及 运用表连接条件和分片信息对表达式进一步化简
+    public static Expr extractTableColumnFilter(Expr expr, List<String> projectList)
+    {
+        expr = pdOr.apply(expr);
+        //只考虑两种情况，expr为SingleExpr和expr为 and的compositionExpr
+        CompositionExpr and = new CompositionExpr(LogicOperator.AND);
+        if (expr instanceof SingleExpr) {
+            SingleExpr e = (SingleExpr) expr;
+            ColumnItem ci = null;
+            if (e.getLvalue() instanceof ColumnItem) {
+                ci = (ColumnItem) e.getLvalue();
+            }
+            else {
+                return new TrueExpr();
+            }
+            if (projectList.contains(ci.getColumnName())) {
+                return expr;
+            }
+        }
+        else {
+            if (expr instanceof CompositionExpr && ((CompositionExpr) expr).getLogicOperator() == LogicOperator.AND) {
+                CompositionExpr ce = (CompositionExpr) expr;
+                for (Expr sub : ce.getConditions()) {
+                    if (sub instanceof SingleExpr) {
+                        SingleExpr e = (SingleExpr) sub;
+                        ColumnItem ci = null;
+                        if (e.getLvalue() instanceof ColumnItem) {
+                            ci = (ColumnItem) e.getLvalue();
+                        }
+                        if (projectList.contains(ci.getColumnName())) {
+                            and.getConditions().add(sub);
+                        }
+                    }
+                }
+                if (and.getConditions().size() == 1) {
+                    return and.getConditions().get(0);
+                }
+                else if (and.getConditions().size() > 1) {
+                    return and;
+                }
+            }
+        }
+        return new TrueExpr();
     }
     public static Expr extractTableFilter(Expr expr, String tableName)
     {
@@ -157,6 +368,15 @@ public abstract class Expr
     public static Expr and(Expr e1, Expr e2, LogicOperator opt)
     {
         CompositionExpr comp = new CompositionExpr(LogicOperator.AND);
+        comp.getConditions().add(e1);
+        comp.getConditions().add(e2);
+        comp = PushDownLaw.formatExpr(comp);
+        Expr and = optimize(comp, opt);
+        return and;
+    }
+    public static Expr or(Expr e1, Expr e2, LogicOperator opt)
+    {
+        CompositionExpr comp = new CompositionExpr(LogicOperator.OR);
         comp.getConditions().add(e1);
         comp.getConditions().add(e2);
         comp = PushDownLaw.formatExpr(comp);

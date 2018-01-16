@@ -6,11 +6,11 @@ import cn.edu.ruc.iir.pard.catalog.Fragment;
 import cn.edu.ruc.iir.pard.catalog.GddUtil;
 import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.catalog.Table;
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage;
 import cn.edu.ruc.iir.pard.commons.utils.DataType;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
 import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
 import cn.edu.ruc.iir.pard.planner.ConditionComparator;
-import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
 import cn.edu.ruc.iir.pard.sql.tree.Load;
@@ -217,7 +217,6 @@ public class LoadPlan
                         cnt.put(f, cnt.get(f) + 1);
                     }
                 }
-                break;
             }
 
             for (String f : fragments.keySet()) {

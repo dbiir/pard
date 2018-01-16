@@ -8,7 +8,6 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>pard-assembly</module>
         <module>pard-parser</module>
         <module>pard-connector</module>
         <module>pard-catalog</module>
@@ -21,9 +20,11 @@
         <module>pard-executor</module>
         <module>pard-commons</module>
         <module>pard-client</module>
+        <module>pard-assembly</module>
     </modules>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <antlr.version>4.6</antlr.version>
         <check-style.skip>false</check-style.skip>
         <check-style.failOnViolation>true</check-style.failOnViolation>

@@ -55,7 +55,12 @@ public class NodeHelper
     {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < list.size(); i++) {
-            sb.append(list.get(i).getColumnName());
+            if (list.get(i).getTableName() != null) {
+                sb.append(list.get(i).getTableName() + "." + list.get(i).getColumnName());
+            }
+            else {
+                sb.append(list.get(i).getColumnName());
+            }
             if (i != list.size() - 1) {
                 sb.append(",");
             }
@@ -78,6 +83,9 @@ public class NodeHelper
     public static List<PlanNode> getChildren(PlanNode node)
     {
         List<PlanNode> list = new ArrayList<PlanNode>();
+        if (node == null) {
+            return list;
+        }
         if (node instanceof UnionNode) {
             UnionNode union = (UnionNode) node;
             return union.getUnionChildren();
@@ -99,12 +107,16 @@ public class NodeHelper
     public static Map<String, String> getPlanNodeInfo(PlanNode node)
     {
         Map<String, String> obj = new HashMap<String, String>();
+        if (node == null) {
+            return obj;
+        }
         if (node instanceof TableScanNode) {
             TableScanNode cnode = (TableScanNode) node;
             obj.put("name", "TABLESCAN");
             obj.put("schema", cnode.getSchema());
             obj.put("table", cnode.getTable());
             obj.put("site", cnode.getSite());
+            obj.put("alias", cnode.getAlias());
             //obj.put("child", toJSON(cnode.getLeftChild()));
             return obj;
         }
@@ -135,12 +147,22 @@ public class NodeHelper
             LimitNode cnode = (LimitNode) node;
             obj.put("name", "LIMIT");
             obj.put("number", ((LimitNode) node).getLimitNum() + "");
+            return obj;
         }
         else if (node instanceof JoinNode) {
             JoinNode cnode = (JoinNode) node;
             obj.put("name", "JOIN");
-            JSONArray array = new JSONArray();
+            if (!cnode.getJoinSet().isEmpty()) {
+                obj.put("joinColumn", cnode.getJoinSet().toString());
+            }
+            if (!cnode.getExprList().isEmpty()) {
+                obj.put("exprList", cnode.getExprList().toString());
+            }
+            if (cnode.getOtherInfo() != null) {
+                obj.put("mark", cnode.getOtherInfo());
+            }
            // obj.put("joinSet", cnode.getJoinSet());
+            return obj;
         }
         else if (node instanceof InputNode) {
             InputNode cnode = (InputNode) node;
@@ -163,7 +185,10 @@ public class NodeHelper
             obj.put("name", "AggragationNode");
             return obj;
         }
-        return null;
+        else {
+            System.out.println(node.getClass().getName());
+        }
+        return obj;
     }
     public static JSONObject toJSON(PlanNode node)
     {

@@ -37,7 +37,7 @@ public abstract class Item
             DereferenceExpression de = (DereferenceExpression) expr;
             //System.out.println("base :" + de.getBase().getClass().getName());
             //System.out.println("field:" + de.getField());
-            ColumnItem ci = new ColumnItem(de.getBase().toString(), de.getField().toString(), 0);
+            ColumnItem ci = new ColumnItem(de.getBase().toString().toLowerCase(), de.getField().toString().toLowerCase(), 0);
             ci.expression = expr;
             return ci;
         }

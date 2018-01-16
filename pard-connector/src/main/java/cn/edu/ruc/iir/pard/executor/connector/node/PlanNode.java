@@ -47,7 +47,7 @@ public abstract class PlanNode
             if (childrenNum >= 2) {
                 return;
             }
-            childrenNum++;
+            //childrenNum++;
         }
         if (left) {
             children[0] = planNode;
@@ -55,6 +55,7 @@ public abstract class PlanNode
         else {
             children[1] = planNode;
         }
+        childrenNum = (children[0] == null ? 0 : 1) + (children[1] == null ? 0 : 1);
     }
 
     public String getName()

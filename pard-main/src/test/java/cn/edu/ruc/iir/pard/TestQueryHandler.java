@@ -19,7 +19,7 @@ public class TestQueryHandler
         JobScheduler scheduler = JobScheduler.INSTANCE();
         TaskScheduler taskScheduler = TaskScheduler.INSTANCE();
         PardQueryHandler handler = new PardQueryHandler(null, scheduler, taskScheduler);
-        String sql = "load \"/Users/Jelly/Downloads/eval_db/book.tsv\" into book.book";
+        String sql = "delete from booktest.customer where 1=1";
         PardResultSet resultSet = handler.executeQuery(sql);
         System.out.println(resultSet);
     }

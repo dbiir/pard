@@ -97,6 +97,7 @@ public class PardTaskExecutor
         Column col0 = new Column();
         col0.setDataType(DataType.INT.getType());
         col0.setColumnName("id");
+        col0.setTableName(((SendDataTask) task).getSchemaName());
         column.add(col0);
         Block block = new Block(column, 50 * 1024 * 1024, seq, taskId);
         block.setSequenceHasNext(false);

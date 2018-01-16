@@ -56,7 +56,8 @@ public class QueryJobExecutor
             }
         }
     }
-    public void executeFirstPhase()
+
+    private void executeFirstPhase()
     {
         BlockingQueue<Block> blocks = new LinkedBlockingQueue<>();
         for (SendDataTask task : sendDataTask) {

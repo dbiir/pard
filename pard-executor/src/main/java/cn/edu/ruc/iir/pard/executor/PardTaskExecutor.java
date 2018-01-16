@@ -88,6 +88,7 @@ public class PardTaskExecutor
             PardResultSet pardResultSet = connector.execute(task);
             resultSetMap.put(taskId, pardResultSet);
             sequenceIds.put(taskId, 0);
+            schemaMap.put(taskId, pardResultSet.getSchema());
         }
 
         PardResultSet resultSet = resultSetMap.get(taskId);
@@ -140,18 +141,26 @@ public class PardTaskExecutor
             PardResultSet pardResultSet = connector.execute(task);
             resultSetMap.put(taskId, pardResultSet);
             sequenceIds.put(taskId, 0);
+            schemaMap.put(taskId, pardResultSet.getSchema());
         }
         PardResultSet resultSet = resultSetMap.get(taskId);
         int seq = sequenceIds.get(taskId) + 1;
-        List<Column> column = new ArrayList<>();
-        Column col0 = new Column();
-        col0.setDataType(DataType.INT.getType());
-        col0.setColumnName("id");
-        column.add(col0);
-        Block block = new Block(column, 50 * 1024 * 1024, seq, taskId);
+        Block block = new Block(schemaMap.get(taskId), 50 * 1024 * 1024, seq, taskId);
         block.setSequenceHasNext(false);
         sequenceIds.put(taskId, seq);
-
+        Row row;
+        while ((row = resultSet.getNext()) != null) {
+            if (!block.addRow(row)) {
+                block.setSequenceHasNext(true);
+                break;
+            }
+        }
+        logger.info("Result block num: " + block.getRows().size());
+        if (!block.isSequenceHasNext()) {
+            resultSetMap.remove(taskId);
+            schemaMap.remove(taskId);
+            sequenceIds.remove(taskId);
+        }
         return block;
     }
 

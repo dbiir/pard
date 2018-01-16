@@ -33,6 +33,7 @@ import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
 import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
+import cn.edu.ruc.iir.pard.sql.tree.Table;
 import com.google.common.collect.ImmutableList;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;
@@ -862,18 +863,11 @@ public class PostgresConnector
                 joinSQL.append(" *");
             }
 
-            joinSQL.append(" from ");
+            StringBuilder fromClause = new StringBuilder(" from ");
             StringBuilder whereClause = new StringBuilder(" where ");
             List<PlanNode> joinChildren = joinNode.getJoinChildren();
-            if (joinNode.getExprList().size() > 0) {
-                whereClause.append(joinNode.getExprList().get(0).toString());
-            }
-            else {
-                whereClause.append((String)(joinNode.getJoinSet().iterator().next()));
-            }
-            whereClause.append(" ");
-
             Iterator it = joinChildren.iterator();
+            Boolean isFirst = true;
             while (it.hasNext()) {
                 PlanNode childRootNode = (PlanNode) it.next();
                 List<PlanNode> childNodeList = new ArrayList<>();
@@ -899,8 +893,62 @@ public class PostgresConnector
                         childFilterNode = (FilterNode) childNodeList.get(i);
                         childIsFilter = true;
                     }
+                    if (childNodeList.get(i) instanceof TableScanNode) {
+                        childTableScanNode = (TableScanNode) childNodeList.get(i);
+                        childIsTableScan = true;
+                    }
+                }
+                //HERE WE IGNORE THE childProjectNode
+                if (childIsFilter) {
+                    whereClause.append("and " + childFilterNode.getExpression());
+                }
+                if (childIsTableScan) {
+                    String schemaName = childTableScanNode.getSchema();
+                    String tableName = childTableScanNode.getTable();
+                    String aliasName = childTableScanNode.getAlias();
+                    if (isFirst) {
+                        fromClause.append(schemaName + "." + tableName);
+                        fromClause.append( "inner join ");
+                        isFirst = false;
+                    }
+                    else {
+                        fromClause.append(schemaName + "." + aliasName);
+                        fromClause.append(" on ");
+                    }
                 }
             }
+            if (joinNode.getExprList().size() > 0) {
+                whereClause.append(joinNode.getExprList().get(0).toString());
+            }
+            else {
+                whereClause.append((String)(joinNode.getJoinSet().iterator().next()));
+            }
+            if (isSort) {
+                whereClause.append("order by");
+                List<Column> columns = sortNode.getColumns();
+                for (Column column : columns) {
+                    whereClause.append(" ");
+                    whereClause.append(column.getColumnName());
+                    whereClause.append(",");
+                }
+                whereClause = new StringBuilder(whereClause.substring(0, whereClause.length() - 1));
+            }
+            if (isLimit) {
+                whereClause.append(" limit ");
+                whereClause.append(limitNode.getLimitNum());
+            }
+            joinSQL.append(fromClause.toString() + whereClause.toString());
+            logger.info("Postgres connector: " + joinSQL);
+            ResultSet rs = statement.executeQuery(joinSQL.toString());
+            List<Column> columns = new ArrayList<>();
+            if (isProject) {
+                columns = projectNode.getColumns();
+            }
+            logger.info("JOIN SUCCESSFULLY");
+            PardResultSet prs = new PardResultSet(PardResultSet.ResultStatus.OK, columns);
+            prs.setJdbcResultSet(rs);
+            prs.setJdbcConnection(conn);
+            return prs;
         }
         catch (SQLException e) {
             logger.info("JOIN FAILED");

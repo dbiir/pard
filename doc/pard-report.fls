@@ -146,6 +146,7 @@ INPUT /usr/local/texlive/2015/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/local/texlive/2015/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/local/texlive/2015/texmf-dist/tex/latex/listings/lstlang1.sty
 INPUT /usr/local/texlive/2015/texmf-dist/tex/latex/listings/lstlang1.sty
+INPUT figure/release.png
 INPUT figure/architecture.png
 INPUT figure/pard-node-in.png
 INPUT figure/timeline.png

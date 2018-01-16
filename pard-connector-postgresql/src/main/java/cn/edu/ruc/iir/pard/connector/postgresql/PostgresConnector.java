@@ -637,7 +637,7 @@ public class PostgresConnector
             Map<String, Expression> siteExpression = task.getSiteExpression(); // site -> Expression
             Map<String, String> tmpTableMap = task.getTmpTableMap(); // site -> tmpTableName
 
-            boolean flag = dispense(siteExpression, tmpTableMap, rs, cols, schema);
+            boolean flag = dispense(siteExpression, tmpTableMap, rs, cols, schema, table);
             if (flag == true) {
                 conn.close();
                 return PardResultSet.okResultSet;
@@ -841,7 +841,7 @@ public class PostgresConnector
         return PardResultSet.execErrResultSet;
     }
 
-    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs, List<Column> columns, String schema)
+    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs, List<Column> columns, String schema, String table)
     {
         boolean isSucceeded;
         Map<String, BufferedWriter> localWriter = new HashMap<String, BufferedWriter>(); // site -> local BufferedWirter
@@ -849,7 +849,7 @@ public class PostgresConnector
             try {
                 BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/dev/shm/" + site + tmpTableMap.get(site) + "SENDDATA")));
                 localWriter.put(site, bw);
-                bw.write(schema + "\t" + tmpTableMap.get(site) + "\n"); //schema name, table name
+                bw.write(schema + "\t" + tmpTableMap.get(site) + "\t" + table + "\n"); //schema name, table name
                 Iterator it = columns.iterator();
                 String secondLine = "";
                 while (it.hasNext()) {
@@ -955,7 +955,7 @@ public class PostgresConnector
             ValueItem vi = vList.get(i);
             e = Expr.generalReplace(e, ci, vi);
         }
-        System.out.println(e.toString());
+//        System.out.println(e.toString());
         e = Expr.optimize(e, Expr.LogicOperator.AND);
         if (e instanceof TrueExpr) {
             return true;

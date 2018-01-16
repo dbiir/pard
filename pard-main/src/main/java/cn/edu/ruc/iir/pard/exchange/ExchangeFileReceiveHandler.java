@@ -90,8 +90,9 @@ public class ExchangeFileReceiveHandler
                     }
                     BufferedReader br = new BufferedReader(new FileReader(new File(this.path)));
                     String[] header = br.readLine().split("\t");
+                    logger.info("SEND DATA HEADER: " + header[0] + " " + header[1]);
                     TableDao tableDao = new TableDao(header[0]);
-                    Table table = tableDao.loadByName(header[1]);
+                    Table table = tableDao.loadByName(header[2]);
                     HashMap<String, Column> tableColumn = table.getColumns();
                     List<Column> columnDefinitions = new ArrayList<>();
                     String[] columnNames = br.readLine().split("\t");

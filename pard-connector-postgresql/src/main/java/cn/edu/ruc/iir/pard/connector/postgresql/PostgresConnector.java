@@ -852,7 +852,10 @@ public class PostgresConnector
             if (isProject) {
                 List<Column> columns = projectNode.getColumns();
                 for (Column column : columns) {
-                    joinSQL.append(column.getTableName() + "." + column.getColumnName());
+                    if (!column.getTableName().isEmpty()) {
+                        joinSQL.append(column.getTableName()).append(".");
+                    }
+                    joinSQL.append(column.getColumnName());
                     joinSQL.append(",");
                 }
                 joinSQL = new StringBuilder(joinSQL.substring(0, joinSQL.length() - 1));
@@ -862,13 +865,9 @@ public class PostgresConnector
             }
 
             StringBuilder fromClause = new StringBuilder(" FROM ");
-            StringBuilder whereClause = new StringBuilder(" WHERE ");
-            if (joinNode.getExprList().size() > 0) {
-                whereClause.append(joinNode.getExprList().get(0).toString());
-            }
-            else {
-                whereClause.append((String) (joinNode.getJoinSet().iterator().next()));
-            }
+            StringBuilder joinCondition = new StringBuilder(" WHERE ");
+            StringBuilder whereClause = new StringBuilder(" ");
+            List<String> schemaTableName = new ArrayList<>();
             List<PlanNode> joinChildren = joinNode.getJoinChildren();
             Iterator it = joinChildren.iterator();
             Boolean isFirst = true;
@@ -914,22 +913,40 @@ public class PostgresConnector
                         if (aliasName == null) {
                             fromClause.append(schemaName + "." + tableName);
                             fromClause.append(" , ");
+                            schemaTableName.add(schemaName + "." + tableName);
                         }
                         else {
-                            fromClause.append(schemaName + "." + tableName + " as " + schemaName + "." + aliasName);
+                            fromClause.append(schemaName + "." + tableName + " as " + aliasName);
                             fromClause.append(" , ");
+                            schemaTableName.add(schemaName + "." + tableName);
                         }
                         isFirst = false;
                     }
                     else {
                         if (aliasName == null) {
                             fromClause.append(schemaName + "." + tableName);
+                            schemaTableName.add(schemaName + "." + tableName);
                         }
                         else {
-                            fromClause.append(schemaName + "." + tableName + " as " + schemaName + "." + aliasName);
+                            fromClause.append(schemaName + "." + tableName + " as " + aliasName);
+                            schemaTableName.add(schemaName + "." + tableName);
                         }
                     }
                 }
+            }
+
+            if (joinNode.getExprList().size() > 0) {
+                joinCondition.append(joinNode.getExprList().get(0).toString());
+            }
+            else {
+                String joinColumn = ((String) (joinNode.getJoinSet().iterator().next()));
+                for (int i = 0; i < schemaTableName.size(); i++) {
+                    joinCondition.append(schemaTableName.get(i) + "." + joinColumn);
+                    if (i != schemaTableName.size() - 1) {
+                        joinCondition.append(" = ");
+                    }
+                }
+                joinCondition.append(" ");
             }
 
             if (isSort) {
@@ -946,7 +963,7 @@ public class PostgresConnector
                 whereClause.append(" LIMIT ");
                 whereClause.append(limitNode.getLimitNum());
             }
-            joinSQL.append(fromClause.toString() + whereClause.toString());
+            joinSQL.append(fromClause.toString() + joinCondition.toString() + whereClause.toString());
             logger.info("Postgres connector: " + joinSQL);
             ResultSet rs = statement.executeQuery(joinSQL.toString());
             List<Column> columns = new ArrayList<>();

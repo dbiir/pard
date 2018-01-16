@@ -55,7 +55,12 @@ public class NodeHelper
     {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < list.size(); i++) {
-            sb.append(list.get(i).getColumnName());
+            if (list.get(i).getTableName() != null) {
+                sb.append(list.get(i).getTableName() + "." + list.get(i).getColumnName());
+            }
+            else {
+                sb.append(list.get(i).getColumnName());
+            }
             if (i != list.size() - 1) {
                 sb.append(",");
             }

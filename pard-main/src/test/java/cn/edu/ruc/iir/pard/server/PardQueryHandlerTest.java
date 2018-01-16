@@ -25,7 +25,8 @@ public class PardQueryHandlerTest
         UsePlan.setCurrentSchema("book");
         //String sql = "select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000";
         //String sql = "select * from book@pard0";
-        String sql = "select * from book,orders where book.id=orders.book_id";
+        //String sql = "select * from book,orders where book.id=orders.book_id";
+        String sql = "select * from customer";
         Statement stmt = parser.createStatement(sql);
         PardPlanner planner = new PardPlanner();
         Plan plan = planner.plan(stmt);

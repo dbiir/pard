@@ -812,7 +812,7 @@ public class PostgresConnector
         PlanNode rootNode = task.getNode();
         try {
             Statement statement = conn.createStatement();
-            StringBuilder joinSQL = new StringBuilder("select ");
+            StringBuilder joinSQL = new StringBuilder("SELECT ");
             List<PlanNode> nodeList = new ArrayList<>();
             int nodeListCursor = 0;
             boolean isProject = false;
@@ -863,8 +863,14 @@ public class PostgresConnector
                 joinSQL.append(" *");
             }
 
-            StringBuilder fromClause = new StringBuilder(" from ");
-            StringBuilder whereClause = new StringBuilder(" where ");
+            StringBuilder fromClause = new StringBuilder(" FROM ");
+            StringBuilder whereClause = new StringBuilder(" WHERE ");
+            if (joinNode.getExprList().size() > 0) {
+                whereClause.append(joinNode.getExprList().get(0).toString());
+            }
+            else {
+                whereClause.append((String) (joinNode.getJoinSet().iterator().next()));
+            }
             List<PlanNode> joinChildren = joinNode.getJoinChildren();
             Iterator it = joinChildren.iterator();
             Boolean isFirst = true;
@@ -900,31 +906,36 @@ public class PostgresConnector
                 }
                 //HERE WE IGNORE THE childProjectNode
                 if (childIsFilter) {
-                    whereClause.append("and " + childFilterNode.getExpression());
+                    whereClause.append(" AND " + childFilterNode.getExpression());
                 }
                 if (childIsTableScan) {
                     String schemaName = childTableScanNode.getSchema();
                     String tableName = childTableScanNode.getTable();
                     String aliasName = childTableScanNode.getAlias();
                     if (isFirst) {
-                        fromClause.append(schemaName + "." + tableName);
-                        fromClause.append("inner join ");
+                        if (aliasName == null) {
+                            fromClause.append(schemaName + "." + tableName);
+                            fromClause.append(" , ");
+                        }
+                        else {
+                            fromClause.append(schemaName + "." + tableName + " as " + schemaName + "." + aliasName);
+                            fromClause.append(" , ");
+                        }
                         isFirst = false;
                     }
                     else {
-                        fromClause.append(schemaName + "." + aliasName);
-                        fromClause.append(" on ");
+                        if (aliasName == null) {
+                            fromClause.append(schemaName + "." + tableName);
+                        }
+                        else {
+                            fromClause.append(schemaName + "." + tableName + " as " schemaName + "." + aliasName);
+                        }
                     }
                 }
             }
-            if (joinNode.getExprList().size() > 0) {
-                whereClause.append(joinNode.getExprList().get(0).toString());
-            }
-            else {
-                whereClause.append((String) (joinNode.getJoinSet().iterator().next()));
-            }
+
             if (isSort) {
-                whereClause.append("order by");
+                whereClause.append("ORDER BY");
                 List<Column> columns = sortNode.getColumns();
                 for (Column column : columns) {
                     whereClause.append(" ");
@@ -934,7 +945,7 @@ public class PostgresConnector
                 whereClause = new StringBuilder(whereClause.substring(0, whereClause.length() - 1));
             }
             if (isLimit) {
-                whereClause.append(" limit ");
+                whereClause.append(" LIMIT ");
                 whereClause.append(limitNode.getLimitNum());
             }
             joinSQL.append(fromClause.toString() + whereClause.toString());

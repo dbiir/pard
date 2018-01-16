@@ -194,7 +194,7 @@ public class ExprTest
             ValueItem vi = vList.get(i);
             e = Expr.generalReplace(e, ci, vi);
         }
-        System.out.println(e.toString());
+        //System.out.println(e.toString());
         e = Expr.optimize(e, LogicOperator.AND);
         if (e instanceof TrueExpr) {
             return true;

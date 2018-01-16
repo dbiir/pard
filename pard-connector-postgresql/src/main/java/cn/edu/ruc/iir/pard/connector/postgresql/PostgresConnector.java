@@ -668,7 +668,7 @@ public class PostgresConnector
         String schemaName = task.getSchemaName();
         String tableName = task.getTableName();
         DropTableTask dropTableTask = new DropTableTask(schemaName, tableName);
-        PardResultSet prsDropTempTale = dropTempTable(conn, dropTableTask);
+        //PardResultSet prsDropTempTale = dropTempTable(conn, dropTableTask);
         CreateTableTask createTableTask = new CreateTableTask(schemaName, tableName, false, task.getColumnDefinitions());
         PardResultSet prsCreateTempTable = createTempTable(conn, createTableTask);
         String filePath1 = task.getPath();

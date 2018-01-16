@@ -424,6 +424,7 @@ public class TaskScheduler
         Expr joinTaskSingleTableExpr = extractTableExpr(joinExpr, dataExpr, joinTableName.getValue(), node);
         String tmpTableName = "tmp_" + dataTableName.getValue() + "_" + jobId + "_" + joinTable.getSite();
         tmpTableName = tmpTableName.replace('-', '_').replace('-', '_').replace('-', '_');
+        tmpTableName += (int) (Math.random() * Integer.MAX_VALUE);
         while (tmpTableName.contains(" ")) {
             tmpTableName = tmpTableName.replace(" ", "");
         }

@@ -375,6 +375,16 @@ public class TaskScheduler
         }
         return null;
     }
+    public ProjectNode getProjectNode(PlanNode node)
+    {
+        while (node != null) {
+            if (node instanceof ProjectNode) {
+                return (ProjectNode) node;
+            }
+            node = node.getLeftChild();
+        }
+        return null;
+    }
     public Expr getTableFilterNode(PlanNode node)
     {
         while (node != null) {
@@ -558,25 +568,17 @@ public class TaskScheduler
             if (iter.hasNext()) {
                 common = iter.next();
             }
-            List<Column> clist = new ArrayList<Column>();
-            for (Column c : proj.getColumns()) {
-                Column col = new Column(c);
-                if (!node.getJoinSet().isEmpty()) {
-                    if (!col.getColumnName().equals(common)) {
-                        col.setTableName(null);
-                    }
+            /*
+            if ((!node.getJoinSet().isEmpty()) && node.getExprList().isEmpty()) {
+                if (!col.getColumnName().equals(common)) {
+                    col.setTableName(null);
                 }
-                //设置为实际表的名字 但是因为别名的存在 所以目前不需要
-                //if (dataTableName.getValue().equals(col.getTableName())) {
-                   // col.setTableName(tmpTableName);
-                //}
-                clist.add(col);
-            }
-            PlanNode output = new OutputNode();
-            PlanNode p = new ProjectNode(clist);
-            output.setChildren(p, true, true);
+            }*/
+            //设置为实际表的名字 但是因为别名的存在 所以目前不需要
+            //if (dataTableName.getValue().equals(col.getTableName())) {
+               // col.setTableName(tmpTableName);
+            //}
             JoinNode join = new JoinNode();
-            p.setChildren(join, true, true);
             join.getJoinSet().addAll(node.getJoinSet());
             join.getExprList().addAll(node.getExprList());
             //TODO: add children.
@@ -613,6 +615,31 @@ public class TaskScheduler
                 joinTask.setTmpTableName(null);
             }
             joinTask.setTaskId(jobId + "_" + jobOffset.addAndGet(1));
+            PlanNode output = new OutputNode();
+            ProjectNode leftProject = getProjectNode(join.getJoinChildren().get(0));
+            ProjectNode rightProject = getProjectNode(join.getJoinChildren().get(1));
+            List<Column> clist = new ArrayList<Column>();
+            for (Column c : proj.getColumns()) {
+                boolean hit = false;
+                for (Column lc : leftProject.getColumns()) {
+                    if (lc.getColumnName().equals(c.getColumnName())) {
+                        clist.add(lc);
+                        hit = true;
+                        break;
+                    }
+                }
+                if (!hit) {
+                    for (Column rc : rightProject.getColumns()) {
+                        if (rc.getColumnName().equals(c.getColumnName())) {
+                            clist.add(rc);
+                            break;
+                        }
+                    }
+                }
+            }
+            PlanNode p = new ProjectNode(clist);
+            output.setChildren(p, true, true);
+            p.setChildren(join, true, true);
             joinTask.setNode(output);
             //System.out.println("joinNode1" + p);
             joinMap.put(joinTable.getSite(), joinTask);

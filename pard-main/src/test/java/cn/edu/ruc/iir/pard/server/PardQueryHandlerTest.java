@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.server;
 
 import cn.edu.ruc.iir.pard.executor.connector.JoinTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
+import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.SendDataTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
@@ -30,7 +31,8 @@ public class PardQueryHandlerTest
         //String sql = "select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000";
         //String sql = "select * from book@pard0";
         //String sql = "select * from book,orders where book.id=orders.book_id";
-        String sql = "select * from customer";
+        //String sql = "select * from customer";
+        String sql = "select customer_id,quantity from orders where quantity<8";
         Statement stmt = parser.createStatement(sql);
         PardPlanner planner = new PardPlanner();
         Plan plan = planner.plan(stmt);
@@ -48,6 +50,12 @@ public class PardQueryHandlerTest
             }
             else if (t instanceof JoinTask) {
                 QueryPlan p = new QueryTestPlan(((JoinTask) t).getNode(), "Join_" + t.getTaskId());
+                System.out.println(p.getPlan());
+                PardServlet.planList.add(p);
+            }
+            else if (t instanceof QueryTask) {
+                QueryTask tt = (QueryTask) t;
+                QueryPlan p = new QueryTestPlan(tt.getPlanNode(), "table_" + t.getTaskId().replace('-', '_'));
                 System.out.println(p.getPlan());
                 PardServlet.planList.add(p);
             }

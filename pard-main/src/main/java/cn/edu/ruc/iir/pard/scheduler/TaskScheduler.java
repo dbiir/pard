@@ -326,6 +326,7 @@ public class TaskScheduler
     public QueryTask singleSiteTableTask(PlanNode node, String jobId, AtomicInteger jobOffset)
     {
         TableScanNode tableScanNode = null;
+        PlanNode root = node;
         if (node instanceof TableScanNode) {
             tableScanNode = (TableScanNode) node;
         }
@@ -339,7 +340,7 @@ public class TaskScheduler
         if (tableScanNode == null) {
             return null;
         }
-        QueryTask task = new QueryTask(tableScanNode.getSite(), NodeHelper.copyNode(node));
+        QueryTask task = new QueryTask(tableScanNode.getSite(), NodeHelper.copyNode(root));
         task.setTaskId(jobId + "-" + jobOffset.addAndGet(1));
         return task;
     }

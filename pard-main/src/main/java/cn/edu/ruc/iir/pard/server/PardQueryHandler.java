@@ -58,10 +58,19 @@ public class PardQueryHandler
     @Override
     public void run()
     {
+        int c = 0;
         try (BufferedReader input = new BufferedReader(
                 new InputStreamReader(socket.getInputStream()))) {
             while (true) {
                 String line = input.readLine();
+                if (line == null) {
+                    //logger.info("Empty line");
+                    c++;
+                    if (c > 10) {
+                        break;
+                    }
+                    continue;
+                }
                 if (line.equalsIgnoreCase("EXIT") ||
                         line.equalsIgnoreCase("QUIT")) {
                     logger.info("CLIENT QUIT");

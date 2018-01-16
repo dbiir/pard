@@ -32,4 +32,13 @@ public class TestPardClient
         System.out.println(RowConstructor.printRow(rowConstructor.build(),
                 ImmutableList.of(DataType.VARCHAR.getType(), DataType.INT.getType(), DataType.DOUBLE.getType())));
     }
+
+    @Test
+    public void testClient()
+    {
+        String host = "10.77.40.31";
+        int port = 11013;
+        String[] args = {host, port + ""};
+        PardClient.main(args);
+    }
 }

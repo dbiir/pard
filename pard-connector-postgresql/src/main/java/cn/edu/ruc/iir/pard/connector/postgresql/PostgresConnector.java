@@ -874,6 +874,8 @@ public class PostgresConnector
             StringBuilder joinCondition = new StringBuilder(" WHERE ");
             StringBuilder whereClause = new StringBuilder(" ");
             List<String> schemaTableName = new ArrayList<>();
+            List<String> tableNameArray = new ArrayList<>();
+            List<String> tableAliasArray = new ArrayList<>();
             List<PlanNode> joinChildren = joinNode.getJoinChildren();
             Iterator it = joinChildren.iterator();
             Boolean isFirst = true;
@@ -919,24 +921,27 @@ public class PostgresConnector
                         if (aliasName == null) {
                             fromClause.append(schemaName + "." + tableName);
                             fromClause.append(" , ");
-                            schemaTableName.add(schemaName + "." + tableName);
+                            tableAliasArray.add(tableName);
                         }
                         else {
                             fromClause.append(schemaName + "." + tableName + " as " + aliasName);
                             fromClause.append(" , ");
-                            schemaTableName.add(schemaName + "." + tableName);
+                            tableAliasArray.add(aliasName);
                         }
+                        schemaTableName.add(schemaName + "." + tableName);
+                        tableNameArray.add(tableName);
                         isFirst = false;
                     }
                     else {
                         if (aliasName == null) {
                             fromClause.append(schemaName + "." + tableName);
-                            schemaTableName.add(schemaName + "." + tableName);
+                            tableAliasArray.add(tableName);
                         }
                         else {
                             fromClause.append(schemaName + "." + tableName + " as " + aliasName);
-                            schemaTableName.add(schemaName + "." + tableName);
+                            tableAliasArray.add(aliasName);
                         }
+                        schemaTableName.add(schemaName + "." + tableName);
                     }
                 }
             }
@@ -946,8 +951,8 @@ public class PostgresConnector
             }
             else {
                 String joinColumn = ((String) (joinNode.getJoinSet().iterator().next()));
-                for (int i = 0; i < schemaTableName.size(); i++) {
-                    joinCondition.append(schemaTableName.get(i) + "." + joinColumn);
+                for (int i = 0; i < tableAliasArray.size(); i++) {
+                    joinCondition.append(tableAliasArray.get(i) + "." + joinColumn);
                     if (i != schemaTableName.size() - 1) {
                         joinCondition.append(" = ");
                     }

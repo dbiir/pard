@@ -26,29 +26,34 @@ public class PardQueryHandlerTest
     @Test
     public void executeQuery()
     {
-        UsePlan.setCurrentSchema("book");
+        UsePlan.setCurrentSchema("booktest");
         //String sql = "select Book.title,Book.copies,Publisher.name,Publisher.nation from Book,Publisher where Book.publisher_id=Publisher.id and Publisher.nation='USA' and Book.copies > 1000";
         //String sql = "select * from book@pard0";
-        String sql = "select * from book,orders where book.id=orders.book_id";
-        //String sql = "select * from customer";
+        //String sql = "select * from book,orders where book.id=orders.book_id";
+        String sql = "select * from customer";
         Statement stmt = parser.createStatement(sql);
         PardPlanner planner = new PardPlanner();
         Plan plan = planner.plan(stmt);
-        plan.setJobId("aa");
+        plan.setJobId("customer_k");
+        QueryPlan qPlan = (QueryPlan) plan;
+        System.out.println(qPlan.getPlan());
         List<Task> task = TaskScheduler.INSTANCE().generateTasks(plan);
         PardServlet.planList.add((QueryPlan) plan);
         for (Task t : task) {
             System.out.println(t.getTaskId());
             if (t instanceof SendDataTask) {
                 QueryPlan p = new QueryTestPlan(((SendDataTask) t).getNode(), "send_Data_" + t.getTaskId());
+                System.out.println(p.getPlan());
                 PardServlet.planList.add(p);
             }
             else if (t instanceof JoinTask) {
                 QueryPlan p = new QueryTestPlan(((JoinTask) t).getNode(), "Join_" + t.getTaskId());
+                System.out.println(p.getPlan());
                 PardServlet.planList.add(p);
             }
         }
         System.out.println(PardServlet.planList.size());
+
         //PardWebServer.main(new String[0]);
 
         Job job = JobScheduler.INSTANCE().newJob();
@@ -56,5 +61,6 @@ public class PardQueryHandlerTest
         job.setJobState(JobState.EXECUTING);
         job.setPlan(plan);
         PardResultSet rs = TaskScheduler.INSTANCE().executeJob(job);
+        PardWebServer.main(new String[0]);
     }
 }

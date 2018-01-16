@@ -1,4 +1,4 @@
-package cn.edu.ruc.iir.pard.planner;
+package cn.edu.ruc.iir.pard.commons.exception;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,6 +7,7 @@ public class ErrorMessage
 {
     private int errcode;
     private String errmsg;
+    private transient PardException exception;
     private static Map<Integer, String> template = null;
     private static ErrorMessage ok = throwMessage(ErrCode.OK, "");
     public static ErrorMessage throwMessage(int errorCode, Object...objects)
@@ -22,6 +23,7 @@ public class ErrorMessage
     }
     public static class ErrCode
     {
+        public static final int SomeSiteDown = 2;
         public static final int OK = 1;
         public static final int ParseError = -10000;
         public static final int SchemaExsits = -10001;
@@ -48,6 +50,8 @@ public class ErrorMessage
         public static final int UnSupportedQuery = -10022;
         public static final int FileNotFound = -10023;
         public static final int FileIOError = -10024;
+        public static final int AllSiteDown = -10025;
+        public static final int ColumnNameIsAmbiguous = -10026;
     }
     public static void init()
     {
@@ -78,7 +82,10 @@ public class ErrorMessage
         template.put(ErrCode.UnSupportedQuery, "Unsupported query:%s");
         template.put(ErrCode.FileNotFound, "File not exists");
         template.put(ErrCode.FileIOError, "File IO error");
+        template.put(ErrCode.AllSiteDown, "Congratulations! The table %s site is all lost connection. Pard needn't do a query plan, thank you!");
+        template.put(ErrCode.ColumnNameIsAmbiguous, "Column name %s is ambigouous in %s");
         template.put(ErrCode.OK, "success");
+        template.put(ErrCode.SomeSiteDown, "Pard lost some sites' connections, the information you want may be not complete.");
     }
     static
     {
@@ -92,14 +99,24 @@ public class ErrorMessage
         return template;
     }
     public ErrorMessage()
-    {}
+    {
+        try {
+            exception = new PardException();
+            throw exception;
+        }
+        catch (PardException e) {
+            exception = e;
+        }
+    }
     public ErrorMessage(String errMsg, int errcode)
     {
+        this();
         this.errcode = errcode;
         this.errmsg = errMsg;
     }
     public ErrorMessage(int errorCode, Object...objects)
     {
+        this();
         String tmp = getTemplate().get(errorCode);
         this.errcode = errorCode;
         this.errmsg = String.format(tmp, objects);
@@ -129,5 +146,10 @@ public class ErrorMessage
     public String toString()
     {
         return String.format("ERROR:[%d] %s", errcode, errmsg);
+    }
+    // get set
+    public PardException getException()
+    {
+        return exception;
     }
 }

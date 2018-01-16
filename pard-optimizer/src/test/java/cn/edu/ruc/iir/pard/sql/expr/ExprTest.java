@@ -1,5 +1,9 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
+import cn.edu.ruc.iir.pard.catalog.Column;
+import cn.edu.ruc.iir.pard.commons.memory.Row;
+import cn.edu.ruc.iir.pard.commons.utils.DataType.DataTypeInt;
+import cn.edu.ruc.iir.pard.commons.utils.RowConstructor;
 import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
 import cn.edu.ruc.iir.pard.sql.expr.rules.ContainEliminateLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.MinimalItemLaw;
@@ -16,6 +20,8 @@ import cn.edu.ruc.iir.pard.sql.tree.Select;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class ExprTest
@@ -133,5 +139,91 @@ public class ExprTest
                 //System.out.println(pl.apply(pase));
             }
         }
+    }
+    /**
+     * A表 id name city age
+     * */
+    @Test
+    public void testGeneralReplace()
+    {
+        SqlParser parser = new SqlParser();
+        String expr = "a.id>'E100' and a.age<18";
+        Expression expression = parser.createExpression(expr);
+        RowConstructor constructor = new RowConstructor();
+        constructor.appendString("'E101'");
+        constructor.appendString("'Geroge'");
+        constructor.appendString("'Beijing'");
+        constructor.appendInt(12);
+        Row row = constructor.build();
+        String[] col = new String[]{"id", "name", "city", "age"};
+        List<Column> cols = new ArrayList<>();
+        for (int i = 0; i < col.length; i++) {
+            Column c = new Column();
+            c.setColumnName(col[i]);
+            c.setTableName("a");
+            c.setDataType(DataTypeInt.VARCHAR);
+            if (i == col.length - 1) {
+                c.setDataType(DataTypeInt.INT);
+            }
+            cols.add(c);
+        }
+        boolean match = match(expression, row, cols);
+        System.out.println(match);
+        expr = "a.id>'E200' and a.age<18";
+        expression = parser.createExpression(expr);
+        match = match(expression, row, cols);
+        System.out.println(match);
+    }
+
+    public Boolean match(Expression expr, Row row, List<Column> col)
+    {
+        List<Integer> types = new ArrayList<Integer>();
+        col.forEach(x -> types.add(x.getDataType()));
+        String[] list = RowConstructor.printRow(row, types).split("\t");
+        List<ColumnItem> ciList = new ArrayList<ColumnItem>();
+        List<ValueItem> vList = new ArrayList<ValueItem>();
+        Expr e = Expr.parse(expr);
+        for (int i = 0; i < list.length; i++) {
+            ColumnItem ci = new ColumnItem(col.get(i).getTableName(), col.get(i).getColumnName(), col.get(i).getDataType());
+            ValueItem vi = new ValueItem(parseFromString(col.get(i).getDataType(), list[i]));
+            ciList.add(ci);
+            vList.add(vi);
+        }
+        for (int i = 0; i < list.length; i++) {
+            ColumnItem ci = ciList.get(i);
+            ValueItem vi = vList.get(i);
+            e = Expr.generalReplace(e, ci, vi);
+        }
+        //System.out.println(e.toString());
+        e = Expr.optimize(e, LogicOperator.AND);
+        if (e instanceof TrueExpr) {
+            return true;
+        }
+        else if (e instanceof FalseExpr) {
+            return false;
+        }
+        return null;
+    }
+
+    public static Comparable parseFromString(int dataType, String value)
+    {
+        switch(dataType) {
+            case DataTypeInt.SMALLINT:
+            case DataTypeInt.BIGINT:
+            case DataTypeInt.INT:
+                return Long.parseLong(value);
+            case DataTypeInt.FLOAT:
+            case DataTypeInt.DOUBLE:
+                return Double.parseDouble(value);
+            case DataTypeInt.TEXT:
+            case DataTypeInt.CHAR:
+            case DataTypeInt.VARCHAR:
+                return value;
+            case DataTypeInt.TIME:
+            case DataTypeInt.DATE:
+            case DataTypeInt.TIMESTAMP:
+                return value;
+        }
+        return value;
     }
 }

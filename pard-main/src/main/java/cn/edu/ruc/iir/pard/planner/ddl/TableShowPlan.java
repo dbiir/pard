@@ -1,8 +1,8 @@
 package cn.edu.ruc.iir.pard.planner.ddl;
 
 import cn.edu.ruc.iir.pard.catalog.Schema;
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage;
 import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
-import cn.edu.ruc.iir.pard.planner.ErrorMessage;
 import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 import cn.edu.ruc.iir.pard.sql.tree.ShowTables;

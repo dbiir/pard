@@ -32,7 +32,15 @@ public class PardWebServer
         context.addServlet(staticHolder, "*.css");
         context.addServlet(staticHolder, "*.jpg");
         context.setResourceBase(".");
-        ServletHolder pardHolder = new ServletHolder(new PardServlet());
+        PardServlet s = new PardServlet();
+        //try {
+           // s.test();
+        //}
+        //catch (ServletException e1) {
+            // TODO Auto-generated catch block
+           // e1.printStackTrace();
+        //}
+        ServletHolder pardHolder = new ServletHolder(s);
         context.addServlet(pardHolder, "*.pard");
         //context.setParentLoaderPriority(true);
         jettyServer.setHandler(context);

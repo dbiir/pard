@@ -1,6 +1,9 @@
 package cn.edu.ruc.iir.pard.server;
 
+import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage;
 import cn.edu.ruc.iir.pard.commons.exception.ParsingException;
+import cn.edu.ruc.iir.pard.commons.exception.SemanticException;
+import cn.edu.ruc.iir.pard.commons.exception.TaskSchedulerException;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
@@ -8,7 +11,6 @@ import cn.edu.ruc.iir.pard.planner.Plan;
 import cn.edu.ruc.iir.pard.scheduler.Job;
 import cn.edu.ruc.iir.pard.scheduler.JobScheduler;
 import cn.edu.ruc.iir.pard.scheduler.TaskScheduler;
-import cn.edu.ruc.iir.pard.semantic.SemanticException;
 import cn.edu.ruc.iir.pard.sql.parser.SqlParser;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
 
@@ -56,10 +58,19 @@ public class PardQueryHandler
     @Override
     public void run()
     {
+        int c = 0;
         try (BufferedReader input = new BufferedReader(
                 new InputStreamReader(socket.getInputStream()))) {
             while (true) {
                 String line = input.readLine();
+                if (line == null) {
+                    //logger.info("Empty line");
+                    c++;
+                    if (c > 10) {
+                        break;
+                    }
+                    continue;
+                }
                 if (line.equalsIgnoreCase("EXIT") ||
                         line.equalsIgnoreCase("QUIT")) {
                     logger.info("CLIENT QUIT");
@@ -96,6 +107,9 @@ public class PardQueryHandler
         catch (ParsingException e) {
             return new PardResultSet(PardResultSet.ResultStatus.PARSING_ERR);
         }
+        catch (NullPointerException e1) {
+            return new PardResultSet(PardResultSet.ResultStatus.PARSING_ERR, e1.getMessage());
+        }
         if (statement == null) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create statement for sql: " + sql);
@@ -106,27 +120,39 @@ public class PardQueryHandler
         logger.info("Created statement for job[" + job.getJobId() + "], job state: " + job.getJobState());
 
         Plan plan = null;
+        ErrorMessage msg = ErrorMessage.getOKMessage();
         try {
             plan = planner.plan(statement);
         }
         catch (SemanticException e) {
             logger.log(Level.WARNING, e.getSemanticErrorMessage().toString());
+            msg = e.getSemanticErrorMessage();
+            if (msg == null) {
+                msg = ErrorMessage.getOKMessage();
+            }
         }
         if (plan == null) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create plan for sql: " + sql);
-            return new PardResultSet(PardResultSet.ResultStatus.PLANNING_ERR);
+            return new PardResultSet(PardResultSet.ResultStatus.PLANNING_ERR, msg.getErrmsg());
         }
         job.setPlan(plan);
         plan.setJobId(job.getJobId());
         jobScheduler.updateJob(job.getJobId());
         logger.info("Created plan for job[" + job.getJobId() + "], job state: " + job.getJobState());
 
-        List<Task> tasks = taskScheduler.generateTasks(plan);
+        List<Task> tasks = null;
+        String taskMsg = null;
+        try {
+            tasks = taskScheduler.generateTasks(plan);
+        }
+        catch (TaskSchedulerException e) {
+            taskMsg = e.getPardErrorMessage().toString();
+        }
         if (tasks == null) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Cannot create tasks for sql: " + sql);
-            return new PardResultSet(PardResultSet.ResultStatus.SCHEDULING_ERR);
+            return new PardResultSet(PardResultSet.ResultStatus.SCHEDULING_ERR, taskMsg);
         }
         if (!tasks.isEmpty()) {
             tasks.forEach(job::addTask);
@@ -135,6 +161,9 @@ public class PardQueryHandler
         logger.info("Generated tasks for job[" + job.getJobId() + "], job state: " + job.getJobState());
 
         PardResultSet resultSet = taskScheduler.executeJob(job);
+        if (plan.getMsg() != null) {
+            resultSet.setSemanticErrmsg(plan.getMsg().toString());
+        }
         if (resultSet.getStatus() != PardResultSet.ResultStatus.OK) {
             jobScheduler.failJob(job.getJobId());
             logger.log(Level.WARNING, "Failed to execute job for sql: " + sql);

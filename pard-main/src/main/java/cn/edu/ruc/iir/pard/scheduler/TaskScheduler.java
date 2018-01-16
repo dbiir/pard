@@ -52,6 +52,7 @@ import cn.edu.ruc.iir.pard.sql.expr.Expr;
 import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
 import cn.edu.ruc.iir.pard.sql.expr.SingleExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
+import cn.edu.ruc.iir.pard.sql.tree.ComparisonExpression;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.Row;
 import com.google.common.collect.ImmutableList;
@@ -531,7 +532,7 @@ public class TaskScheduler
         String tmpTableName = "tmp_" + dataTableName.getValue() + "_" + jobId + "_" + joinTable.getSite();
         tmpTableName = tmpTableName.replace('-', '_').replace('-', '_').replace('-', '_');
         tmpTableName += randomString;
-        String tmpTableAlias = dataTableName.getValue() + "_0";
+        String tmpTableAlias = dataTableName.getValue() + "p0";
         while (tmpTableName.contains(" ")) {
             tmpTableName = tmpTableName.replace(" ", "");
         }
@@ -580,7 +581,12 @@ public class TaskScheduler
             //}
             JoinNode join = new JoinNode();
             join.getJoinSet().addAll(node.getJoinSet());
-            join.getExprList().addAll(node.getExprList());
+            //join.getExprList().addAll(node.getExprList());
+            for (Expression expr : node.getExprList()) {
+                Expr e = Expr.parse(expr);
+                e = Expr.replaceTableName(e, dataTableName.getValue(), tmpTableAlias);
+                join.getExprList().add((ComparisonExpression) e.toExpression());
+            }
             //TODO: add children.
             join.addJoinChild(NodeHelper.copyNode(joinNode));
             //System.out.println("joinNode1" + joinNode);

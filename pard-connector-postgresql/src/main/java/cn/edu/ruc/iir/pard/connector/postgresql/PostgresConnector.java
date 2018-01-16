@@ -552,6 +552,7 @@ public class PostgresConnector
             Statement statement = conn.createStatement();
             StringBuilder querySQL = new StringBuilder("select ");
             PlanNode rootNode = task.getNode();
+            System.out.println(rootNode);
             List<PlanNode> nodeList = new ArrayList<>();
             int nodeListCursor = 0;
             FilterNode filterNode = null;
@@ -808,6 +809,7 @@ public class PostgresConnector
     {
         String tmpTableName = task.getTmpTableName();
         PlanNode rootNode = task.getNode();
+        System.out.println(rootNode);
         boolean isVertical = false;
         try {
             Statement statement = conn.createStatement();
@@ -853,10 +855,13 @@ public class PostgresConnector
             if (isProject) {
                 List<Column> columns = projectNode.getColumns();
                 for (Column column : columns) {
-                    if (column.getTableName() != null && !column.getTableName().isEmpty()) {
+                    /*
+                    if (column.getTableName() != null) {
                         joinSQL.append(column.getTableName()).append(".");
                     }
                     joinSQL.append(column.getColumnName());
+                    joinSQL.append(",");*/
+                    joinSQL.append(column.toString());
                     joinSQL.append(",");
                 }
                 joinSQL = new StringBuilder(joinSQL.substring(0, joinSQL.length() - 1));

@@ -277,7 +277,7 @@ public class EtcdUtil
                 //System.out.println(json.toString());
                 Column col = (Column) JSONObject.toBean(json, Column.class);
                 columnHashMap.put(obj.toString(), col);
-                if (col.getTableName() == null) {
+                if (col.getTableName() == null || col.getTableName().isEmpty()) {
                     col.setTableName(table.getTablename());
                 }
             }

@@ -98,7 +98,7 @@ Pard系统的使用说明如下：
 解压后目录结构如图\ref{release}
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{figure/release.tiff}
+	\includegraphics[width=\linewidth]{figure/release.png}
 	\caption{发布版目录结构}
 	\label{fig:release}
 \end{figure}
@@ -246,7 +246,7 @@ RPC
 
 
 
-\subsection{Communication}
+\subsection{节点通信}
 通讯任务依据数据传输量的大小，和任务本身性质，可以自然的分为两类：
 
 
@@ -254,7 +254,7 @@ pipeline  Netty inbound outbound
 
 
 
-\subsection{Catalog}
+\subsection{元数据}
 元数据模型  etcd   
 
 
@@ -262,7 +262,7 @@ watch机制
 
 
 
-\subsection{Parser}
+\subsection{SQL解析}
 语义语法解析
 Antlrv4
 
@@ -328,16 +328,12 @@ expression  and or not
 
 
 
-\subsection{SQL Optimization}
-package cn.edu.ruc.iir.pard.server.PardQueryHandler;
-
-
-
-
-
-\subsection{Project Dependency Management}
-
-
+\subsection{SQL优化}
+% PLAN树结构
+% PROJECT/FILTER下推
+% 表达式计算
+% INSERT/DELETE/SELECT剪枝
+% JOIN优化
 
 \section{任务分工及小结}
 

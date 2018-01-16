@@ -561,7 +561,7 @@ public class TaskScheduler
             List<Column> clist = new ArrayList<Column>();
             for (Column c : proj.getColumns()) {
                 Column col = new Column(c);
-                if (node.getExprList().isEmpty()) {
+                if (!node.getJoinSet().isEmpty()) {
                     if (!col.getColumnName().equals(common)) {
                         col.setTableName(null);
                     }

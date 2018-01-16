@@ -95,13 +95,7 @@ Pard系统的使用说明如下：
 
 \textit{pard-assembly/target}目录下的\textit{.zip}或\textit{.tar.gz}文件即为部署文件。
 
-解压后目录结构如图\ref{release}
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\linewidth]{figure/release.png}
-	\caption{发布版目录结构}
-	\label{fig:release}
-\end{figure}
+解压后目录结构如图\ref{fig:release}
 
 \item Pard Server的启动：
 \lstinline[language=bash]|./sbin/pard-server start/run|
@@ -129,6 +123,15 @@ Pard Server的启动方式分为两种：
 \item \textit{pard.connector.driver}: Pard Server使用的JDBC连接的driver类。
 \end{itemize}
 \end{enumerate}
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[scale=0.9]{figure/release.jpg}
+	\caption{发布版目录结构}
+	\label{fig:release}
+\end{figure}
+
 
 \subsection{项目管理}
 Pard的开发利用Github进行协同，并且代码都开源在Github上。\textit{https://github.com/dbiir/pard} 
@@ -207,6 +210,16 @@ Pard Server的停止流程：
 
 \section{各模块详细设计}
 \subsection{执行流程}
+总体执行流程如图\ref{fig:exec-flow}。
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{figure/exec-flow.png}
+	\caption{总体执行流程}
+	\label{fig:exec-flow}
+\end{figure}
+
+
 package cn.edu.ruc.iir.pard.scheduler;
 
 job 
@@ -248,9 +261,26 @@ RPC
 
 \subsection{节点通信}
 通讯任务依据数据传输量的大小，和任务本身性质，可以自然的分为两类：
+一类是描述节点要负责的任务本身的通知，数据量很小，我们选用RPC技术来实现；
+另一类是因数据partition产生的大批量数据传输，数据量通常很大，我们选用Netty框架来实现。
+Insert、Delete、Load等返回值比较少，不需要太多交互通信的也都是用RPC来做的，
+其余大批量通信比较多的涉及到Netty。
+Pard有对Byte array做可选压缩的功能，
 
 
-pipeline  Netty inbound outbound
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.7\linewidth]{figure/iobound.png}
+	\caption{Pard inbound outbound}
+	\label{fig:iobound}
+\end{figure}
+
+Pard中Netty 的事件可以分为 Inbound 和 Outbound 事件.
+从图\ref{fig:iobound}可以看出, inbound 事件和 outbound 事件的流向是不一样的, inbound 事件的流行是从下至上, 而 outbound 刚好相反, 是从上到下. 并且 inbound 的传递方式是通过调用相应的 \lstinline|ChannelHandlerContext.fireIN_EVT()| 方法, 而 outbound 方法的的传递方式是通过调用 \lstinline|ChannelHandlerContext.OUT_EVT()| 方法. 例如 \lstinline|ChannelHandlerContext.fireChannelRegistered()| 调用会发送一个 \textit{ChannelRegistered} 的 inbound 给下一个ChannelHandlerContext, 而 \lstinline|ChannelHandlerContext.bind| 调用会发送一个 \textit{bind} 的 outbound 事件给 下一个 ChannelHandlerContext.
+
+
+
+
 
 
 
@@ -266,7 +296,7 @@ watch机制
 语义语法解析
 Antlrv4
 
-
+Pard支持的语法如下：
 \begin{lstlisting}
 statement
 : query                                                            #statementDefault
@@ -317,12 +347,9 @@ ON TABLE? qualifiedName FROM grantee=identifier                #revoke
 ;
 \end{lstlisting}
 
-支持基本的Select语句，如
-
-select * from ASG where eno<’E1020’ and eno>=’E0990’
-
-
-expression  and or not
+目前并没有实现全部的完整SQL功能，只
+支持基本的Select语句，也就是验收要求的部分，如
+\lstinline|select * from ASG where eno<’E1020’ and eno>=’E0990’| 
 
 
 

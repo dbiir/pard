@@ -2,6 +2,7 @@ package cn.edu.ruc.iir.pard.server;
 
 import cn.edu.ruc.iir.pard.executor.connector.JoinTask;
 import cn.edu.ruc.iir.pard.executor.connector.PardResultSet;
+import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.SendDataTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.planner.PardPlanner;
@@ -49,6 +50,12 @@ public class PardQueryHandlerTest
             }
             else if (t instanceof JoinTask) {
                 QueryPlan p = new QueryTestPlan(((JoinTask) t).getNode(), "Join_" + t.getTaskId());
+                System.out.println(p.getPlan());
+                PardServlet.planList.add(p);
+            }
+            else if (t instanceof QueryTask) {
+                QueryTask tt = (QueryTask) t;
+                QueryPlan p = new QueryTestPlan(tt.getPlanNode(), "table_" + t.getTaskId().replace('-', '_'));
                 System.out.println(p.getPlan());
                 PardServlet.planList.add(p);
             }

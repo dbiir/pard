@@ -43,7 +43,7 @@ public class TestConnector
     @BeforeTest
     public void init()
     {
-        configuration.init("../pard-main/etc/pard.properties");
+        configuration.init("../pard-main/etc/pard-wentao.properties");
     }
 
     @Test
@@ -212,5 +212,8 @@ public class TestConnector
     {
         PardUserConfiguration configuration = PardUserConfiguration.INSTANCE();
         Connector connector = PostgresConnector.INSTANCE();
+    }
+    public void testQuery()
+    {
     }
 }

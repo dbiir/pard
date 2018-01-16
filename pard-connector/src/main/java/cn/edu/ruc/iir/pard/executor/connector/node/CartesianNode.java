@@ -18,5 +18,6 @@ public class CartesianNode
     {
         super(node);
         this.name = "Cartesian";
+        this.childrens.addAll(node.childrens);
     }
 }

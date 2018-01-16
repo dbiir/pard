@@ -66,8 +66,14 @@ public class ExchangeFileSendHandler
                 }
             }
 
-            ChannelFuture f = ctx.writeAndFlush(new DefaultFileRegion(raf.getChannel(), 0, length));
-            f.addListener((ChannelFutureListener) future -> ctx.writeAndFlush("OKDONE\n"));
+            if (path.endsWith("SENDDATA")) { // SEND DATA TASK
+                ChannelFuture f = ctx.writeAndFlush(new DefaultFileRegion(raf.getChannel(), 0, length));
+                f.addListener((ChannelFutureListener) future -> ctx.writeAndFlush("OKDONESENDDATA\n"));
+            }
+            else { // LOAD TASK
+                ChannelFuture f = ctx.writeAndFlush(new DefaultFileRegion(raf.getChannel(), 0, length));
+                f.addListener((ChannelFutureListener) future -> ctx.writeAndFlush("OKDONE\n"));
+            }
         }
         if (message.equalsIgnoreCase("OK")) {
             PardResultSet resultSet = new PardResultSet(PardResultSet.ResultStatus.OK);

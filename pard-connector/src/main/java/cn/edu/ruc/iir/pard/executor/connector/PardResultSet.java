@@ -62,6 +62,7 @@ public class PardResultSet
     private int currentSize = 0;
     private String taskId;
     private long executionTime;
+    private String semanticErrmsg;
     private transient ResultSet jdbcResultSet = null;
     private transient Connection connection = null;
 
@@ -73,6 +74,11 @@ public class PardResultSet
     public PardResultSet(ResultStatus resultStatus)
     {
         this(resultStatus, ImmutableList.of(), defaultCapacity);
+    }
+    public PardResultSet(ResultStatus resultStatus, String msg)
+    {
+        this(resultStatus, ImmutableList.of(), defaultCapacity);
+        semanticErrmsg = msg;
     }
 
     public PardResultSet(ResultStatus resultStatus, List<Column> schema)
@@ -246,6 +252,16 @@ public class PardResultSet
     public void setExecutionTime(long executionTime)
     {
         this.executionTime = executionTime;
+    }
+
+    public String getSemanticErrmsg()
+    {
+        return semanticErrmsg;
+    }
+
+    public void setSemanticErrmsg(String semanticErrmsg)
+    {
+        this.semanticErrmsg = semanticErrmsg;
     }
 
     @Override

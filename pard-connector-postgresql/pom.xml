@@ -5,7 +5,7 @@
     <parent>
         <artifactId>pard</artifactId>
         <groupId>cn.edu.ruc.iir</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0-alpha</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -24,7 +24,10 @@
             <groupId>cn.edu.ruc.iir</groupId>
             <artifactId>pard-catalog</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>cn.edu.ruc.iir</groupId>
+            <artifactId>pard-optimizer</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>

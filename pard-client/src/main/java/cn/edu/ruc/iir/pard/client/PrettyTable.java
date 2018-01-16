@@ -10,6 +10,7 @@ public class PrettyTable
 {
     private List<String> headers = new ArrayList<>();
     private List<List<String>> data = new ArrayList<>();
+    private List<Integer> colLength = new ArrayList<>();
 
     public PrettyTable(String... headers)
     {
@@ -21,7 +22,7 @@ public class PrettyTable
         data.add(Arrays.asList(row));
     }
 
-    private int getMaxSize(int column)
+    private int getMaxSizeForCol(int column)
     {
         int maxSize = headers.get(column).length();
         for (List<String> row : data) {
@@ -32,24 +33,12 @@ public class PrettyTable
         return maxSize;
     }
 
-    private String formatRow(List<String> row)
-    {
-        StringBuilder result = new StringBuilder();
-        result.append("|");
-        for (int i = 0; i < row.size(); i++) {
-            result.append(StringUtils.center(row.get(i), getMaxSize(i) + 2));
-            result.append("|");
-        }
-        result.append("\n");
-        return result.toString();
-    }
-
     private String formatRule()
     {
         StringBuilder result = new StringBuilder();
         result.append("+");
         for (int i = 0; i < headers.size(); i++) {
-            for (int j = 0; j < getMaxSize(i) + 2; j++) {
+            for (int j = 0; j < colLength.get(i).intValue() + 2; j++) {
                 result.append("-");
             }
             result.append("+");
@@ -58,14 +47,41 @@ public class PrettyTable
         return result.toString();
     }
 
+    private String formatRuleNew()
+    {
+        StringBuilder result = new StringBuilder();
+        result.append("+");
+        for (int i = 0; i < headers.size(); i++) {
+            colLength.add(new Integer(getMaxSizeForCol(i)));
+            for (int j = 0; j < colLength.get(i).intValue() + 2; j++) {
+                result.append("-");
+            }
+            result.append("+");
+        }
+        result.append("\n");
+        return result.toString();
+    }
+
+    private String formatRowNew(List<String> row)
+    {
+        StringBuilder result = new StringBuilder();
+        result.append("|");
+        for (int i = 0; i < row.size(); i++) {
+            result.append(StringUtils.center(row.get(i), colLength.get(i).intValue() + 2));
+            result.append("|");
+        }
+        result.append("\n");
+        return result.toString();
+    }
+
     public String toString()
     {
         StringBuilder result = new StringBuilder();
-        result.append(formatRule());
-        result.append(formatRow(headers));
+        result.append(formatRuleNew());
+        result.append(formatRowNew(headers));
         result.append(formatRule());
         for (List<String> row : data) {
-            result.append(formatRow(row));
+            result.append(formatRowNew(row));
         }
         result.append(formatRule());
         return result.toString();
@@ -74,47 +90,5 @@ public class PrettyTable
     public int rowSize()
     {
         return data.size();
-    }
-
-    public String printHeader()
-    {
-        StringBuilder result = new StringBuilder();
-        result.append(formatRule());
-        result.append(formatRow(headers));
-        result.append(formatRule());
-        return result.toString();
-    }
-
-    public String printEnd()
-    {
-        StringBuilder result = new StringBuilder();
-        result.append(formatRule());
-        return result.toString();
-    }
-
-    public void printLargeDataSets()
-    {
-        System.out.println(printHeader());
-        StringBuilder result = new StringBuilder();
-        int count = 0;
-        for (List<String> row : data) {
-            result.append(formatRow(row));
-            count++;
-            if (count == 5000) {
-                System.out.println(result.toString());
-                result.delete(0, result.length());
-                count = 0;
-            }
-        }
-        System.out.println(printEnd());
-    }
-
-    public void printLargeDataSetsOneByOne()
-    {
-        System.out.println(printHeader());
-        for (List<String> row : data) {
-            System.out.println(formatRow(row));
-        }
-        System.out.println(printEnd());
     }
 }

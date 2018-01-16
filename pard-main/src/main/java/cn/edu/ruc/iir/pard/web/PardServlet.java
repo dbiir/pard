@@ -139,7 +139,7 @@ public class PardServlet
     {
         List<PNode> nodeDataArray = new ArrayList<PNode>();
         List<PEdge> linkedDataArray = new ArrayList<PEdge>();
-        PlanNode node = ((QueryPlan) plan).optimize();
+        PlanNode node = ((QueryPlan) plan).getPlan();
         //Map<PlanNode, PNode> mapping = new HashMap<PlanNode, PNode>();
         Queue<PlanNode> que = new LinkedList<PlanNode>();
 
@@ -169,6 +169,9 @@ public class PardServlet
             level++;
             List<PlanNode> children = NodeHelper.getChildren(planNode);
             for (PlanNode pn : children) {
+                if (pn == null) {
+                    continue;
+                }
                 que.add(pn);
                 //nodeLevel.put(pn, level);
                 nodeLevelQue.add(level);
@@ -186,7 +189,7 @@ public class PardServlet
         que.add(node);
         PNode pa = parse(node);
         int xInc = 270;
-        int yInc = 150;
+        int yInc = 200;
         pa.locx = giveX(1, maxNumber, xInc, 1);
         pa.locy = 60 + giveY(1, yInc);
         //mapping.put(node, pa);

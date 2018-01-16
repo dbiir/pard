@@ -100,8 +100,8 @@ public class ExchangeFileReceiveHandler
                     }
                     br.close();
                     //TODO table name is what?
-                    //Task task = new CreateTmpTableTask(header[0], header[1], columnDefinitions);
-                    Task task = new CreateTmpTableTask(null, header[1], columnDefinitions, this.path);
+                    Task task = new CreateTmpTableTask(header[0], header[1], columnDefinitions, this.path);
+                    //Task task = new CreateTmpTableTask(null, header[1], columnDefinitions, this.path);
                     PardResultSet resultSet = executor.executeStatus(task);
                     logger.info("Create tmp table: " + resultSet.getStatus().toString());
                     writer = null;

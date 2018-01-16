@@ -91,18 +91,21 @@ public abstract class Expr
     {
         Expr e = Expr.clone(e1);
         if (e instanceof SingleExpr) {
+            System.out.println("from " + e.toString());
             SingleExpr se = (SingleExpr) e;
             Item lv = se.getLvalue();
             Item rv = se.getRvalue();
-            if (lv instanceof ColumnItem && ((ColumnItem) lv).getTableName().toLowerCase().equals(from)) {
+            if (lv instanceof ColumnItem && ((ColumnItem) lv).getTableName().equalsIgnoreCase(from)) {
                 ColumnItem ci = (ColumnItem) lv;
                 lv = new ColumnItem(to, ci.getColumnName(), ci.getDataType());
             }
-            if (rv instanceof ColumnItem && ((ColumnItem) rv).getTableName().toLowerCase().equals(from)) {
+            if (rv instanceof ColumnItem && ((ColumnItem) rv).getTableName().equalsIgnoreCase(from)) {
                 ColumnItem ci = (ColumnItem) rv;
                 rv = new ColumnItem(to, ci.getColumnName(), ci.getDataType());
             }
-            return new SingleExpr(lv, rv, se.getCompareType());
+            se = new SingleExpr(lv, rv, se.getCompareType());
+            //System.out.println("to " + se.toString());
+            return se;
         }
         else if (e instanceof CompositionExpr) {
             CompositionExpr ce = (CompositionExpr) e;

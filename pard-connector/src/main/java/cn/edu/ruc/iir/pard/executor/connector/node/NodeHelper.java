@@ -78,6 +78,9 @@ public class NodeHelper
     public static List<PlanNode> getChildren(PlanNode node)
     {
         List<PlanNode> list = new ArrayList<PlanNode>();
+        if (node == null) {
+            return list;
+        }
         if (node instanceof UnionNode) {
             UnionNode union = (UnionNode) node;
             return union.getUnionChildren();
@@ -108,6 +111,7 @@ public class NodeHelper
             obj.put("schema", cnode.getSchema());
             obj.put("table", cnode.getTable());
             obj.put("site", cnode.getSite());
+            obj.put("alias", cnode.getAlias());
             //obj.put("child", toJSON(cnode.getLeftChild()));
             return obj;
         }

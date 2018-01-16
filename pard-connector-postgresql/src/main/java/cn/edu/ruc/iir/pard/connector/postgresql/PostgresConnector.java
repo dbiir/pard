@@ -20,6 +20,7 @@ import cn.edu.ruc.iir.pard.executor.connector.QueryTask;
 import cn.edu.ruc.iir.pard.executor.connector.SendDataTask;
 import cn.edu.ruc.iir.pard.executor.connector.Task;
 import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
+import cn.edu.ruc.iir.pard.executor.connector.node.JoinNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
@@ -31,7 +32,7 @@ import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
-import cn.edu.ruc.iir.pard.sql.tree.Join;
+//import cn.edu.ruc.iir.pard.sql.tree.Join;
 import com.google.common.collect.ImmutableList;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.jdbc.PgConnection;
@@ -637,7 +638,7 @@ public class PostgresConnector
             Map<String, Expression> siteExpression = task.getSiteExpression(); // site -> Expression
             Map<String, String> tmpTableMap = task.getTmpTableMap(); // site -> tmpTableName
 
-            boolean flag = dispense(siteExpression, tmpTableMap, rs, cols, schema, table);
+            boolean flag = dispense(siteExpression, tmpTableMap, rs, cols, schema);
             if (flag == true) {
                 conn.close();
                 return PardResultSet.okResultSet;
@@ -816,11 +817,15 @@ public class PostgresConnector
             String schemaName = null;
             String tableName = null;
             FilterNode filterNode = null;
-            ProjectNode projectNode = null;
+            ProjectNode projectNode1 = null;
+            JoinNode joinNode = null;
+            ProjectNode projectNode2 = null;
             SortNode sortNode = null;
             LimitNode limitNode = null;
             boolean isFilter = false;
-            boolean isProject = false;
+            boolean isProject1 = false;
+            boolean isJoin = false;
+            boolean isProject2 = false;
             boolean isSort = false;
             boolean isLimit = false;
             nodeList.add(rootNode);
@@ -829,7 +834,6 @@ public class PostgresConnector
                 nodeList.add(nodeList.get(nodeListCursor - 1).getLeftChild());
                 nodeListCursor++;
             }
-            
         }
         catch (SQLException e) {
             logger.info("JOIN FAILED");
@@ -838,7 +842,7 @@ public class PostgresConnector
         return PardResultSet.execErrResultSet;
     }
 
-    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs, List<Column> columns, String schema, String table)
+    private boolean dispense(Map<String, Expression> siteExpression, Map<String, String> tmpTableMap, ResultSet rs, List<Column> columns, String schema)
     {
         boolean isSucceeded;
         Map<String, BufferedWriter> localWriter = new HashMap<String, BufferedWriter>(); // site -> local BufferedWirter
@@ -846,7 +850,7 @@ public class PostgresConnector
             try {
                 BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/dev/shm/" + site + tmpTableMap.get(site) + "SENDDATA")));
                 localWriter.put(site, bw);
-                bw.write(schema + "\t" + table + "\n"); //schema name, table name
+                bw.write(schema + "\t" + tmpTableMap.get(site) + "\n"); //schema name, table name
                 Iterator it = columns.iterator();
                 String secondLine = "";
                 while (it.hasNext()) {

@@ -94,7 +94,7 @@
                 <version>1.0-SNAPSHOT</version>
             </dependency>
 
-            <!-- Antlr -->
+            <!-- AntlrV4 -->
             <dependency>
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr4-runtime</artifactId>

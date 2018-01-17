@@ -280,25 +280,129 @@ Pard有对Byte array做可选压缩的功能，
 \end{figure}
 
 Pard中Netty 的事件可以分为 Inbound 和 Outbound 事件.
-从图\ref{fig:iobound}可以看出, inbound 事件和 outbound 事件的流向是不一样的, inbound 事件的流行是从下至上, 而 outbound 刚好相反, 是从上到下. 并且 inbound 的传递方式是通过调用相应的 \lstinline|ChannelHandlerContext.fireIN_EVT()| 方法, 而 outbound 方法的的传递方式是通过调用 \lstinline|ChannelHandlerContext.OUT_EVT()| 方法. 例如 \lstinline|ChannelHandlerContext.fireChannelRegistered()| 调用会发送一个 \textit{ChannelRegistered} 的 inbound 给下一个ChannelHandlerContext, 而 \lstinline|ChannelHandlerContext.bind| 调用会发送一个 \textit{bind} 的 outbound 事件给 下一个 ChannelHandlerContext.
+从图\ref{fig:iobound}可以看出, inbound 事件和 outbound 事件的流向是不一样的, inbound 事件的流行是从下至上, 而 outbound 刚好相反, 是从上到下。并且 inbound 的传递方式是通过调用相应的 \lstinline|ChannelHandlerContext.fireIN_EVT()| 方法, 而 outbound 方法的的传递方式是通过调用 \lstinline|ChannelHandlerContext.OUT_EVT()| 方法。 例如 \lstinline|ChannelHandlerContext.fireChannelRegistered()| 调用会发送一个 \textit{ChannelRegistered} 的 inbound 给下一个ChannelHandlerContext, 而 \lstinline|ChannelHandlerContext.bind| 调用会发送一个 \textit{bind} 的 outbound 事件给 下一个 ChannelHandlerContext。
+\lstinline|PardFileExchangeClient| 的 \lstinline|run| 方法的pileline就加入了新的
+\lstinline|ExchangeFileSendHandler|（ \lstinline|extends ChannelInboundHandlerAdapter| ）的实例。
 
-
+网络传输是只能传输byte array的，拿到后要做语义解析。我们开始自己做了一个Object Encoder和Decoder，
+还有使用gzip算法做数据压缩的可选功能。
+Netty自己也实现了解析byte array的这类需求，叫编解码技术。
+服务器编码数据后发送到客户端，客户端需要对数据进行解码。编解码器由两部分组成：编码器、解码器。 
+解码器：负责将消息从字节或其他序列形式转成指定的消息对象； 
+编码器：将消息对象转成字节或其他序列形式在网络上传输。 
+我们的编解码其都是ChannelHandler的实现。 
+入站“ByteBuf”读取bytes后由 ToIntegerDecoder 进行解码，然后将解码后的消息存入List集合中，然后传递到ChannelPipeline中的下一个ChannelInboundHandler。
 
 
 
 
 
 \subsection{元数据}
-元数据模型  etcd   
+Pard使用etcd，以Key-Value形式存储GDD。etcd  的官方定义是：
+\begin{quote}
+	A highly-available key value store for shared configuration and service discovery.
+\end{quote}
+实际上，etcd作为一个受到Zookeeper与doozer启发而催生的项目，除了拥有与之类似的功能外，更具有以下4个特点:
+\begin{enumerate}
+	\item 简单：基于HTTP+JSON的API让你用curl命令就可以轻松使用;
+	\item 安全：可选SSL客户认证机制;
+	\item 快速：每个实例每秒支持一千次写操作;
+	\item 可信：使用Raft算法充分实现了分布式。
+\end{enumerate}
+所以我们选用etcd存储GDD。
+Pard的一个亮点是基于etcd的watch机制，减少了IO的操作。
+只有当GDD发生改变时，才去取数据，更新。
+我们使用etcd的持久监听（stream），当有事件时，会连续触发，不需要客户端重新发起监听。
+因为GDD本来就很小，所我们在内存中维护GDD。
+Pard watch的有site、schema、user，每个站点开启三个Thread来watch。
+调用 \lstinline| watcher.listen()| 方法持续的watch。
 
 
-watch机制
+元数据模型关键结构如下：
+\begin{lstlisting}
+public class GDD {
+HashMap<String,Site>siteList;
+HashMap<String,Schema>schemaList;
+HashMap<String,User>userList;
+}
+
+public class Site {
+int Id;
+String name;
+String ip;
+int port;
+boolean isLeader;
+}
+
+public class Schema {
+String name;
+int id;
+List<Table>tableList;
+List<Privilege>userList;
+//Statics statics;
+}
+public class Privilege {
+int use;//1,read, 3, write,5create 7,delete;
+int uid;
+String username;
+}
+public class Table {
+String tablename;
+int id;
+HashMap<String,Column>columns;
+List<Fragment>fragment;
+List<Privilege>userList;
+int isFragment;
+Statics statics;
+}
+
+public class Column {
+int id;
+int dataType;
+String columnName;
+int len;
+int index;//0:none; 1:hashindex; 2:btreeindex; 3:others
+boolean isKey;
+}
+public class Fragment {
+int fragmentType;//0: horizontal;1:vertical
+List<Condition>condition;
+Table subTable
+int siteId;
+Statics statics;
+}
+public class Condition {
+String columnName;
+int CompareType;//define less,great,equal..
+String value;
+int dataType;//the datatype of value
+}
+public class Statics {
+String columnName;
+String min;
+String max;
+String mean;
+String mode;
+String median;
+HashMap<String,Integer>staticList;
+}
+public class User {
+int uid;
+String username;
+HashMap<String,Privilege>tableList;
+HashMap<String,Privilege>schemaList;
+}
+\end{lstlisting}
+
+
+
 
 
 
 \subsection{SQL解析}
-语义语法解析
-Antlrv4
+语义语法解析使用Antlrv4。
+ANTLR—Another Tool for Language Recognition，可以根据输入的SQL命令和我们自定义的规则，
+根据自动生成语法树，
 
 Pard支持的语法如下：
 \begin{lstlisting}
@@ -380,7 +484,17 @@ ON TABLE? qualifiedName FROM grantee=identifier                #revoke
 \subsection{黄文韬的小结}
 
 \subsection{陈成的小结}
-
+本门课程中，学习了分布式数据库的一些非常基础的知识，相比于另一门数据库管理系统实现，这门课就多在了分布式的部分，
+数据如何partition，不同的partition方式下查询等操作如何优化。大作业确实非常challenging，比如Netty框架设计复杂精妙，我学习花了很大时间，一个个example的改、试，后来在师兄的帮助下才正确的运用在了项目中。
+前几次课与卢卫老师的大数据管理冲突，我都没来，后来觉得还是应该去一下明确本学期在课程上的投入。
+课程消耗精力太多的话，没时间做自己该负责的科研项目了。
+我认为，我们没有在预期时间完成任务的原因是当初系统设计的导向不是任务导向，当初可能要求太高了，各种复杂的结构、情况都考虑的话，
+过早优化是万恶之源，
+可能基本的任务都没完成就得不偿失了。
+通过这次大作业感受到搭建一个能够work的系统并不是一件容易的事
+情，总是会有莫名其妙的 bug 困扰着你并消磨你的热情；另一个体会是，永远不要把工作往
+后推，因为一到期末 deadline 很多，你并不会像自己预期那样高效，连续的熬夜也不能迅速
+打造完美的系统。
 
 
 

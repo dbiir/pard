@@ -1119,6 +1119,8 @@ public class PostgresConnector
         else if (e instanceof FalseExpr) {
             return false;
         }
+        logger.info("original info " + expr.toString());
+        logger.info("parse info " + e.toString());
         return null;
     }
 

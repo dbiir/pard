@@ -186,6 +186,7 @@ public class PardServlet
                 maxNumber = nodeNo[i];
             }
         }
+        System.out.println(maxNumber);
         que.add(node);
         PNode pa = parse(node);
         int xInc = 270;
@@ -212,7 +213,7 @@ public class PardServlet
                 p.locx = giveX(levelNo, maxNumber, xInc, nodeNo[level]); //parent.locx + xoffset * 220;
 
                 if (pnlist.size() == 1) {
-                    p.locx = parent.locx;
+                    //p.locx = parent.locx;
                 }
                 /*
                 else if (pnlist.size() == 2) {

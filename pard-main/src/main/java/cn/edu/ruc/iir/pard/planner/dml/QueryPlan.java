@@ -1,50 +1,13 @@
 package cn.edu.ruc.iir.pard.planner.dml;
 
-import cn.edu.ruc.iir.pard.catalog.Column;
-import cn.edu.ruc.iir.pard.catalog.Fragment;
-import cn.edu.ruc.iir.pard.catalog.Schema;
 import cn.edu.ruc.iir.pard.commons.exception.ErrorMessage;
-import cn.edu.ruc.iir.pard.etcd.dao.SchemaDao;
-import cn.edu.ruc.iir.pard.etcd.dao.SiteDao;
-import cn.edu.ruc.iir.pard.etcd.dao.TableDao;
-import cn.edu.ruc.iir.pard.executor.connector.node.DistinctNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.FilterNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.JoinNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.LimitNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.OutputNode;
 import cn.edu.ruc.iir.pard.executor.connector.node.PlanNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.ProjectNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.SortNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.TableScanNode;
-import cn.edu.ruc.iir.pard.executor.connector.node.UnionNode;
 import cn.edu.ruc.iir.pard.planner.EarlyStopPlan;
 import cn.edu.ruc.iir.pard.planner.Plan;
-import cn.edu.ruc.iir.pard.planner.ddl.UsePlan;
-import cn.edu.ruc.iir.pard.sql.expr.ColumnItem;
-import cn.edu.ruc.iir.pard.sql.expr.Expr;
-import cn.edu.ruc.iir.pard.sql.expr.Expr.LogicOperator;
-import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
-import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
-import cn.edu.ruc.iir.pard.sql.tree.AllColumns;
-import cn.edu.ruc.iir.pard.sql.tree.Expression;
-import cn.edu.ruc.iir.pard.sql.tree.Identifier;
-import cn.edu.ruc.iir.pard.sql.tree.Query;
-import cn.edu.ruc.iir.pard.sql.tree.QueryBody;
-import cn.edu.ruc.iir.pard.sql.tree.QuerySpecification;
-import cn.edu.ruc.iir.pard.sql.tree.Relation;
-import cn.edu.ruc.iir.pard.sql.tree.Select;
-import cn.edu.ruc.iir.pard.sql.tree.SelectItem;
-import cn.edu.ruc.iir.pard.sql.tree.SingleColumn;
-import cn.edu.ruc.iir.pard.sql.tree.SortItem;
 import cn.edu.ruc.iir.pard.sql.tree.Statement;
-import cn.edu.ruc.iir.pard.sql.tree.Table;
 import cn.edu.ruc.iir.pard.web.PardServlet;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -52,18 +15,19 @@ import java.util.logging.Logger;
  * A query statement can be translated to a query plan.
  * @author hagen
  */
-public class QueryPlan
+public abstract class QueryPlan
         extends Plan implements EarlyStopPlan
 {
     private Logger logger = Logger.getLogger(QueryPlan.class.getName());
     private PlanNode node;
     private boolean alreadyDone;
+    /*
     private Optional<LimitNode> limit;
     private Optional<SortNode> sort;
     private Optional<DistinctNode> distinct;
     private ProjectNode project;
     private Optional<FilterNode> filter;
-    private UnionNode union;
+    private UnionNode union;*/
     public QueryPlan(Statement stmt)
     {
         super(stmt);
@@ -76,6 +40,7 @@ public class QueryPlan
     @Override
     public ErrorMessage semanticAnalysis()
     {
+        /*
         logger = Logger.getLogger(QueryPlan.class.getName());
         node = new OutputNode();
         ColumnItem.clearCol2TblMap();
@@ -244,9 +209,9 @@ public class QueryPlan
         currentNode.setChildren(unionNode, true, true);
         currentNode = unionNode;
         logger.info("Parsed query plan: " + this.node.toString());
-        //col2tblMap.remove();
+        //col2tblMap.remove();*/
         return ErrorMessage.throwMessage(ErrorMessage.ErrCode.OK);
-    }
+    }/*
     public JoinNode verticalLocalization(TableDao tdao, List<String> siteList, String fromTableName, boolean projectColumn)
     {
         //TODO: join localization
@@ -298,7 +263,7 @@ public class QueryPlan
             //this.alreadyDone = true;
         }
         return unionNode;
-    }
+    }*/
     public PlanNode optimize()
     {
         return node;

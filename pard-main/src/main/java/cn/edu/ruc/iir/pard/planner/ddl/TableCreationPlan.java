@@ -158,6 +158,7 @@ public class TableCreationPlan
             column.setDataType(dt.getType());
             column.setLen(dt.getLength());
             column.setKey(cd.isPrimary() ? 1 : 0);
+            column.setTableName(tableName);
             //System.out.println("type:" + type + " colName: " + colName + " col id " + column.getId());
             if (table.getColumns().get(colName) == null) {
                 vpmap.put(cd.getName().toString(), column);

@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.catalog.Condition;
+import cn.edu.ruc.iir.pard.sql.expr.rules.ContainEliminateLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.MinimalItemLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.PushDownLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.TrueFalseLaw;
@@ -27,6 +28,7 @@ public abstract class Expr
     public static PushDownLaw pdOr = new PushDownLaw(LogicOperator.OR);
     public static TrueFalseLaw tfLaw = new TrueFalseLaw();
     public static MinimalItemLaw milaw = new MinimalItemLaw();
+    public static ContainEliminateLaw claw = new ContainEliminateLaw();
     public static enum LogicOperator
     {
         AND("and"), OR("or"), NOT("!"), NOTHING("nothing");
@@ -361,6 +363,7 @@ public abstract class Expr
         else {
             and = pdOr.apply(e1);
         }
+        and = claw.apply(and);
         and = milaw.apply(and);
         and = tfLaw.apply(and);
         return and;

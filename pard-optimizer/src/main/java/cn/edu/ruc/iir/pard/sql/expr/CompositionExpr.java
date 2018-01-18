@@ -12,6 +12,7 @@ import cn.edu.ruc.iir.pard.sql.tree.NullLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -109,7 +110,7 @@ public class CompositionExpr
     {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((conditions == null) ? 0 : conditions.hashCode());
+        result = prime * result + ((conditions == null) ? 0 : new HashSet<>(conditions).hashCode());
         result = prime * result + ((logicOperator == null) ? 0 : logicOperator.hashCode());
         return result;
     }
@@ -132,7 +133,7 @@ public class CompositionExpr
             }
         }
         else {
-            if (!conditions.equals(other.conditions)) {
+            if (!new HashSet<>(conditions).equals(new HashSet<>(other.conditions))) {
                 return false;
             }
         }

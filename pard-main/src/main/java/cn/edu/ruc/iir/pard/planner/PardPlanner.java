@@ -79,7 +79,7 @@ public class PardPlanner
         }
         if (statement instanceof Query) {
             // query plan
-            QueryPlan plan = new QueryPlan(statement);
+            QueryPlan plan = new QueryPlan2(statement);
             return plan;
             /*
             ErrorMessage errorMessage = plan.semanticAnalysis();

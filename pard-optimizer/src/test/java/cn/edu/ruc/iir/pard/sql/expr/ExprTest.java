@@ -35,34 +35,41 @@ public class ExprTest
     @Test
     public void pipeline()
     {
-        String sql = "select a,b,c from D,E where D.id=E.id and (d.a=1 or E.b=2 and C.k>3 or not (p.a<5 and p.d>7) and true) and d.c<10 and d.c>11";
+        // String sql = "select a,b,c from D,E where D.id=E.id and (d.a=1 or
+        // E.b=2 and C.k>3 or not (p.a<5 and p.d>7) and true) and d.c<10 and
+        // d.c>11";
         SqlParser parser = new SqlParser();
-        Statement stmt = parser.createStatement(sql);
-        Query query = (Query) stmt;
-        QueryBody queryBody = query.getQueryBody();
-        QuerySpecification querySpecification = (QuerySpecification) queryBody;
-        Select select = querySpecification.getSelect();
-        Optional<Expression> oexpr = querySpecification.getWhere();
-        if (oexpr.isPresent()) {
-            Expression expr = oexpr.get();
-            Expr e = Expr.parse(expr);
-            System.out.println(e.toString());
-            if (e instanceof CompositionExpr) {
-                PushDownLaw pl = new PushDownLaw(LogicOperator.AND);
-                ContainEliminateLaw cl = new ContainEliminateLaw();
-                TrueFalseLaw tfLaw = new TrueFalseLaw();
-                MinimalItemLaw milaw = new MinimalItemLaw();
-                CompositionExpr exps = (CompositionExpr) e;
-                Expr pase = pl.apply(exps); //下推AND
-                //pase = cl.apply(pase); //合并处理蕴含, 有问题
-                //（a or (a and b) => (a and b)） 有问题
-                // （a and (a or b) => a）
-                Expr ex = milaw.apply(milaw.apply(pase)); //合并a>10 & a>15这样的项
-                System.out.println(ex);
-                System.out.println(tfLaw.apply(ex)); // 永真式永假式判断
+        String expression = "a>5 and (a>5 or b<10)";
+        Expr e = Expr.parse(parser.createExpression(expression));
+        System.out.println(e.toString());
+        if (e instanceof CompositionExpr) {
+            PushDownLaw pl = new PushDownLaw(LogicOperator.AND);
+            ContainEliminateLaw cl = new ContainEliminateLaw();
+            TrueFalseLaw tfLaw = new TrueFalseLaw();
+            MinimalItemLaw milaw = new MinimalItemLaw();
+            CompositionExpr exps = (CompositionExpr) e;
+            Expr pase = pl.apply(exps); // 下推AND
+            pase = cl.apply(pase); // 合并处理蕴含, 有问题
+            Expr ex = milaw.apply(milaw.apply(pase)); // 合并a>10 & a>15这样的项
+            System.out.println(ex);
+            System.out.println(tfLaw.apply(ex)); // 永真式永假式判断
                 //System.out.println(pl.apply(pase));
-            }
         }
+    }
+    @Test
+    public void pipeline2()
+    {
+        // String sql = "select a,b,c from D,E where D.id=E.id and (d.a=1 or
+        // E.b=2 and C.k>3 or not (p.a<5 and p.d>7) and true) and d.c<10 and
+        // d.c>11";
+        SqlParser parser = new SqlParser();
+        String expression = "a>5 and (a>5 or b<10)";
+        String expression2 = "(b<10 or a>5) and a>5";
+        Expr e1 = Expr.parse(parser.createExpression(expression));
+        Expr e2 = Expr.parse(parser.createExpression(expression2));
+        System.out.println(e1.equals(e2));
+        System.out.println(Expr.and(e1, e2, LogicOperator.OR));
+        System.out.println(Expr.and(e1, e2, LogicOperator.AND));
     }
     public static PushDownLaw pdAnd = new PushDownLaw(LogicOperator.AND);
     public static PushDownLaw pdOr = new PushDownLaw(LogicOperator.OR);

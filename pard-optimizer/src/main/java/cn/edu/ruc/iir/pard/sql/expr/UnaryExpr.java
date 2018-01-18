@@ -2,10 +2,20 @@ package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
 import cn.edu.ruc.iir.pard.sql.tree.NotExpression;
-
+/**
+ * UnaryExpr
+ *
+ * It denotes an expression with operator 'not'.
+ *
+ * @author hagen
+ * */
 public class UnaryExpr
         extends Expr
 {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
     private final LogicOperator compareType;
     private final Expr expression;
     public UnaryExpr(UnaryExpr expr)

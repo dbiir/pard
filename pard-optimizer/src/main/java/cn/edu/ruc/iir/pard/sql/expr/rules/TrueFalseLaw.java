@@ -9,7 +9,11 @@ import cn.edu.ruc.iir.pard.sql.expr.SingleExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.UnaryExpr;
 import cn.edu.ruc.iir.pard.sql.expr.ValueItem;
-
+/**
+ * TrueFalseLaw
+ *
+ * @author hagen
+ * */
 public class TrueFalseLaw
         extends ExprLaw
 {

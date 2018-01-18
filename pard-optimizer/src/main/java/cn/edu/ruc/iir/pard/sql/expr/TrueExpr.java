@@ -2,10 +2,20 @@ package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.sql.tree.BooleanLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
-
+/**
+ * TrueExpr
+ *
+ * It denotes an expression with value true..
+ *
+ * @author hagen
+ * */
 public class TrueExpr
         extends Expr
 {
+    /**
+     *
+     */
+    private static final long serialVersionUID = -3006782887478595711L;
     private final String content = "True";
     public TrueExpr()
     {

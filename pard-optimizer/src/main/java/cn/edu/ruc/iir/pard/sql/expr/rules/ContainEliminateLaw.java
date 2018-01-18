@@ -7,7 +7,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+/**
+ * absorption property.
+ *
+ * a*(a+b)=a+a*b=a
+ *
+ * @author hagen
+ * */
 public class ContainEliminateLaw
         extends ExprLaw
 {
@@ -25,7 +31,7 @@ public class ContainEliminateLaw
             CompositionExpr p = (CompositionExpr) parent;
             CompositionExpr c = (CompositionExpr) children;
             if (c.getConditions().size() > p.getConditions().size()) {
-                System.out.println("warning: cmp un optimized!");
+                //System.out.println("warning: cmp un optimized!");
                 return false;
             }
             for (Expr ce : c.getConditions()) {
@@ -77,8 +83,9 @@ public class ContainEliminateLaw
                     }
                 }
             }
+            //Set<Expr> pset = parent.values();
             for (Expr tp : ce.getConditions()) {
-                if (parent.get(tp) == null) {
+                if (!parent.values().contains(tp) || (parent.get(tp) != null && parent.get(tp).equals(tp))) {
                     ret.getConditions().add(tp);
                 }
             }

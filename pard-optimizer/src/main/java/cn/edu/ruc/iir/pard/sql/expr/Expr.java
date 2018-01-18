@@ -1,6 +1,7 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.catalog.Condition;
+import cn.edu.ruc.iir.pard.sql.expr.rules.ContainEliminateLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.MinimalItemLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.PushDownLaw;
 import cn.edu.ruc.iir.pard.sql.expr.rules.TrueFalseLaw;
@@ -15,7 +16,13 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-
+/**
+ * Expr
+ *
+ * Expr is an abstract class. It has many static utils to support the expression caculation.
+ *
+ * @author hagen
+ * */
 public abstract class Expr
         implements Serializable
 {
@@ -27,6 +34,7 @@ public abstract class Expr
     public static PushDownLaw pdOr = new PushDownLaw(LogicOperator.OR);
     public static TrueFalseLaw tfLaw = new TrueFalseLaw();
     public static MinimalItemLaw milaw = new MinimalItemLaw();
+    public static ContainEliminateLaw claw = new ContainEliminateLaw();
     public static enum LogicOperator
     {
         AND("and"), OR("or"), NOT("!"), NOTHING("nothing");
@@ -361,6 +369,7 @@ public abstract class Expr
         else {
             and = pdOr.apply(e1);
         }
+        and = claw.apply(and);
         and = milaw.apply(and);
         and = tfLaw.apply(and);
         return and;

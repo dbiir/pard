@@ -14,6 +14,7 @@ public class ConditionComparator
     private ConditionComparator()
     {}
 
+    @SuppressWarnings("rawtypes")
     public static Comparable parseFromString(int dataType, String value)
     {
         switch(dataType) {

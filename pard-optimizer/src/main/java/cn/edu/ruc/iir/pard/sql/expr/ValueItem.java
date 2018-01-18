@@ -1,10 +1,20 @@
 package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
-
+/**
+ * ValueItem
+ *
+ * ValueItem class can denote a value in the expression.
+ *
+ * @author hagen
+ * */
 public class ValueItem
         extends Item implements Comparable<ValueItem>
 {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 2927976547609885069L;
     @SuppressWarnings("rawtypes")
     private final Comparable comp;
     public ValueItem(ValueItem vi)

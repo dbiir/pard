@@ -12,13 +12,24 @@ import cn.edu.ruc.iir.pard.sql.tree.NullLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-
+/**
+ * CompositionExpr
+ *
+ *The compositionExpr denotes a set of Expr's 'and' or 'or'.
+ *
+ * @author hagen
+ * */
 public class CompositionExpr
         extends Expr
 {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
     private List<Expr> conditions;
     private LogicOperator logicOperator;
     public CompositionExpr(CompositionExpr expr)
@@ -77,6 +88,7 @@ public class CompositionExpr
         sb.append(" )");
         return sb.toString();
     }
+    @SuppressWarnings("rawtypes")
     public static Comparable parseFromLiteral(Literal literal)
     {
         if (literal instanceof LongLiteral) {
@@ -109,7 +121,7 @@ public class CompositionExpr
     {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((conditions == null) ? 0 : conditions.hashCode());
+        result = prime * result + ((conditions == null) ? 0 : new HashSet<>(conditions).hashCode());
         result = prime * result + ((logicOperator == null) ? 0 : logicOperator.hashCode());
         return result;
     }
@@ -132,7 +144,7 @@ public class CompositionExpr
             }
         }
         else {
-            if (!conditions.equals(other.conditions)) {
+            if (!new HashSet<>(conditions).equals(new HashSet<>(other.conditions))) {
                 return false;
             }
         }

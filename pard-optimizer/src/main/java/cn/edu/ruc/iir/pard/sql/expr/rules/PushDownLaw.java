@@ -10,7 +10,11 @@ import cn.edu.ruc.iir.pard.sql.expr.UnaryExpr;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Push down and/or
+ *
+ * @author hagen
+ * */
 public class PushDownLaw
         extends ExprLaw
 {

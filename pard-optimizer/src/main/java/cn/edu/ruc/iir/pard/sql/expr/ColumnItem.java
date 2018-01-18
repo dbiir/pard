@@ -6,7 +6,13 @@ import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
-
+/**
+ * ColumnItem
+ *
+ * ColumnItem class can denote a column in the expression.
+ *
+ * @author hagen
+ * */
 public class ColumnItem
         extends Item
 {
@@ -42,7 +48,7 @@ public class ColumnItem
     public ColumnItem(String tableName, String columnName, int dataType)
     {
         super();
-        this.tableName = tableName.toLowerCase();
+        this.tableName = tableName == null ? null : tableName.toLowerCase();
         this.columnName = columnName.toLowerCase();
         this.dataType = dataType;
     }
@@ -65,7 +71,12 @@ public class ColumnItem
     @Override
     public String toString()
     {
-        return tableName + "." + columnName;
+        if (tableName == null || tableName.isEmpty()) {
+            return columnName;
+        }
+        else {
+            return tableName + "." + columnName;
+        }
     }
     @Override
     public int hashCode()

@@ -7,7 +7,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+/**
+ * absorption property.
+ *
+ * a*(a+b)=a+a*b=a
+ *
+ * @author hagen
+ * */
 public class ContainEliminateLaw
         extends ExprLaw
 {

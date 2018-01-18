@@ -2,10 +2,20 @@ package cn.edu.ruc.iir.pard.sql.expr;
 
 import cn.edu.ruc.iir.pard.sql.tree.BooleanLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.Expression;
-
+/**
+ * FalseExpr
+ *
+ * It denotes an expression with value false.
+ *
+ * @author hagen
+ * */
 public class FalseExpr
         extends Expr
 {
+    /**
+     *
+     */
+    private static final long serialVersionUID = -7854693924810826450L;
     private final String content = "False";
     public FalseExpr()
     {

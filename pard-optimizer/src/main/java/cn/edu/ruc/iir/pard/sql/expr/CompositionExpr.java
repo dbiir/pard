@@ -16,10 +16,20 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-
+/**
+ * CompositionExpr
+ *
+ *The compositionExpr denotes a set of Expr's 'and' or 'or'.
+ *
+ * @author hagen
+ * */
 public class CompositionExpr
         extends Expr
 {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
     private List<Expr> conditions;
     private LogicOperator logicOperator;
     public CompositionExpr(CompositionExpr expr)
@@ -78,6 +88,7 @@ public class CompositionExpr
         sb.append(" )");
         return sb.toString();
     }
+    @SuppressWarnings("rawtypes")
     public static Comparable parseFromLiteral(Literal literal)
     {
         if (literal instanceof LongLiteral) {

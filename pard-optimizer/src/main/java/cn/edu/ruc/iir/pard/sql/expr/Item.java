@@ -12,7 +12,13 @@ import cn.edu.ruc.iir.pard.sql.tree.NullLiteral;
 import cn.edu.ruc.iir.pard.sql.tree.StringLiteral;
 
 import java.io.Serializable;
-
+/**
+ * Item
+ *
+ * Item class can denote a left value or right value in the expression..
+ *
+ * @author hagen
+ * */
 public abstract class Item
         implements Serializable
 {

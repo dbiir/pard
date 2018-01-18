@@ -16,7 +16,13 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-
+/**
+ * Expr
+ *
+ * Expr is an abstract class. It has many static utils to support the expression caculation.
+ *
+ * @author hagen
+ * */
 public abstract class Expr
         implements Serializable
 {

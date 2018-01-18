@@ -6,7 +6,13 @@ import cn.edu.ruc.iir.pard.sql.tree.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
-
+/**
+ * ColumnItem
+ *
+ * ColumnItem class can denote a column in the expression.
+ *
+ * @author hagen
+ * */
 public class ColumnItem
         extends Item
 {

@@ -8,7 +8,11 @@ import cn.edu.ruc.iir.pard.sql.expr.FalseExpr;
 import cn.edu.ruc.iir.pard.sql.expr.SingleExpr;
 import cn.edu.ruc.iir.pard.sql.expr.TrueExpr;
 import cn.edu.ruc.iir.pard.sql.expr.UnaryExpr;
-
+/**
+ *de Morgan’s laws
+ *
+ *@author hagen
+ * */
 class PushDownNotLaw
         extends ExprLaw
 {
